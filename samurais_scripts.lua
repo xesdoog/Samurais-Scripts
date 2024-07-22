@@ -912,7 +912,7 @@ script.register_looped("auto-kill-enemies", function(ak)
     local gta_peds = entities.get_all_peds_as_handles()
     if (PED.COUNT_PEDS_IN_COMBAT_WITH_TARGET_WITHIN_RADIUS(self.get_ped(), myCoords.x, myCoords.y, myCoords.z, 100)) > 0 then
       for _, p in pairs(gta_peds) do
-        if PED.IS_PED_HUMAN(p) and PED.IS_PED_IN_COMBAT(p, self.get_ped()) then
+        if PED.IS_PED_HUMAN(p) and PED.IS_PED_IN_COMBAT(p, self.get_ped()) and not PED.IS_PED_A_PLAYER(p) then
           if PED.CAN_PED_IN_COMBAT_SEE_TARGET(p, self.get_ped()) then
             PED.APPLY_DAMAGE_TO_PED(p, 100000, 1, 0);PED.EXPLODE_PED_HEAD(p, 0x7FD62962)
           else
