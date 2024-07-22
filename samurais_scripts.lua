@@ -162,7 +162,7 @@ weapon_tab:add_imgui(function()
   end
 
   autoKill, autoKillUsed = ImGui.Checkbox("Auto Kill Enemies", autoKill, true)
-  UI.helpMarker(false, "Automatically kills all enemies.")
+  UI.helpMarker(false, "Automatically kill all enemies in your proximity.")
   if autoKillUsed then
     lua_cfg.save("autoKill", autoKill)
     UI.widgetSound("Nav2")
