@@ -666,6 +666,7 @@ end)
     *players*
 ]]
 local players_tab     = Samurais_scripts:add_tab("Players ")
+
 playerIndex           = 0
 local targetPlayerPed = 0
 local playerVeh       = 0
@@ -754,12 +755,16 @@ end)
 --[[
     *world*
 ]]
-world_tab          = Samurais_scripts:add_tab("World ")
-local pedGrabber   = false
-local ped_grabbed  = false
-local carpool      = false
-local attached_ped = 0
-local pedthrowF    = 10
+local world_tab = Samurais_scripts:add_tab("World ")
+
+local pedGrabber         = false
+local ped_grabbed        = false
+local carpool            = false
+local show_npc_veh_ctrls = false
+local stop_searching     = false
+local attached_ped       = 0
+local npc_vehicle        = 0
+local pedthrowF          = 10
 
 local function playHandsUp()
   script.run_in_fiber(function()
@@ -809,9 +814,53 @@ world_tab:add_imgui(function()
   end
 
   carpool, carpoolUsed = ImGui.Checkbox("Ride With NPCs", carpool, true)
-  UI.helpMarker(false, "Allows you to get in NPC vehicles as passenger.")
+  UI.helpMarker(false, "(WIP) Allows you to get in NPC vehicles as passenger.")
   if carpoolUsed then
     UI.widgetSound("Nav2")
+  end
+
+  if carpool then
+    if show_npc_veh_ctrls and npc_vehicle ~= 0 then
+      if ImGui.Button("< Previous Seat") then
+        script.run_in_fiber(function()
+          if PED.IS_PED_SITTING_IN_VEHICLE(self.get_ped(), npc_vehicle) then
+            local numSeats = VEHICLE.GET_VEHICLE_MAX_NUMBER_OF_PASSENGERS(npc_vehicle)
+            local mySeat   = Game.getPedVehicleSeat(self.get_ped())
+            if mySeat <= 0 then
+              mySeat = numSeats
+            end
+            mySeat = mySeat - 1
+            if VEHICLE.IS_VEHICLE_SEAT_FREE(npc_vehicle, mySeat, true) then
+              UI.widgetSound("Nav")
+              PED.SET_PED_INTO_VEHICLE(self.get_ped(), npc_vehicle, mySeat)
+            else
+              mySeat = mySeat - 1
+              return
+            end
+          end
+        end)
+      end
+      ImGui.SameLine()
+      if ImGui.Button("Next Seat >") then
+        script.run_in_fiber(function()
+          if PED.IS_PED_SITTING_IN_VEHICLE(self.get_ped(), npc_vehicle) then
+            local numSeats = VEHICLE.GET_VEHICLE_MAX_NUMBER_OF_PASSENGERS(npc_vehicle)
+            local mySeat   = Game.getPedVehicleSeat(self.get_ped())
+            if mySeat > numSeats then
+              mySeat = 0
+            end
+            mySeat = mySeat + 1
+            if VEHICLE.IS_VEHICLE_SEAT_FREE(npc_vehicle, mySeat, true) then
+              UI.widgetSound("Nav")
+              PED.SET_PED_INTO_VEHICLE(self.get_ped(), npc_vehicle, mySeat)
+            else
+              mySeat = mySeat + 1
+              return
+            end
+          end
+        end)
+      end
+    end
   end
 end)
 
@@ -820,6 +869,7 @@ end)
     *settings*
 ]]
 local settings_tab = Samurais_scripts:add_tab("Settings ")
+
 disableTooltips = lua_cfg.read("disableTooltips")
 disableUiSounds = lua_cfg.read("disableUiSounds")
 settings_tab:add_imgui(function()
@@ -931,7 +981,7 @@ script.register_looped("GameInput", function()
     end
   end
 
-  if pedGrabber then
+  if pedGrabber and Game.Self.isOnFoot() then
     PAD.DISABLE_CONTROL_ACTION(0, 24, 1)
     PAD.DISABLE_CONTROL_ACTION(0, 25, 1)
     PAD.DISABLE_CONTROL_ACTION(0, 50, 1)
@@ -1713,6 +1763,12 @@ script.register_looped("Ped Grabber", function(pg)
       end
       if ped_grabbed and attached_ped ~= 0 then
         PED.FORCE_PED_MOTION_STATE(attached_ped, 0x0EC17E58, 0, 0, 0)
+        if PED.IS_PED_RAGDOLL(self.get_ped()) then
+          repeat
+            pg:sleep(100)
+          until PED.IS_PED_RAGDOLL(self.get_ped()) == false
+          playHandsUp()
+        end
         if PAD.IS_DISABLED_CONTROL_PRESSED(0, 25) then
           if PAD.IS_DISABLED_CONTROL_PRESSED(0, 24) or PAD.IS_DISABLED_CONTROL_PRESSED(0, 257) then
             local myFwdX = Game.getForwardX(self.get_ped())
@@ -1737,21 +1793,31 @@ end)
 
 script.register_looped("Carpool", function(cp)
   if carpool then
-    local nearestPed = Game.getClosestPed(self.get_ped(), 50)
+    if not stop_searching then
+      nearestPed = Game.getClosestPed(self.get_ped(), 500)
+    end
     if PED.IS_PED_SITTING_IN_ANY_VEHICLE(nearestPed) then
       npc_vehicle = PED.GET_VEHICLE_PED_IS_USING(nearestPed)
-      if PED.GET_PED_CONFIG_FLAG(nearestPed, 251, 1) == false then
-        PED.SET_PED_CONFIG_FLAG(nearestPed, 251, true)
-      end
-      if PED.GET_PED_CONFIG_FLAG(nearestPed, 255, 1) == false then
-        PED.SET_PED_CONFIG_FLAG(nearestPed, 255, true)
-      end
-      if PED.GET_PED_CONFIG_FLAG(nearestPed, 398, 1) == false then
-        PED.SET_PED_CONFIG_FLAG(nearestPed, 398, true)
-      end
       if PED.GET_VEHICLE_PED_IS_TRYING_TO_ENTER(self.get_ped()) == npc_vehicle then
+        PED.SET_PED_CONFIG_FLAG(nearestPed, 251, true)
+        PED.SET_PED_CONFIG_FLAG(nearestPed, 255, true)
+        PED.SET_PED_CONFIG_FLAG(nearestPed, 398, true)
         PED.SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(nearestPed, true)
       end
+    end
+    if PED.IS_PED_SITTING_IN_VEHICLE(self.get_ped(), npc_vehicle) then
+      local ped_to_reset = VEHICLE.GET_PED_IN_VEHICLE_SEAT(self.get_veh(), -1, true)
+      show_npc_veh_ctrls = true
+      stop_searching     = true
+      repeat
+        cp:sleep(100)
+      until PED.IS_PED_SITTING_IN_VEHICLE(self.get_ped(), npc_vehicle) == false
+      PED.SET_PED_CONFIG_FLAG(ped_to_reset, 251, false)
+      PED.SET_PED_CONFIG_FLAG(ped_to_reset, 255, false)
+      PED.SET_PED_CONFIG_FLAG(ped_to_reset, 398, false)
+      PED.SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped_to_reset, false)
+      show_npc_veh_ctrls = false
+      stop_searching     = false
     end
   end
   cp:yield()

@@ -240,7 +240,7 @@ UI = {
   ---@param hovercolor string | table
   ---@param activecolor string | table
   ---@param alpha integer
-  ---@return ImGui.Button
+  ---@return boolean
   --[[ -- Usage:
     - text: The button label.
     - color: The default button color. Can be either a HEX string (both short and long hex formats are accepted), a table containing 3 color numbers in RGB format (you can use standard RGB values between 0 and 255 or ImGui values between 0 and 1), or a string literal (ex: "red").
@@ -249,9 +249,9 @@ UI = {
     - alpha: A value between 0 and 1 representing visibility.
   ]]
   coloredButton = function(text, color, hovercolor, activecolor, alpha)
-    r, g, b, errorMsg                   = UI.getColor(color)
-    hoverR, hoverG, hoverB, errorMsg    = UI.getColor(hovercolor)
-    activeR, activeG, activeB, errorMsg = UI.getColor(activecolor)
+    local r, g, b                   = UI.getColor(color)
+    local hoverR, hoverG, hoverB    = UI.getColor(hovercolor)
+    local activeR, activeG, activeB = UI.getColor(activecolor)
     if type(alpha) ~= "number" or alpha == nil then
       alpha = 1
     end
