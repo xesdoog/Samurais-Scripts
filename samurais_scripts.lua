@@ -763,7 +763,7 @@ local carpool            = false
 local show_npc_veh_ctrls = false
 local stop_searching     = false
 local attached_ped       = 0
-local npc_vehicle        = 0
+local thisVeh            = 0
 local pedthrowF          = 10
 
 local function playHandsUp()
@@ -820,19 +820,19 @@ world_tab:add_imgui(function()
   end
 
   if carpool then
-    if show_npc_veh_ctrls and npc_vehicle ~= 0 then
+    if show_npc_veh_ctrls and thisVeh ~= 0 then
       if ImGui.Button("< Previous Seat") then
         script.run_in_fiber(function()
-          if PED.IS_PED_SITTING_IN_VEHICLE(self.get_ped(), npc_vehicle) then
-            local numSeats = VEHICLE.GET_VEHICLE_MAX_NUMBER_OF_PASSENGERS(npc_vehicle)
+          if PED.IS_PED_SITTING_IN_VEHICLE(self.get_ped(), thisVeh) then
+            local numSeats = VEHICLE.GET_VEHICLE_MAX_NUMBER_OF_PASSENGERS(thisVeh)
             local mySeat   = Game.getPedVehicleSeat(self.get_ped())
             if mySeat <= 0 then
               mySeat = numSeats
             end
             mySeat = mySeat - 1
-            if VEHICLE.IS_VEHICLE_SEAT_FREE(npc_vehicle, mySeat, true) then
+            if VEHICLE.IS_VEHICLE_SEAT_FREE(thisVeh, mySeat, true) then
               UI.widgetSound("Nav")
-              PED.SET_PED_INTO_VEHICLE(self.get_ped(), npc_vehicle, mySeat)
+              PED.SET_PED_INTO_VEHICLE(self.get_ped(), thisVeh, mySeat)
             else
               mySeat = mySeat - 1
               return
@@ -843,16 +843,16 @@ world_tab:add_imgui(function()
       ImGui.SameLine()
       if ImGui.Button("Next Seat >") then
         script.run_in_fiber(function()
-          if PED.IS_PED_SITTING_IN_VEHICLE(self.get_ped(), npc_vehicle) then
-            local numSeats = VEHICLE.GET_VEHICLE_MAX_NUMBER_OF_PASSENGERS(npc_vehicle)
+          if PED.IS_PED_SITTING_IN_VEHICLE(self.get_ped(), thisVeh) then
+            local numSeats = VEHICLE.GET_VEHICLE_MAX_NUMBER_OF_PASSENGERS(thisVeh)
             local mySeat   = Game.getPedVehicleSeat(self.get_ped())
             if mySeat > numSeats then
               mySeat = 0
             end
             mySeat = mySeat + 1
-            if VEHICLE.IS_VEHICLE_SEAT_FREE(npc_vehicle, mySeat, true) then
+            if VEHICLE.IS_VEHICLE_SEAT_FREE(thisVeh, mySeat, true) then
               UI.widgetSound("Nav")
-              PED.SET_PED_INTO_VEHICLE(self.get_ped(), npc_vehicle, mySeat)
+              PED.SET_PED_INTO_VEHICLE(self.get_ped(), thisVeh, mySeat)
             else
               mySeat = mySeat + 1
               return
@@ -1793,31 +1793,44 @@ end)
 
 script.register_looped("Carpool", function(cp)
   if carpool then
-    if not stop_searching then
-      nearestPed = Game.getClosestPed(self.get_ped(), 500)
+
+    if PED.IS_PED_SITTING_IN_ANY_VEHICLE(self.get_ped()) then
+      stop_searching = true
+    else
+      stop_searching = false
     end
-    if PED.IS_PED_SITTING_IN_ANY_VEHICLE(nearestPed) then
-      npc_vehicle = PED.GET_VEHICLE_PED_IS_USING(nearestPed)
-      if PED.GET_VEHICLE_PED_IS_TRYING_TO_ENTER(self.get_ped()) == npc_vehicle then
-        PED.SET_PED_CONFIG_FLAG(nearestPed, 251, true)
-        PED.SET_PED_CONFIG_FLAG(nearestPed, 255, true)
-        PED.SET_PED_CONFIG_FLAG(nearestPed, 398, true)
-        PED.SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(nearestPed, true)
+
+    if not stop_searching then
+      nearestVeh = Game.getClosestVehicle(self.get_ped(), 10)
+    end
+    local trying_to_enter = PED.GET_VEHICLE_PED_IS_TRYING_TO_ENTER(self.get_ped())
+    if trying_to_enter ~= 0 and trying_to_enter == nearestVeh then
+      driverPed = VEHICLE.GET_PED_IN_VEHICLE_SEAT(trying_to_enter, -1, true)
+      if driverPed ~= nil and driverPed ~= self.get_ped() and not PED.IS_PED_A_PLAYER(driverPed) then
+        thisVeh = trying_to_enter
+        PED.SET_PED_CONFIG_FLAG(driverPed, 251, true)
+        PED.SET_PED_CONFIG_FLAG(driverPed, 255, true)
+        PED.SET_PED_CONFIG_FLAG(driverPed, 398, true)
+        PED.SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(driverPed, true)
       end
     end
-    if PED.IS_PED_SITTING_IN_VEHICLE(self.get_ped(), npc_vehicle) then
-      local ped_to_reset = VEHICLE.GET_PED_IN_VEHICLE_SEAT(self.get_veh(), -1, true)
-      show_npc_veh_ctrls = true
-      stop_searching     = true
-      repeat
-        cp:sleep(100)
-      until PED.IS_PED_SITTING_IN_VEHICLE(self.get_ped(), npc_vehicle) == false
-      PED.SET_PED_CONFIG_FLAG(ped_to_reset, 251, false)
-      PED.SET_PED_CONFIG_FLAG(ped_to_reset, 255, false)
-      PED.SET_PED_CONFIG_FLAG(ped_to_reset, 398, false)
-      PED.SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped_to_reset, false)
-      show_npc_veh_ctrls = false
-      stop_searching     = false
+    if PED.IS_PED_SITTING_IN_VEHICLE(self.get_ped(), thisVeh) then
+      local ped_to_reset = VEHICLE.GET_PED_IN_VEHICLE_SEAT(thisVeh, -1, true)
+      if ped_to_reset ~= nil and ped_to_reset ~= self.get_ped() and not PED.IS_PED_A_PLAYER(ped_to_reset) then
+        show_npc_veh_ctrls = true
+        stop_searching     = true
+        repeat
+          cp:sleep(100)
+        until PED.IS_PED_SITTING_IN_VEHICLE(self.get_ped(), thisVeh) == false
+        PED.SET_PED_CONFIG_FLAG(ped_to_reset, 251, false)
+        PED.SET_PED_CONFIG_FLAG(ped_to_reset, 255, false)
+        PED.SET_PED_CONFIG_FLAG(ped_to_reset, 398, false)
+        PED.SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped_to_reset, false)
+        show_npc_veh_ctrls = false
+        stop_searching     = false
+      else
+        show_npc_veh_ctrls = false
+      end
     end
   end
   cp:yield()
