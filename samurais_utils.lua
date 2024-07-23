@@ -1,4 +1,4 @@
----@diagnostic disable: undefined-global, lowercase-global, undefined-doc-name
+---@diagnostic disable: undefined-global, lowercase-global, undefined-doc-name, undefined-field
 
 -------------------------------------------------- Lua Funcs -----------------------------------------------------------------
 lua_Fn = {
@@ -21,7 +21,7 @@ lua_Fn = {
   ---@param str string
   ---@param suffix string
   str_endswith = function(str, suffix)
-    return str:sub(-#suffix) == suffix
+    return str:sub(- #suffix) == suffix
   end,
 
   ---Inserts a string into another string at the given position. (Indexes start from 0).
@@ -29,7 +29,7 @@ lua_Fn = {
   ---@param pos integer
   ---@param text string
   str_insert = function(str, pos, text)
-    return str:sub(1, pos)..text..str:sub(pos)
+    return str:sub(1, pos) .. text .. str:sub(pos)
   end,
 
   ---Replaces a string with a new string.
@@ -40,11 +40,11 @@ lua_Fn = {
     local search_index = 1
     while true do
       local start_index, end_index = str:find(old, search_index, true)
-      if (not start_index) then
+      if not start_index then
         break
       end
       local changed = str:sub(end_index + 1)
-      result = str:sub(1, (start_index - 1))..new..changed
+      result = str:sub(1, (start_index - 1)) .. new .. changed
       search_index = -1 * changed:len()
     end
     return result
@@ -54,11 +54,11 @@ lua_Fn = {
   ---@param value integer | string
   --[[ -- Example:
 
-      formatMoney(42069) 
+      formatMoney(42069)
         -> "$42,069"
   ]]
   formatMoney = function(value)
-    return "$"..tostring(value):reverse():gsub("%d%d%d", "%1,"):reverse():gsub("^,", "")
+    return "$" .. tostring(value):reverse():gsub("%d%d%d", "%1,"):reverse():gsub("^,", "")
   end,
 
   ---Must be called from inside a coroutine. Input time is in milliseconds.
@@ -77,9 +77,11 @@ lua_Fn = {
     local r, g, b
     hex = hex:gsub("#", "")
     if hex:len() == 3 then -- short HEX
-      r, g, b = (tonumber("0x" .. hex:sub(1, 1)) * 17) / 255, (tonumber("0x" .. hex:sub(2, 2)) * 17) / 255, (tonumber("0x" .. hex:sub(3, 3)) * 17) / 255
+      r, g, b = (tonumber("0x" .. hex:sub(1, 1)) * 17) / 255, (tonumber("0x" .. hex:sub(2, 2)) * 17) / 255,
+          (tonumber("0x" .. hex:sub(3, 3)) * 17) / 255
     else
-      r, g, b = tonumber("0x" .. hex:sub(1, 2)) / 255, tonumber("0x" .. hex:sub(3, 4)) / 255, tonumber("0x" .. hex:sub(5, 6)) / 255
+      r, g, b = tonumber("0x" .. hex:sub(1, 2)) / 255, tonumber("0x" .. hex:sub(3, 4)) / 255,
+          tonumber("0x" .. hex:sub(5, 6)) / 255
     end
     return r, g, b
   end,
@@ -89,7 +91,7 @@ lua_Fn = {
   iter = function(table)
     local i = 0
     local n = #table
-    return function ()
+    return function()
       i = i + 1
       if i <= n then
         return table[i]
@@ -112,7 +114,7 @@ lua_Fn = {
 
   ---Converts 0 and 1 values to bools.
   ---@param value integer
-  get_bool =  function(value)
+  get_bool = function(value)
     if type(value) == "number" then
       if value == 0 then
         return false
@@ -128,6 +130,7 @@ lua_Fn = {
 
   ---Lua version of Bob Jenskins' "Jenkins One At A Time" hash function (https://en.wikipedia.org/wiki/Jenkins_hash_function).
   ---@param key string
+  ---@return integer
   joaat = function(key)
     local hash = 0
     for i = 1, #key do
@@ -196,12 +199,14 @@ UI = {
   ---@param text string
   ---@param color string | table
   ---@param alpha integer
+  ---@param wrap_size number
   --[[ -- Usage:
     - text: The text to display.
     - color: Can be either a HEX string (both short and long hex formats are accepted) or a table containing 3 color numbers in RGB format (you can use standard RGB values between 0 and 255 or ImGui values between 0 and 1), or a string literal (ex: "red").
     - alpha: A value between 0 and 1 representing visibility.
+    - wrap_size: A number representing the size your text will wrap around.
   ]]
-  coloredText = function(text, color, alpha)
+  coloredText = function(text, color, alpha, wrap_size)
     r, g, b, errorMsg = UI.getColor(color)
     if type(alpha) ~= "number" or alpha == nil then
       alpha = 1
@@ -213,7 +218,7 @@ UI = {
       alpha = 0.1
     end
     ImGui.PushStyleColor(ImGuiCol.Text, r, g, b, alpha)
-    ImGui.PushTextWrapPos(ImGui.GetFontSize() * 20)
+    ImGui.PushTextWrapPos(ImGui.GetFontSize() * wrap_size)
     ImGui.TextWrapped(text)
     ImGui.PopTextWrapPos()
     ImGui.PopStyleColor(1)
@@ -221,7 +226,7 @@ UI = {
       if ImGui.IsItemHovered() then
         ImGui.SetNextWindowBgAlpha(0.8)
         ImGui.BeginTooltip()
-        ImGui.PushTextWrapPos(ImGui.GetFontSize() * 20)
+        ImGui.PushTextWrapPos(ImGui.GetFontSize() * wrap_size)
         ImGui.TextWrapped(errorMsg)
         ImGui.PopTextWrapPos()
         ImGui.EndTooltip()
@@ -283,7 +288,7 @@ UI = {
         ImGui.SetNextWindowBgAlpha(0.75)
         ImGui.BeginTooltip()
         if colorFlag == true then
-          UI.coloredText(text, color, alpha)
+          UI.coloredText(text, color, alpha, 20)
         else
           ImGui.PushTextWrapPos(ImGui.GetFontSize() * 20)
           ImGui.TextWrapped(text)
@@ -311,7 +316,7 @@ UI = {
         ImGui.SetNextWindowBgAlpha(0.75)
         ImGui.BeginTooltip()
         if colorFlag == true then
-          UI.coloredText(text, color, alpha)
+          UI.coloredText(text, color, alpha, 20)
         else
           ImGui.PushTextWrapPos(ImGui.GetFontSize() * 20)
           ImGui.TextWrapped(text)
@@ -338,7 +343,7 @@ UI = {
       retBool = ImGui.IsItemHovered() and ImGui.IsItemClicked(1)
     else
       error(
-      "error in function isItemClicked: Invalid mouse button. Correct inputs: 'lmb' as Left Mouse Button or 'rmb' as Right Mouse Button.",
+        "error in function isItemClicked: Invalid mouse button. Correct inputs: 'lmb' as Left Mouse Button or 'rmb' as Right Mouse Button.",
         2)
     end
     return retBool
@@ -350,40 +355,30 @@ UI = {
 
   **Sound strings:**
 
-  "Select" | "select2" | "Cancel" | "Error" | "Nav" | "Nav2" | "Pickup" | "Radar" | "Delete" | "W_Pickup"
+  "Select" | "Select2" | "Cancel" | "Error" | "Nav" | "Nav2" | "Pickup" | "Radar" | "Delete" | "W_Pickup" | "Focus_In" | "Focus_Out"
   ]]
   widgetSound = function(sound)
     if not disableUiSounds then
+      local sounds_T = {
+        { name = "Radar",     sound = "RADAR_ACTIVATE",      soundRef = "DLC_BTL_SECURITY_VANS_RADAR_PING_SOUNDS" },
+        { name = "Select",    sound = "SELECT",              soundRef = "HUD_FRONTEND_DEFAULT_SOUNDSET" },
+        { name = "Pickup",    sound = "PICK_UP",             soundRef = "HUD_FRONTEND_DEFAULT_SOUNDSET" },
+        { name = "W_Pickup",  sound = "PICK_UP_WEAPON",      soundRef = "HUD_FRONTEND_CUSTOM_SOUNDSET" },
+        { name = "Delete",    sound = "DELETE",              soundRef = "HUD_DEATHMATCH_SOUNDSET" },
+        { name = "Cancel",    sound = "CANCEL",              soundRef = "HUD_FREEMODE_SOUNDSET" },
+        { name = "Error",     sound = "ERROR",               soundRef = "HUD_FREEMODE_SOUNDSET" },
+        { name = "Nav",       sound = "NAV_LEFT_RIGHT",      soundRef = "HUD_FREEMODE_SOUNDSET" },
+        { name = "Nav2",      sound = "NAV_UP_DOWN",         soundRef = "HUD_FREEMODE_SOUNDSET" },
+        { name = "Select2",   sound = "CHANGE_STATION_LOUD", soundRef = "RADIO_SOUNDSET" },
+        { name = "Focus_In",  sound = "FOCUSIN",             soundRef = "HINTCAMSOUNDS" },
+        { name = "Focus_Out", sound = "FOCUSOUT",            soundRef = "HINTCAMSOUNDS" },
+      }
       script.run_in_fiber(function()
-        if sound == "Select" then
-          AUDIO.PLAY_SOUND_FRONTEND(-1, "SELECT", "HUD_FRONTEND_DEFAULT_SOUNDSET", true)
-        end
-        if sound == "Cancel" then
-          AUDIO.PLAY_SOUND_FRONTEND(-1, "CANCEL", "HUD_FREEMODE_SOUNDSET", true)
-        end
-        if sound == "Error" then
-          AUDIO.PLAY_SOUND_FRONTEND(-1, "ERROR", "HUD_FREEMODE_SOUNDSET", true)
-        end
-        if sound == "Nav" then
-          AUDIO.PLAY_SOUND_FRONTEND(-1, "NAV_LEFT_RIGHT", "HUD_FREEMODE_SOUNDSET", true)
-        end
-        if sound == "Nav2" then
-          AUDIO.PLAY_SOUND_FRONTEND(-1, "NAV_UP_DOWN", "HUD_FREEMODE_SOUNDSET", true)
-        end
-        if sound == "Pickup" then
-          AUDIO.PLAY_SOUND_FRONTEND(-1, "PICK_UP", "HUD_FRONTEND_DEFAULT_SOUNDSET", true)
-        end
-        if sound == "Select2" then
-          AUDIO.PLAY_SOUND_FRONTEND(-1, "CHANGE_STATION_LOUD", "RADIO_SOUNDSET", true)
-        end
-        if sound == "Radar" then
-          AUDIO.PLAY_SOUND_FRONTEND(-1, "RADAR_ACTIVATE", "DLC_BTL_SECURITY_VANS_RADAR_PING_SOUNDS", true)
-        end
-        if sound == "Delete" then
-          AUDIO.PLAY_SOUND_FRONTEND(-1, "DELETE", "HUD_DEATHMATCH_SOUNDSET", true)
-        end
-        if sound == "W_Pickup" then
-          AUDIO.PLAY_SOUND_FRONTEND(-1, "PICK_UP_WEAPON", "HUD_FRONTEND_CUSTOM_SOUNDSET", true)
+        for _, snd in ipairs(sounds_T) do
+          if sound == snd.name then
+            AUDIO.PLAY_SOUND_FRONTEND(-1, snd.sound, snd.soundRef, true)
+            break
+          end
         end
       end)
     end
@@ -673,16 +668,14 @@ Game = {
     local closestPed = 0
     local gtaPeds = entities.get_all_peds_as_handles()
     for _, ped in ipairs(gtaPeds) do
-      if PED.IS_PED_HUMAN(ped) then
-        if ped ~= self.get_ped() then
-          local thisPos      = ENTITY.GET_ENTITY_COORDS(closeTo, true)
-          local randomPedPos = ENTITY.GET_ENTITY_COORDS(ped, true)
-          local distCalc     = SYSTEM.VDIST2(thisPos.x, thisPos.y, thisPos.z, randomPedPos.x, randomPedPos.y,
-            randomPedPos.z)
-          if distCalc <= range then
-            if not ENTITY.IS_ENTITY_DEAD(ped) then
-              closestPed = ped
-            end
+      if PED.IS_PED_HUMAN(ped) and ped ~= self.get_ped() then
+        local thisPos      = ENTITY.GET_ENTITY_COORDS(closeTo, true)
+        local randomPedPos = ENTITY.GET_ENTITY_COORDS(ped, true)
+        local distCalc     = SYSTEM.VDIST2(thisPos.x, thisPos.y, thisPos.z, randomPedPos.x, randomPedPos.y,
+          randomPedPos.z)
+        if distCalc <= range then
+          if not ENTITY.IS_ENTITY_DEAD(ped) then
+            closestPed = ped
           end
         end
       end
@@ -754,13 +747,13 @@ Game = {
     isDriving = function()
       local retBool
       if not Game.Self.isOnFoot() then
-          if Game.getPedVehicleSeat(self.get_ped()) == -1 then
-              retBool = true
-          else
-              retBool = false
-          end
-      else
+        if Game.getPedVehicleSeat(self.get_ped()) == -1 then
+          retBool = true
+        else
           retBool = false
+        end
+      else
+        retBool = false
       end
       return retBool
     end,
@@ -776,6 +769,9 @@ Game = {
       return weaponHash
     end,
 
+    -- Teleports localPlayer to the provided coordinates.
+    ---@param keepVehicle boolean
+    ---@param coords vector3
     teleport = function(keepVehicle, coords)
       script.run_in_fiber(function(selftp)
         STREAMING.REQUEST_COLLISION_AT_COORD(coords.x, coords.y, coords.z)
@@ -824,29 +820,29 @@ Game = {
       ---@type string
       local retVal
       local class_T = {
-                        {class = 0,  name = "Compacts"},
-                        {class = 1,  name = "Sedans"},
-                        {class = 2,  name = "SUVs"},
-                        {class = 3,  name = "Coupes"},
-                        {class = 4,  name = "Muscle"},
-                        {class = 5,  name = "Sports Classics"},
-                        {class = 6,  name = "Sports"},
-                        {class = 7,  name = "Super"},
-                        {class = 8,  name = "Motorcycles"},
-                        {class = 9,  name = "Off-road"},
-                        {class = 10, name = "Industrial"},
-                        {class = 11, name = "Utility"},
-                        {class = 12, name = "Vans"},
-                        {class = 13, name = "Cycles"},
-                        {class = 14, name = "Boats"},
-                        {class = 15, name = "Helicopters"},
-                        {class = 16, name = "Planes"},
-                        {class = 17, name = "Service"},
-                        {class = 18, name = "Emergency"},
-                        {class = 19, name = "Military"},
-                        {class = 20, name = "Commercial"},
-                        {class = 21, name = "Trains"},
-                      }
+        { class = 0,  name = "Compacts" },
+        { class = 1,  name = "Sedans" },
+        { class = 2,  name = "SUVs" },
+        { class = 3,  name = "Coupes" },
+        { class = 4,  name = "Muscle" },
+        { class = 5,  name = "Sports Classics" },
+        { class = 6,  name = "Sports" },
+        { class = 7,  name = "Super" },
+        { class = 8,  name = "Motorcycles" },
+        { class = 9,  name = "Off-road" },
+        { class = 10, name = "Industrial" },
+        { class = 11, name = "Utility" },
+        { class = 12, name = "Vans" },
+        { class = 13, name = "Cycles" },
+        { class = 14, name = "Boats" },
+        { class = 15, name = "Helicopters" },
+        { class = 16, name = "Planes" },
+        { class = 17, name = "Service" },
+        { class = 18, name = "Emergency" },
+        { class = 19, name = "Military" },
+        { class = 20, name = "Commercial" },
+        { class = 21, name = "Trains" },
+      }
 
       if not Game.Self.isOnFoot() then
         for _, v in ipairs(class_T) do
@@ -1068,7 +1064,7 @@ function json()
       local x = str:byte(j)
       if x < 32 then
         decode_error(str, j, "control character in string")
-      elseif x == 92 then   -- `\`: Escape
+      elseif x == 92 then -- `\`: Escape
         res = res .. str:sub(k, j - 1)
         j = j + 1
         local c = str:sub(j, j)
@@ -1085,7 +1081,7 @@ function json()
           res = res .. escape_char_map_inv[c]
         end
         k = j + 1
-      elseif x == 34 then   -- `"`: End of string
+      elseif x == 34 then -- `"`: End of string
         res = res .. str:sub(k, j - 1)
         return res, j + 1
       end
@@ -1219,7 +1215,6 @@ function json()
   return json
 end
 
-
 jsonConf = json()
 --[[¤ Config System For Lua ¤
 
@@ -1315,43 +1310,43 @@ lua_cfg = {
 XmlParser = {}
 
 function XmlParser:ToXmlString(value)
-	value = string.gsub (value, "&", "&amp;");		-- '&' -> "&amp;"
-	value = string.gsub (value, "<", "&lt;");		-- '<' -> "&lt;"
-	value = string.gsub (value, ">", "&gt;");		-- '>' -> "&gt;"
-	--value = string.gsub (value, "'", "&apos;");	-- '\'' -> "&apos;"
-	value = string.gsub (value, "\"", "&quot;");	-- '"' -> "&quot;"
-	-- replace non printable char -> "&#xD;"
-   	value = string.gsub(value, "([^%w%&%;%p%\t% ])",
-       	function (c) 
-       		return string.format("&#x%X;", string.byte(c)) 
-       		--return string.format("&#x%02X;", string.byte(c)) 
-       		--return string.format("&#%02d;", string.byte(c)) 
-       	end);
-	return value;
+  value = string.gsub(value, "&", "&amp;");   -- '&' -> "&amp;"
+  value = string.gsub(value, "<", "&lt;");    -- '<' -> "&lt;"
+  value = string.gsub(value, ">", "&gt;");    -- '>' -> "&gt;"
+  --value = string.gsub (value, "'", "&apos;");	-- '\'' -> "&apos;"
+  value = string.gsub(value, "\"", "&quot;"); -- '"' -> "&quot;"
+  -- replace non printable char -> "&#xD;"
+  value = string.gsub(value, "([^%w%&%;%p%\t% ])",
+    function(c)
+      return string.format("&#x%X;", string.byte(c))
+      --return string.format("&#x%02X;", string.byte(c))
+      --return string.format("&#%02d;", string.byte(c))
+    end);
+  return value;
 end
 
 function XmlParser:FromXmlString(value)
-  	value = string.gsub(value, "&#x([%x]+)%;",
-      	function(h) 
-      		return string.char(tonumber(h,16)) 
-      	end);
-  	value = string.gsub(value, "&#([0-9]+)%;",
-      	function(h) 
-      		return string.char(tonumber(h,10)) 
-      	end);
-	value = string.gsub (value, "&quot;", "\"");
-	value = string.gsub (value, "&apos;", "'");
-	value = string.gsub (value, "&gt;", ">");
-	value = string.gsub (value, "&lt;", "<");
-	value = string.gsub (value, "&amp;", "&");
-	return value;
+  value = string.gsub(value, "&#x([%x]+)%;",
+    function(h)
+      return string.char(tonumber(h, 16))
+    end);
+  value = string.gsub(value, "&#([0-9]+)%;",
+    function(h)
+      return string.char(tonumber(h, 10))
+    end);
+  value = string.gsub(value, "&quot;", "\"");
+  value = string.gsub(value, "&apos;", "'");
+  value = string.gsub(value, "&gt;", ">");
+  value = string.gsub(value, "&lt;", "<");
+  value = string.gsub(value, "&amp;", "&");
+  return value;
 end
 
 function XmlParser:ParseArgs(s)
   local arg = {}
-  s:gsub("(%w+)=([\"'])(.-)%2", function (w, _, a)
-    	arg[w] = self:FromXmlString(a);
-  	end)
+  s:gsub("(%w+)=([\"'])(.-)%2", function(w, _, a)
+    arg[w] = self:FromXmlString(a);
+  end)
   return arg
 end
 
@@ -1373,26 +1368,26 @@ function XmlParser:ParseXmlText(xmlText)
     end
     local text = string.sub(xmlText, i, ni - 1)
     if not string.find(text, "^%s*$") then
-      top.Value = (top.Value or "")..self:FromXmlString(text)
+      top.Value = (top.Value or "") .. self:FromXmlString(text)
     end
-    if empty == "/" then  -- empty element tag
-      table.insert(top.ChildNodes, {Name = label, Value = nil, Attributes = self:ParseArgs(xarg), ChildNodes = {}})
-    elseif c == "" then   -- start tag
+    if empty == "/" then -- empty element tag
+      table.insert(top.ChildNodes, { Name = label, Value = nil, Attributes = self:ParseArgs(xarg), ChildNodes = {} })
+    elseif c == "" then  -- start tag
       top = {
         Name       = label,
         Value      = nil,
         Attributes = self:ParseArgs(xarg),
         ChildNodes = {}
       }
-      table.insert(stack, top)   -- new level
-    else  -- end tag
-      local toclose = table.remove(stack)  -- remove top
+      table.insert(stack, top)            -- new level
+    else                                  -- end tag
+      local toclose = table.remove(stack) -- remove top
       top = stack[#stack]
       if #stack < 1 then
-        error("XmlParser: nothing to close with "..label)
+        error("XmlParser: nothing to close with " .. label)
       end
       if toclose.Name ~= label then
-        error("XmlParser: trying to close "..toclose.Name.." with "..label)
+        error("XmlParser: trying to close " .. toclose.Name .. " with " .. label)
       end
       table.insert(top.ChildNodes, toclose)
     end
@@ -1400,22 +1395,22 @@ function XmlParser:ParseXmlText(xmlText)
   end
   local text = string.sub(xmlText, i)
   if not string.find(text, "^%s*$") then
-      stack[#stack].Value = (stack[#stack].Value or "")..self:FromXmlString(text)
+    stack[#stack].Value = (stack[#stack].Value or "") .. self:FromXmlString(text)
   end
   if #stack > 1 then
-    error("XmlParser: unclosed "..stack[stack.n].Name)
+    error("XmlParser: unclosed " .. stack[stack.n].Name)
   end
   return stack[1].ChildNodes[1]
 end
 
 function XmlParser:ParseXmlFile(xmlFileName)
-	local file, err = io.open(xmlFileName, "r")
-	if not err and file ~= nil then
-		local xmlText = file:read("*a")
-		io.close(file)
-      return self:ParseXmlText(xmlText), nil
-	else
+  local file, err = io.open(xmlFileName, "r")
+  if not err and file ~= nil then
+    local xmlText = file:read("*a")
+    io.close(file)
+    return self:ParseXmlText(xmlText), nil
+  else
     error(tostring(err), 2)
-		return nil, err
-	end
+    return nil, err
+  end
 end
