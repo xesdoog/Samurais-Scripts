@@ -12,7 +12,7 @@ A base for a Lua script centered around roleplaying and having fun in a game ful
    **Example:**
      ```lua
      ["Self"] = {
-        {iso = "fr-FR", text = "Un texte sous le tab Self"},
+        {iso = "fr-FR", text = "Traduction du mot 'Self' en Français."},
      },
      ```
 3. Open a PR.
@@ -22,9 +22,9 @@ A base for a Lua script centered around roleplaying and having fun in a game ful
    **Example:**
      ```lua
      ["Self"] = {
-       {iso = "fr-FR", text = "Un texte sous le tab Self"},
+       {iso = "fr-FR", text = "Traduction du mot 'Self' en Français."},
      -- leave the other tables as they are and add yours below the last one:
-       {iso = "pt-BR", text = "Um texto sob a guia Self"},
+       {iso = "pt-BR", text = "Tradução da palavra 'Self' em Português."},
      },
      ```
 2. Open a PR. Your language will be added to the main script's language list under '**Settings**' if it doesn't already exist. Alternatively you can add it yourself by editing the `lang_T` table and following the same structure.
