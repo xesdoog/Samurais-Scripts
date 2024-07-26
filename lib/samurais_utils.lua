@@ -223,7 +223,7 @@ UI = {
     ImGui.PopTextWrapPos()
     ImGui.PopStyleColor(1)
     if errorMsg ~= "" then
-      if ImGui.IsItemHovered() then
+      if ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled) then
         ImGui.SetNextWindowBgAlpha(0.8)
         ImGui.BeginTooltip()
         ImGui.PushTextWrapPos(ImGui.GetFontSize() * wrap_size)
@@ -284,7 +284,7 @@ UI = {
     if not disableTooltips then
       ImGui.SameLine()
       ImGui.TextDisabled("(?)")
-      if ImGui.IsItemHovered() then
+      if ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled) then
         ImGui.SetNextWindowBgAlpha(0.75)
         ImGui.BeginTooltip()
         if colorFlag == true then
@@ -312,7 +312,7 @@ UI = {
   ]]
   toolTip = function(colorFlag, text, color, alpha)
     if not disableTooltips then
-      if ImGui.IsItemHovered() then
+      if ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled) then
         ImGui.SetNextWindowBgAlpha(0.75)
         ImGui.BeginTooltip()
         if colorFlag == true then
@@ -338,9 +338,9 @@ UI = {
   isItemClicked = function(mb)
     local retBool = false
     if mb == "lmb" then
-      retBool = ImGui.IsItemHovered() and ImGui.IsItemClicked(0)
+      retBool = ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled) and ImGui.IsItemClicked(0)
     elseif mb == "rmb" then
-      retBool = ImGui.IsItemHovered() and ImGui.IsItemClicked(1)
+      retBool = ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled) and ImGui.IsItemClicked(1)
     else
       error(
         "error in function isItemClicked: Invalid mouse button. Correct inputs: 'lmb' as Left Mouse Button or 'rmb' as Right Mouse Button.",
@@ -394,6 +394,37 @@ Game = {
     return tonumber(game_build:get_string())
   end,
 
+  GetLang = function()
+    local language_codes_T = {
+        { name = "English",             id = 0,  iso = "en-US" },
+        { name = "French",              id = 1,  iso = "fr-FR" },
+        { name = "German",              id = 2,  iso = "de-DE" },
+        { name = "Italian",             id = 3,  iso = "it-IT" },
+        { name = "Spanish, Spain",      id = 4,  iso = "es-ES" },
+        { name = "Portugese",           id = 5,  iso = "pt-BR" },
+        { name = "Polish",              id = 6,  iso = "pl-PL" },
+        { name = "Russian",             id = 7,  iso = "ru-RU" },
+        { name = "Korean",              id = 8,  iso = "ko-KR" },
+        { name = "Chinese Traditional", id = 9,  iso = "zh-TW" },
+        { name = "Japanese",            id = 10, iso = "ja-JP" },
+        { name = "Spanish, Mexico",     id = 11, iso = "es-MX" },
+        { name = "Chinese Simplified",  id = 12, iso = "zh-CN" },
+    }
+    local lang_iso, lang_name
+    local lang = LOCALIZATION.GET_CURRENT_LANGUAGE()
+    for _, l in ipairs(language_codes_T) do
+        if lang == l.id then
+            lang_iso  = l.iso
+            lang_name = l.name
+            break
+        else
+            lang_iso  = "en-US"
+            lang_name = "English"
+        end
+    end
+    return lang_iso, lang_name
+  end,
+
   isOnline = function()
     if NETWORK.NETWORK_IS_GAME_IN_PROGRESS() and NETWORK.NETWORK_IS_SESSION_ACTIVE() then
       return true
@@ -438,6 +469,35 @@ Game = {
       table.insert(playerNames, playerName)
     end
     playerIndex, used = ImGui.Combo("##playerList", playerIndex, playerNames, #filteredPlayers)
+  end,
+
+  -- Returns the number of players in an online session.
+  ---@return number
+  getPlayerCount = function()
+    local retNum
+    if Game.isOnline() then
+      retNum = NETWORK.NETWORK_GET_NUM_CONNECTED_PLAYERS()
+    else
+      retNum = 0
+    end
+    return retNum
+  end,
+
+  -- Returns the player's cash
+  ---@param player integer
+  getPlayerWallet = function(player)
+    local wallet     = (tonumber(lua_Fn.str_replace(MONEY.NETWORK_GET_STRING_WALLET_BALANCE(player), "$", "")))
+    local wallet_int = wallet
+    local formatted  = lua_Fn.formatMoney(wallet)
+    return formatted, wallet_int
+  end,
+
+  -- Returns the player's bank balance
+  ---@param player integer
+  getPlayerBank = function(player)
+    local _, wallet = Game.getPlayerWallet(player)
+    local bank = (tonumber(lua_Fn.str_replace(MONEY.NETWORK_GET_STRING_BANK_WALLET_BALANCE(player), "$", "")) - wallet)
+    return lua_Fn.formatMoney(bank)
   end,
 
   ---@param text string

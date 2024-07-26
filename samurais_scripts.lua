@@ -1,6 +1,7 @@
 ---@diagnostic disable: undefined-global, lowercase-global
 
-require('samurais_utils')
+require('lib/samurais_utils')
+require('lib/Translations')
 Samurais_scripts = gui.get_tab("Samurai's Scripts")
 
 default_config = {
@@ -32,15 +33,21 @@ default_config = {
   autobrklight      = false,
   holdF             = false,
   noJacking         = false,
+  useGameLang       = false,
+  lang_idx          = 0,
   DriftIntensity    = 0,
   lightSpeed        = 1,
+  LANG              = 'en-US',
+  current_lang      = 'English',
 }
 
+LANG = lua_cfg.read("LANG")
+current_lang = lua_cfg.read("current_lang")
 
 --[[
     *self*
 ]]
-local self_tab          = Samurais_scripts:add_tab("Self ")
+local self_tab          = Samurais_scripts:add_tab(translateLabel("Self"))
 local Regen             = lua_cfg.read("Regen")
 local objectiveTP       = lua_cfg.read("objectiveTP")
 local phoneAnim         = lua_cfg.read("phoneAnim")
@@ -51,58 +58,59 @@ local disableActionMode = lua_cfg.read("disableActionMode")
 local isCrouched        = false
 local objectives_T      = { 0, 1, 2, 143, 144, 145, 146, 280, 502, 503, 504, 505, 506, 507, 508, 509, 510, 511, 535, 536, 537, 538, 539, 540, 541, 542 }
 self_tab:add_imgui(function()
-  Regen, RegenUsed = ImGui.Checkbox("Auto-Heal", Regen, true)
-  UI.helpMarker(false, "Automatically refill your health and armour.")
+  Regen, RegenUsed = ImGui.Checkbox(translateLabel("Auto-Heal"), Regen, true)
+  UI.helpMarker(false, translateLabel("autoheal_tooltip"))
   if RegenUsed then
     lua_cfg.save("Regen", Regen)
     UI.widgetSound("Nav2")
   end
 
-  objectiveTP, objectiveTPUsed = ImGui.Checkbox("Teleport To Objective", objectiveTP, true)
-  UI.helpMarker(false, "While this option is enabled, press [F10] to teleport to mission objectives.")
+  objectiveTP, objectiveTPUsed = ImGui.Checkbox(translateLabel("objectiveTP"), objectiveTP, true)
+  UI.helpMarker(false, translateLabel("objectiveTP_tooltip"))
   if objectiveTPUsed then
     lua_cfg.save("objectiveTP", objectiveTP)
     UI.widgetSound("Nav2")
   end
 
-  replaceSneakAnim, rsanimUsed = ImGui.Checkbox("Crouch Instead of Sneak", replaceSneakAnim, true)
-  UI.helpMarker(false, "Replace stealth mode's sneaking animation (Left CTRL) with crouching.")
+  replaceSneakAnim, rsanimUsed = ImGui.Checkbox(translateLabel("CrouchCB"), replaceSneakAnim, true)
+  UI.helpMarker(false, translateLabel("Crouch_tooltip"))
   if rsanimUsed then
     lua_cfg.save("replaceSneakAnim", replaceSneakAnim)
     UI.widgetSound("Nav2")
   end
 
-  phoneAnim, phoneAnimUsed = ImGui.Checkbox("Enable Phone Animations", phoneAnim, true)
-  UI.helpMarker(false, "Restores the disabled phone animations from Single Player.")
+  phoneAnim, phoneAnimUsed = ImGui.Checkbox(translateLabel("PhoneAnimCB"), phoneAnim, true)
+  UI.helpMarker(false, translateLabel("PhoneAnim_tooltip"))
   if phoneAnimUsed then
     lua_cfg.save("phoneAnim", phoneAnim)
     UI.widgetSound("Nav2")
   end
 
-  sprintInside, sprintInsideUsed = ImGui.Checkbox("Sprint Inside Interiors", sprintInside, true)
+  sprintInside, sprintInsideUsed = ImGui.Checkbox(translateLabel("SprintInsideCB"), sprintInside, true)
   UI.helpMarker(false,
-    "Allows you to sprint at full speed inside interiors that do not allow it like the Casino. Some interiors will still force you to run slowly.")
+    translateLabel("SprintInside_tooltip"))
   if sprintInsideUsed then
     lua_cfg.save("sprintInside", sprintInside)
     UI.widgetSound("Nav2")
   end
 
-  lockPick, lockPickUsed = ImGui.Checkbox("Use Lockpick Animation", lockPick, true)
+  lockPick, lockPickUsed = ImGui.Checkbox(translateLabel("LockpickCB"), lockPick, true)
   UI.helpMarker(false,
-    "When stealing vehicles, your character will use the lockpick animation instead of breaking the window.")
+    translateLabel("Lockpick_tooltip"))
   if lockPickUsed then
     lua_cfg.save("lockPick", lockPick)
     UI.widgetSound("Nav2")
   end
 
-  disableActionMode, actionModeUsed = ImGui.Checkbox("Disable Action Mode", disableActionMode, true)
-  UI.helpMarker(false, "Disables the forced movement style the player uses after firing a weapon.")
+  disableActionMode, actionModeUsed = ImGui.Checkbox(translateLabel("ActionModeCB"), disableActionMode, true)
+  UI.helpMarker(false, translateLabel("ActionMode_tooltip"))
   if actionModeUsed then
     lua_cfg.save("disableActionMode", disableActionMode)
     UI.widgetSound("Nav2")
   end
 end)
-sound_player          = self_tab:add_tab("Sound Player")
+
+sound_player = self_tab:add_tab(translateLabel"soundplayer")
 local sound_index1    = 0
 local sound_index2    = 0
 local switch          = 0
@@ -143,11 +151,11 @@ local function displayFemaleSounds()
 end
 
 sound_player:add_imgui(function()
-  switch, isChanged = ImGui.RadioButton("Male Sounds", switch, 0); ImGui.SameLine()
+  switch, isChanged = ImGui.RadioButton(translateLabel("malesounds"), switch, 0); ImGui.SameLine()
   if isChanged then
     UI.widgetSound("Nav")
   end
-  switch, isChanged = ImGui.RadioButton("Female Sounds", switch, 1)
+  switch, isChanged = ImGui.RadioButton(translateLabel("femalesounds"), switch, 1)
   if isChanged then
     UI.widgetSound("Nav")
   end
@@ -158,7 +166,7 @@ sound_player:add_imgui(function()
     displayFemaleSounds()
     selected_sound = female_sounds_T[sound_index2 + 1]
   end
-  if ImGui.Button(" Play ##sound") then
+  if ImGui.Button(translateLabel("playButton") .. "##sound") then
     script.run_in_fiber(function()
       local myCoords = Game.getCoords(self.get_ped(), true)
       AUDIO.PLAY_AMBIENT_SPEECH_FROM_POSITION_NATIVE(selected_sound.soundName, selected_sound.soundRef, myCoords.x,
@@ -170,7 +178,7 @@ end)
 --[[
     *weapon*
 ]]
-local weapon_tab  = Samurais_scripts:add_tab("Weapon ")
+local weapon_tab  = Samurais_scripts:add_tab(translateLabel("weaponTab"))
 local Triggerbot  = lua_cfg.read("Triggerbot")
 local aimEnemy    = lua_cfg.read("aimEnemy")
 local autoKill    = lua_cfg.read("autoKill")
@@ -179,18 +187,18 @@ local HashGrabber = false
 local Entity      = 0
 
 weapon_tab:add_imgui(function()
-  HashGrabber, HgUsed = ImGui.Checkbox("Entity Info Gun", HashGrabber, true)
+  HashGrabber, HgUsed = ImGui.Checkbox(translateLabel("hashgrabberCB"), HashGrabber, true)
   UI.helpMarker(false,
-    "This is mainly for devs. Aim your gun at a game entity and press [FIRE] to get information about it.")
+    translateLabel("hashgrabber_tt"))
   if HgUsed then
     UI.widgetSound("Nav2")
   end
 
-  Triggerbot, TbUsed = ImGui.Checkbox("Trigger Bot", Triggerbot, true)
+  Triggerbot, TbUsed = ImGui.Checkbox(translateLabel("triggerbotCB"), Triggerbot, true)
   UI.helpMarker(false,
-    "A barebones triggerbot that uses game natives. No hackery involved.\10\10Press [Left Shift] while aiming at a ped to automatically shoot them in the head. Only works on foot.")
+    translateLabel("triggerbot_tt"))
   if Triggerbot then
-    ImGui.SameLine(); aimEnemy, aimEnemyUsed = ImGui.Checkbox("Enemies Only", aimEnemy, true)
+    ImGui.SameLine(); aimEnemy, aimEnemyUsed = ImGui.Checkbox(translateLabel("enemyonlyCB"), aimEnemy, true)
     if aimEnemyUsed then
       lua_cfg.save("aimEnemy", aimEnemy)
       UI.widgetSound("Nav2")
@@ -201,8 +209,8 @@ weapon_tab:add_imgui(function()
     UI.widgetSound("Nav2")
   end
 
-  autoKill, autoKillUsed = ImGui.Checkbox("Auto Kill Enemies", autoKill, true)
-  UI.helpMarker(false, "Automatically kill all enemies in your proximity.")
+  autoKill, autoKillUsed = ImGui.Checkbox(translateLabel("autokillCB"), autoKill, true)
+  UI.helpMarker(false, translateLabel("autokill_tt"))
   if autoKillUsed then
     lua_cfg.save("autoKill", autoKill)
     UI.widgetSound("Nav2")
@@ -212,7 +220,7 @@ end)
 --[[
     *vehicle*
 ]]
-local vehicle_tab        = Samurais_scripts:add_tab("Vehicle ")
+local vehicle_tab = Samurais_scripts:add_tab(translateLabel("vehicleTab"))
 local popsnd, sndRef
 local flame_size
 local driftMode          = lua_cfg.read("driftMode")
@@ -237,8 +245,6 @@ local is_quad            = false
 local is_boat            = false
 local is_bike            = false
 local validModel         = false
-local sfx                = false
-local ptfx               = false
 local has_xenon          = false
 local purge_started      = false
 local nos_started        = false
@@ -343,7 +349,8 @@ local gta_vehicles       = { "Airbus", "Airtug", "akula", "akuma", "aleutian", "
   "wastelander", "weevil", "weevil2", "windsor", "windsor2", "winky", "wolfsbane", "xa21", "xls", "xls2", "yosemite",
   "yosemite2", "yosemite3", "youga", "youga2", "youga3", "youga4", "z190", "zeno", "zentorno", "zhaba", "zion", "zion2",
   "zion3", "zombiea", "zombieb", "zorrusso", "zr350", "zr380", "zr3802", "zr3803", "Ztype", }
-local vehOffsets         = {
+
+local vehOffsets = {
   fc   = 0x001C,
   ft   = 0x0014,
   rc   = 0x0020,
@@ -404,8 +411,8 @@ vehicle_tab:add_imgui(function()
     if validModel then
       ImGui.Text(full_veh_name .. "   (" .. vehicle_class .. ")")
       ImGui.Spacing()
-      driftMode, driftModeUsed = ImGui.Checkbox("Activate Drift Mode", driftMode, true)
-      UI.helpMarker(false, "This will make your car lose grip. Hold [Left Shift] to drift")
+      driftMode, driftModeUsed = ImGui.Checkbox(translateLabel("driftModeCB"), driftMode, true)
+      UI.helpMarker(false, translateLabel("driftMode_tt"))
       if driftModeUsed then
         UI.widgetSound("Nav2")
         lua_cfg.save("driftMode", driftMode)
@@ -414,19 +421,18 @@ vehicle_tab:add_imgui(function()
       if driftMode then
         DriftTires = false
         ImGui.Spacing()
-        ImGui.Text("Intensity:")
+        ImGui.Text(translateLabel("driftSlider"))
         ImGui.PushItemWidth(250)
         DriftIntensity, DriftIntensityUsed = ImGui.SliderInt("##Intensity", DriftIntensity, 0, 3)
-        UI.toolTip(false, "0: No Grip (very stiff).\n1: Balanced (Recommended).\n2: Weak Drift.\n3: Weakest Drift.")
+        UI.toolTip(false, translateLabel("driftSlider_tt"))
         ImGui.PopItemWidth()
         if DriftIntensityUsed then
           UI.widgetSound("Nav")
           lua_cfg.save("DriftIntensity", DriftIntensity)
         end
       end
-      DriftTires, DriftTiresUsed = ImGui.Checkbox("Equip Drift Tires", DriftTires, true)
-      UI.helpMarker(false,
-        "This will equip your car with drift tires whenver you press [Left Shift]. Your tires will be reset when you release the button.")
+      DriftTires, DriftTiresUsed = ImGui.Checkbox(translateLabel("driftTiresCB"), DriftTires, true)
+      UI.helpMarker(false, translateLabel("driftTires_tt"))
       if DriftTires then
         driftMode = false
       end
@@ -435,24 +441,19 @@ vehicle_tab:add_imgui(function()
         lua_cfg.save("DriftTires", DriftTires)
         lua_cfg.save("driftMode", false)
       end
-      ImGui.Spacing(); ImGui.Text(
-        "TIP: You can not use both options together.\10Choose one of the two. Experiment and find the\10style that suits you.")
     else
       ImGui.TextWrapped("\10You can only drift cars, trucks and quad bikes.\10\10")
     end
 
-    ImGui.Separator(); ImGui.Spacing(); limitVehOptions, lvoUsed = ImGui.Checkbox("Performance Cars Only",
-      limitVehOptions, true)
-    UI.toolTip(false,
-      "Limit some options to performance vehicles only. For example, with this enabled slow and irrelevant vehicles will not have launch control or a crackle tune.")
+    ImGui.Separator(); ImGui.Spacing(); limitVehOptions, lvoUsed = ImGui.Checkbox(translateLabel("lvoCB"), limitVehOptions, true)
+    UI.toolTip(false, translateLabel("lvo_tt"))
     if lvoUsed then
       UI.widgetSound("Nav2")
       lua_cfg.save("limitVehOptions", limitVehOptions)
     end
 
     launchCtrl, lctrlUsed = ImGui.Checkbox("Launch Control", launchCtrl, true)
-    UI.toolTip(false,
-      "When your vehicle is completely stopped, press and hold [Accelerate] + [Brake] for 3 seconds then let go of the brakes.")
+    UI.toolTip(false, translateLabel("lct_tt"))
     if lctrlUsed then
       UI.widgetSound("Nav2")
       lua_cfg.save("launchCtrl", launchCtrl)
@@ -460,27 +461,22 @@ vehicle_tab:add_imgui(function()
 
     ImGui.SameLine(); ImGui.Dummy(31, 1); ImGui.SameLine(); speedBoost, spdbstUsed = ImGui.Checkbox("NOS", speedBoost,
       true)
-    UI.toolTip(false,
-      "A speed boost that simulates nitrous. Gives you more power and increases your top speed when pressing [Left Shift].")
+    UI.toolTip(false, translateLabel("speedBoost_tt"))
     if spdbstUsed then
       UI.widgetSound("Nav2")
       lua_cfg.save("speedBoost", speedBoost)
     end
     if speedBoost then
-      sfx, ptfx = true, true
       ImGui.SameLine(); nosvfx, nosvfxUsed = ImGui.Checkbox("VFX", nosvfx, true)
-      UI.toolTip(false, "Activates a visual effect on your screen when using NOS.")
+      UI.toolTip(false, translateLabel("vfx_tt"))
       if nosvfxUsed then
         UI.widgetSound("Nav2")
         lua_cfg.save("nosvfx", nosvfx)
       end
-    else
-      sfx, ptfx = false, false
     end
 
     loud_radio, loudRadioUsed = ImGui.Checkbox("Big Subwoofer", loud_radio, true)
-    UI.toolTip(false,
-      "Makes your vehicle's radio sound louder from the outside. To notice the difference, activate this option then stand close to your car while the engine is running and the radio is on.")
+    UI.toolTip(false, translateLabel("loudradio_tt"))
     if loudRadioUsed then
       UI.widgetSound("Nav2")
       lua_cfg.save("loud_radio", loud_radio)
@@ -497,14 +493,14 @@ vehicle_tab:add_imgui(function()
 
     ImGui.SameLine(); ImGui.Dummy(32, 1); ImGui.SameLine(); nosPurge, nosPurgeUsed = ImGui.Checkbox("NOS Purge", nosPurge,
       true)
-    UI.toolTip(false, "Press [X] on keyboard or [A] on controller to purge your NOS Fast & Furious style.")
+    UI.toolTip(false, translateLabel("purge_tt"))
     if nosPurgeUsed then
       UI.widgetSound("Nav2")
       lua_cfg.save("nosPurge", nosPurge)
     end
 
     popsNbangs, pnbUsed = ImGui.Checkbox("Pops & Bangs", popsNbangs, true)
-    UI.toolTip(false, "Enables exhaust pops whenever you let go of [Accelerate] from high RPM.")
+    UI.toolTip(false, translateLabel("pnb_tt"))
     if pnbUsed then
       UI.widgetSound("Nav2")
       lua_cfg.save("popsNbangs", popsNbangs)
@@ -512,7 +508,7 @@ vehicle_tab:add_imgui(function()
     if popsNbangs then
       ImGui.SameLine(); ImGui.Dummy(37, 1); ImGui.SameLine(); louderPops, louderPopsUsed = ImGui.Checkbox("Louder Pops",
         louderPops, true)
-      UI.toolTip(false, "Makes your pops & bangs sound extremely loud.")
+      UI.toolTip(false, translateLabel("louderpnb_tt"))
       if louderPopsUsed then
         UI.widgetSound("Nav2")
         lua_cfg.save("louderPops", louderPops)
@@ -520,47 +516,31 @@ vehicle_tab:add_imgui(function()
     end
 
     hornLight, hornLightUsed = ImGui.Checkbox("High Beams on Horn", hornLight, true)
-    UI.toolTip(false, "Flash high beams when honking.")
+    UI.toolTip(false, translateLabel("highbeams_tt"))
     if hornLightUsed then
       UI.widgetSound("Nav2")
       lua_cfg.save("hornLight", hornLight)
     end
 
     ImGui.SameLine(); autobrklight, autobrkUsed = ImGui.Checkbox("Auto Brake Lights", autobrklight, true)
-    UI.toolTip(false, "Automatically turns on the brake lights when your car is stopped.")
+    UI.toolTip(false, translateLabel("brakeLight_tt"))
     if autobrkUsed then
       UI.widgetSound("Nav2")
       lua_cfg.save("autobrklight", autobrklight)
     end
 
     holdF, holdFused = ImGui.Checkbox("Keep Engine On", holdF, true)
-    UI.toolTip(false,
-      "Brings back GTA IV's vehicle exit: Hold [F] to turn off the engine before exiting the vehicle or press normally to exit and keep it running.")
+    UI.toolTip(false, translateLabel("engineOn_tt"))
     if holdFused then
       UI.widgetSound("Nav2")
       lua_cfg.save("holdF", holdF)
     end
 
-    ImGui.SameLine(); ImGui.Dummy(25, 1); ImGui.SameLine(); noJacking, noJackingUsed = ImGui.Checkbox(
-      "Can't Touch This!", noJacking, true)
-    UI.toolTip(false, "Prevent NPCs and players from carjacking you.")
+    ImGui.SameLine(); ImGui.Dummy(25, 1); ImGui.SameLine(); noJacking, noJackingUsed = ImGui.Checkbox("Can't Touch This!", noJacking, true)
+    UI.toolTip(false, translateLabel("canttouchthis_tt"))
     if noJackingUsed then
       UI.widgetSound("Nav2")
       lua_cfg.save("noJacking", noJacking)
-    end
-    if noJacking then
-      script.run_in_fiber(function()
-        if not PED.GET_PED_CONFIG_FLAG(self.get_ped(), 398) then
-          PED.SET_PED_CONFIG_FLAG(self.get_ped(), 398, true)
-        end
-        if PED.GET_PED_CONFIG_FLAG(self.get_ped(), 177) then
-          PED.SET_PED_CONFIG_FLAG(self.get_ped(), 177, true)
-        end
-      end)
-    else
-      script.run_in_fiber(function()
-        PED.SET_PED_CONFIG_FLAG(self.get_ped(), 177, false)
-      end)
     end
 
     rgbLights, rgbToggled = ImGui.Checkbox("RGB Headlights", rgbLights, true)
@@ -579,7 +559,7 @@ vehicle_tab:add_imgui(function()
     if rgbLights then
       ImGui.SameLine();
       ImGui.PushItemWidth(120)
-      lightSpeed, lightSpeedUsed = ImGui.SliderInt("RGB Speed", lightSpeed, 1, 3)
+      lightSpeed, lightSpeedUsed = ImGui.SliderInt(translateLabel("rgbSlider"), lightSpeed, 1, 3)
       ImGui.PopItemWidth()
       if lightSpeedUsed then
         UI.widgetSound("Nav")
@@ -587,12 +567,12 @@ vehicle_tab:add_imgui(function()
       end
     end
     ImGui.Spacing()
-    if ImGui.Button("Change Engine Sound") then
+    if ImGui.Button(translateLabel("engineSoundBtn")) then
       if is_car or is_bike or is_quad then
         open_sounds_window = true
       else
         open_sounds_window = false
-        gui.show_error("Tokyo Drift", "This option only works on road vehicles.")
+        gui.show_error("Tokyo Drift", translateLabel("engineSoundErr"))
       end
     end
     if open_sounds_window then
@@ -600,12 +580,12 @@ vehicle_tab:add_imgui(function()
       ImGui.SetNextWindowSizeConstraints(100, 100, 600, 800)
       ImGui.Begin("Vehicle Sounds",
         ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoCollapse)
-      if ImGui.Button("Close") then
+      if ImGui.Button(translateLabel("closeBtn")) then
         open_sounds_window = false
       end
       ImGui.Spacing(); ImGui.Spacing()
       ImGui.PushItemWidth(250)
-      search_term, used = ImGui.InputTextWithHint("", "Search Vehicle Names", search_term, 32)
+      search_term, used = ImGui.InputTextWithHint("", translateLabel("searchVeh_hint"), search_term, 32)
       if ImGui.IsItemActive() then
         is_typing = true
       else
@@ -616,13 +596,13 @@ vehicle_tab:add_imgui(function()
       ImGui.PopItemWidth()
       local selected_name = filteredNames[vehSound_index + 1]
       ImGui.Spacing()
-      if ImGui.Button("Use This Sound") then
+      if ImGui.Button(translateLabel("Use This Sound")) then
         script.run_in_fiber(function()
           AUDIO.FORCE_USE_AUDIO_GAME_OBJECT(current_vehicle, selected_name)
         end)
       end
       ImGui.SameLine()
-      if ImGui.Button("Restore Default") then
+      if ImGui.Button(translateLabel("Restore Default")) then
         script.run_in_fiber(function()
           AUDIO.FORCE_USE_AUDIO_GAME_OBJECT(current_vehicle,
             vehicles.get_vehicle_display_name(ENTITY.GET_ENTITY_MODEL(current_vehicle)))
@@ -639,10 +619,10 @@ vehicle_tab:add_imgui(function()
       engineDestroyed = false
     end
     if engineDestroyed then
-      engineButton_label = "Fix Engine"
+      engineButton_label = translateLabel("Fix Engine")
       engine_hp          = 1000
     else
-      engineButton_label = "Destroy Engine"
+      engineButton_label = translateLabel("Destroy Engine")
       engine_hp          = -4000
     end
     if ImGui.Button(engineButton_label) then
@@ -650,14 +630,8 @@ vehicle_tab:add_imgui(function()
         VEHICLE.SET_VEHICLE_ENGINE_HEALTH(current_vehicle, engine_hp)
       end)
     end
-    -- if NETWORK.NETWORK_IS_SESSION_ACTIVE() then
-    --     ImGui.SameLine();ImGui.Dummy(40, 1);ImGui.SameLine();nodripfeed, used = ImGui.Checkbox("No Dripfeeding", nodripfeed, true)
-    --     if nodripfeed then
-    --       globals.set_int(2707347, 1)
-    --     end
-    -- end
   else
-    ImGui.Text("Please get in a vehicle!")
+    ImGui.Text(translateLabel("getinveh"))
   end
 end)
 
@@ -665,7 +639,7 @@ end)
 --[[
     *players*
 ]]
-local players_tab     = Samurais_scripts:add_tab("Players ")
+local players_tab     = Samurais_scripts:add_tab(translateLabel("playersTab"))
 
 playerIndex           = 0
 local targetPlayerPed = 0
@@ -673,79 +647,80 @@ local playerVeh       = 0
 local player_name     = "STRING"
 players_tab:add_imgui(function()
   if Game.isOnline() then
-    local playerCount = NETWORK.NETWORK_GET_NUM_CONNECTED_PLAYERS()
-    ImGui.Text("Total Players:  [ " .. playerCount .. " ]")
-    ImGui.PushItemWidth(320)
-    Game.displayPlayerList()
-    ImGui.PopItemWidth()
-    local selectedPlayer = filteredPlayers[playerIndex + 1]
-    ImGui.Spacing()
-    -- if ImGui.Button("Open Player Window") then
-    targetPlayerPed   = selectedPlayer
-    targetPlayerIndex = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(targetPlayerPed)
-    player_name       = PLAYER.GET_PLAYER_NAME(targetPlayerIndex)
-    --   ImGui.OpenPopup(tostring(player_name))
+    UI.coloredText(translateLabel("temporarily disabled"), "yellow", 1, 20)
+    -- local playerCount = Game.getPlayerCount()
+    -- ImGui.Text("Total Players:  [ " .. playerCount .. " ]")
+    -- ImGui.PushItemWidth(320)
+    -- Game.displayPlayerList()
+    -- ImGui.PopItemWidth()
+    -- local selectedPlayer = filteredPlayers[playerIndex + 1]
+    -- ImGui.Spacing()
+    -- -- if ImGui.Button("Open Player Window") then
+    -- targetPlayerPed   = selectedPlayer
+    -- targetPlayerIndex = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(targetPlayerPed)
+    -- player_name       = PLAYER.GET_PLAYER_NAME(targetPlayerIndex)
+    -- --   ImGui.OpenPopup(tostring(player_name))
+    -- -- end
+    -- -- ImGui.SetNextWindowSizeConstraints(400, 100, 600, 800)
+    -- -- if ImGui.BeginPopupModal(tostring(player_name), true, ImGuiWindowFlags.AlwaysAutoResize) then
+    -- if NETWORK.NETWORK_IS_PLAYER_ACTIVE(targetPlayerIndex) then
+    --   local playerWallet  = Game.getPlayerWallet(targetPlayerIndex)
+    --   local playerBank    = Game.getPlayerBank(targetPlayerIndex)
+    --   local playerCoords  = Game.getCoords(targetPlayerPed, false)
+    --   local playerHeading = math.floor(Game.getHeading(targetPlayerPed))
+    --   local playerHealth  = ENTITY.GET_ENTITY_HEALTH(targetPlayerPed)
+    --   local playerArmour  = PED.GET_PED_ARMOUR(targetPlayerPed)
+    --   local godmode       = PLAYER.GET_PLAYER_INVINCIBLE(targetPlayerIndex)
+    --   if PED.IS_PED_SITTING_IN_ANY_VEHICLE(targetPlayerPed) then
+    --     playerVeh = PED.GET_VEHICLE_PED_IS_IN(targetPlayerPed, true)
+    --   end
+    --   ImGui.Spacing()
+    --   ImGui.Text("Cash:" .. "      " .. playerWallet)
+    --   ImGui.Spacing()
+    --   ImGui.Text("Bank:" .. "      " .. playerBank)
+    --   ImGui.Spacing()
+    --   ImGui.Text("Coords:" .. "      " .. tostring(playerCoords))
+    --   if ImGui.IsItemHovered() and ImGui.IsItemClicked(0) then
+    --     log.debug(player_name .. "'s coords: " .. tostring(playerCoords))
+    --     gui.show_message("Samurai's Scripts", player_name .. "'s coordinates logged to console.")
+    --   end
+    --   ImGui.Spacing()
+    --   ImGui.Text("Heading:" .. "     " .. tostring(playerHeading))
+    --   if ImGui.IsItemHovered() and ImGui.IsItemClicked(0) then
+    --     log.debug(player_name .. "'s heading: " .. tostring(playerHeading))
+    --     gui.show_message("Samurai's Scripts", player_name .. "'s heading logged to console.")
+    --   end
+    --   ImGui.Spacing()
+    --   ImGui.Text("Health:" .. "        " .. tostring(playerHealth))
+    --   if playerArmour ~= nil then
+    --     ImGui.Spacing()
+    --     ImGui.Text("Armour:" .. "        " .. tostring(playerArmour))
+    --   end
+    --   ImGui.Spacing()
+    --   ImGui.Text("God Mode:" .. "  " .. tostring(godmode))
+    --   if PED.IS_PED_SITTING_IN_ANY_VEHICLE(targetPlayerPed) then
+    --     ImGui.Spacing()
+    --     ImGui.Text("Vehicle:" .. "  " .. tostring(vehicles.get_vehicle_display_name(ENTITY.GET_ENTITY_MODEL(playerVeh))))
+    --     if ImGui.Button("Delete Vehicle") then
+    --       script.run_in_fiber(function(del)
+    --         local pvCTRL = entities.take_control_of(playerVeh, 350)
+    --         if pvCTRL then
+    --           ENTITY.SET_ENTITY_AS_MISSION_ENTITY(playerVeh, true, true)
+    --           del:sleep(200)
+    --           VEHICLE.DELETE_VEHICLE(playerVeh)
+    --           gui.show_success("Samurai's Scripts", "" .. player_name .. "'s vehicle has been yeeted.")
+    --         else
+    --           gui.show_error("Samurai's Scripts",
+    --             "Failed to delete the vehicle! " .. player_name .. " probably has protections on.")
+    --         end
+    --       end)
+    --     end
+    --   end
+    --   -- ImGui.End()
+    -- else
+    --   ImGui.Text("Player left the session.")
     -- end
-    -- ImGui.SetNextWindowSizeConstraints(400, 100, 600, 800)
-    -- if ImGui.BeginPopupModal(tostring(player_name), true, ImGuiWindowFlags.AlwaysAutoResize) then
-    if NETWORK.NETWORK_IS_PLAYER_ACTIVE(targetPlayerIndex) then
-      local playerWallet  = (tonumber(lua_Fn.str_replace(MONEY.NETWORK_GET_STRING_WALLET_BALANCE(targetPlayerIndex), "$", "")))
-      local playerBank    = (tonumber(lua_Fn.str_replace(MONEY.NETWORK_GET_STRING_BANK_WALLET_BALANCE(targetPlayerIndex), "$", "")) - playerWallet)
-      local playerCoords  = Game.getCoords(targetPlayerPed, false)
-      local playerHeading = math.floor(Game.getHeading(targetPlayerPed))
-      local playerHealth  = ENTITY.GET_ENTITY_HEALTH(targetPlayerPed)
-      local playerArmour  = PED.GET_PED_ARMOUR(targetPlayerPed)
-      local godmode       = PLAYER.GET_PLAYER_INVINCIBLE(targetPlayerIndex)
-      if PED.IS_PED_SITTING_IN_ANY_VEHICLE(targetPlayerPed) then
-        playerVeh = PED.GET_VEHICLE_PED_IS_IN(targetPlayerPed, true)
-      end
-      ImGui.Spacing()
-      ImGui.Text("Cash:" .. "      " .. lua_Fn.formatMoney(playerWallet))
-      ImGui.Spacing()
-      ImGui.Text("Bank:" .. "      " .. lua_Fn.formatMoney(playerBank))
-      ImGui.Spacing()
-      ImGui.Text("Coords:" .. "      " .. tostring(playerCoords))
-      if ImGui.IsItemHovered() and ImGui.IsItemClicked(0) then
-        log.debug(player_name .. "'s coords: " .. tostring(playerCoords))
-        gui.show_message("Samurai's Scripts", player_name .. "'s coordinates logged to console.")
-      end
-      ImGui.Spacing()
-      ImGui.Text("Heading:" .. "     " .. tostring(playerHeading))
-      if ImGui.IsItemHovered() and ImGui.IsItemClicked(0) then
-        log.debug(player_name .. "'s heading: " .. tostring(playerHeading))
-        gui.show_message("Samurai's Scripts", player_name .. "'s heading logged to console.")
-      end
-      ImGui.Spacing()
-      ImGui.Text("Health:" .. "        " .. tostring(playerHealth))
-      if playerArmour ~= nil then
-        ImGui.Spacing()
-        ImGui.Text("Armour:" .. "        " .. tostring(playerArmour))
-      end
-      ImGui.Spacing()
-      ImGui.Text("God Mode:" .. "  " .. tostring(godmode))
-      if PED.IS_PED_SITTING_IN_ANY_VEHICLE(targetPlayerPed) then
-        ImGui.Spacing()
-        ImGui.Text("Vehicle:" .. "  " .. tostring(vehicles.get_vehicle_display_name(ENTITY.GET_ENTITY_MODEL(playerVeh))))
-        if ImGui.Button("Delete Vehicle") then
-          script.run_in_fiber(function(del)
-            local pvCTRL = entities.take_control_of(playerVeh, 350)
-            if pvCTRL then
-              ENTITY.SET_ENTITY_AS_MISSION_ENTITY(playerVeh, true, true)
-              del:sleep(200)
-              VEHICLE.DELETE_VEHICLE(playerVeh)
-              gui.show_success("Samurai's Scripts", "" .. player_name .. "'s vehicle has been yeeted.")
-            else
-              gui.show_error("Samurai's Scripts",
-                "Failed to delete the vehicle! " .. player_name .. " probably has protections on.")
-            end
-          end)
-        end
-      end
-      -- ImGui.End()
-    else
-      ImGui.Text("Player left the session.")
-    end
-    -- end
+    -- -- end
   else
     ImGui.Text("You are currently in Single Player.")
   end
@@ -755,7 +730,7 @@ end)
 --[[
     *world*
 ]]
-local world_tab = Samurais_scripts:add_tab("World ")
+local world_tab = Samurais_scripts:add_tab(translateLabel("worldTab"))
 
 local pedGrabber         = false
 local ped_grabbed        = false
@@ -788,7 +763,7 @@ local function attachPed(ped)
         ped_grabbed = true
         attached_ped = ped
       else
-        gui.show_error("Samurai's Scripts", "Failed to take control of the NPC!")
+        gui.show_error("Samurai's Scripts", translateLabel("failedToCtrlNPC"))
       end
     end
   end)
@@ -796,15 +771,14 @@ local function attachPed(ped)
 end
 
 world_tab:add_imgui(function()
-  pedGrabber, pgUsed = ImGui.Checkbox("Ped Grabber", pedGrabber, true)
-  UI.helpMarker(false,
-    "Stand close to an NPC who's on foot then pess [FIRE] to grab them. Once they are grabbed, hold [AIM] then press [FIRE] again to throw them.")
+  pedGrabber, pgUsed = ImGui.Checkbox(translateLabel("pedGrabber"), pedGrabber, true)
+  UI.helpMarker(false, translateLabel("pedGrabber_tt"))
   if pgUsed then
     UI.widgetSound("Nav2")
   end
 
   if pedGrabber then
-    ImGui.Text("Throw Force:")
+    ImGui.Text(translateLabel("Throw Force"))
     ImGui.PushItemWidth(160)
     pedthrowF, ptfUsed = ImGui.SliderInt("##throw_force", pedthrowF, 10, 100, "%d", 0)
     ImGui.PopItemWidth()
@@ -813,15 +787,15 @@ world_tab:add_imgui(function()
     end
   end
 
-  carpool, carpoolUsed = ImGui.Checkbox("Ride With NPCs", carpool, true)
-  UI.helpMarker(false, "(WIP) Allows you to get in NPC vehicles as passenger.")
+  carpool, carpoolUsed = ImGui.Checkbox(translateLabel("carpool"), carpool, true)
+  UI.helpMarker(false, translateLabel("carpool_tt"))
   if carpoolUsed then
     UI.widgetSound("Nav2")
   end
 
   if carpool then
     if show_npc_veh_ctrls and thisVeh ~= 0 then
-      if ImGui.Button("< Previous Seat") then
+      if ImGui.Button("< " .. translateLabel("prevSeat")) then
         script.run_in_fiber(function()
           if PED.IS_PED_SITTING_IN_VEHICLE(self.get_ped(), thisVeh) then
             local numSeats = VEHICLE.GET_VEHICLE_MAX_NUMBER_OF_PASSENGERS(thisVeh)
@@ -841,7 +815,7 @@ world_tab:add_imgui(function()
         end)
       end
       ImGui.SameLine()
-      if ImGui.Button("Next Seat >") then
+      if ImGui.Button(translateLabel("nextSeat") .. " >") then
         script.run_in_fiber(function()
           if PED.IS_PED_SITTING_IN_VEHICLE(self.get_ped(), thisVeh) then
             local numSeats = VEHICLE.GET_VEHICLE_MAX_NUMBER_OF_PASSENGERS(thisVeh)
@@ -868,34 +842,81 @@ end)
 --[[
     *settings*
 ]]
-local settings_tab = Samurais_scripts:add_tab("Settings ")
+local settings_tab = Samurais_scripts:add_tab(translateLabel("settingsTab"))
+lang_idx = lua_cfg.read("lang_idx")
+local selected_lang
+local lang_T       = {
+  { name = 'English',               iso = 'en-US' },
+  { name = 'French',                iso = 'fr-FR' },
+  { name = 'German',                iso = 'de-DE' },
+  { name = 'Chinese (Traditional)', iso = 'zh-TW' },
+  { name = 'Chinese (Simplified)',  iso = 'zh-CH' },
+  { name = 'Spanish',               iso = 'es-ES' },
+  { name = 'Portuguese',            iso = 'pt-BR' },
+}
+
+function displayLangs()
+  filteredLangs = {}
+  for _, lang in ipairs(lang_T) do
+    table.insert(filteredLangs, lang.name)
+  end
+  lang_idx, lang_idxUsed = ImGui.Combo("##langs", lang_idx, filteredLangs, #lang_T)
+end
 
 disableTooltips = lua_cfg.read("disableTooltips")
 disableUiSounds = lua_cfg.read("disableUiSounds")
+useGameLang     = lua_cfg.read("useGameLang")
 settings_tab:add_imgui(function()
-  disableTooltips, dtUsed = ImGui.Checkbox("Disable Tooltips", disableTooltips, true)
-  UI.toolTip(false, "Disable all tooltips.")
+  disableTooltips, dtUsed = ImGui.Checkbox(translateLabel("Disable Tooltips"), disableTooltips, true)
   if dtUsed then
     lua_cfg.save("disableTooltips", disableTooltips)
     UI.widgetSound("Nav2")
   end
 
-  disableUiSounds, duisndUsed = ImGui.Checkbox("Disable UI Sound", disableUiSounds, true)
-  UI.toolTip(false, "Disable sound feedback from UI widgets.")
+  disableUiSounds, duisndUsed = ImGui.Checkbox(translateLabel("DisableSound"), disableUiSounds, true)
+  UI.toolTip(false, translateLabel("DisableSound_tt"))
   if duisndUsed then
     lua_cfg.save("disableUiSounds", disableUiSounds)
     UI.widgetSound("Nav2")
   end
+
+  ImGui.Text(translateLabel("langTitle") .. " " .. current_lang)
+  useGameLang, uglUsed = ImGui.Checkbox(translateLabel("gameLangCB"), useGameLang, true)
+  UI.toolTip(false, translateLabel("gameLang_tt"))
+  if useGameLang then
+    LANG, current_lang = Game.GetLang()
+  end
+  if uglUsed then
+    lua_cfg.save("useGameLang", useGameLang)
+    lua_cfg.save("LANG", LANG)
+    lua_cfg.save("lang_idx", 0)
+  end
+
+  if not useGameLang then
+    ImGui.Text(translateLabel("customLangTxt"))
+    displayLangs()
+    selected_lang = lang_T[lang_idx + 1]
+    ImGui.SameLine()
+    if ImGui.Button(translateLabel("saveBtn") .. "##lang") then
+      LANG         = selected_lang.iso
+      current_lang = selected_lang.name
+      lua_cfg.save("lang_idx", lang_idx)
+      lua_cfg.save("LANG", LANG)
+      lua_cfg.save("current_lang", current_lang)
+      gui.show_success("Samurai's Scripts", "Language settings saved. Please restart the script to apply the changes.")
+    end
+  end
+
   ImGui.Dummy(10, 1)
-  if UI.coloredButton("Reset Settings", "#FF0000", "#EE4B2B", "#880808", 1) then
+  if UI.coloredButton(translateLabel("reset_settings_Btn"), "#FF0000", "#EE4B2B", "#880808", 1) then
     UI.widgetSound("Focus_In")
     ImGui.OpenPopup("Confirm")
   end
   ImGui.SetNextWindowPos(760, 400, ImGuiCond.Appearing)
   ImGui.SetNextWindowBgAlpha(0.6)
   if ImGui.BeginPopupModal("Confirm", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar) then
-    UI.coloredText("Are you sure?", "yellow", 1, 20)
-    if ImGui.Button("  Yes  ") then
+    UI.coloredText(translateLabel("confirm_txt"), "yellow", 1, 20)
+    if ImGui.Button("  " .. translateLabel("yes") .. "  ") then
       UI.widgetSound("Select2")
       lua_cfg.reset(default_config)
       Regen             = false
@@ -925,12 +946,15 @@ settings_tab:add_imgui(function()
       autobrklight      = false
       holdF             = false
       noJacking         = false
+      useGameLang       = false
       DriftIntensity    = 0
       lightSpeed        = 1
+      LANG              = "en-US"
+      current_lang      = "English"
       ImGui.CloseCurrentPopup()
     end
     ImGui.SameLine(); ImGui.Spacing(); ImGui.SameLine()
-    if ImGui.Button(" Cancel ") then
+    if ImGui.Button("  " .. translateLabel("no") .. "  ") then
       UI.widgetSound("Cancel")
       ImGui.CloseCurrentPopup()
     end
@@ -964,7 +988,7 @@ script.register_looped("GameInput", function()
         PAD.DISABLE_CONTROL_ACTION(0, 73, true)
       end
     end
-    if speedBoost and PAD.IS_CONTROL_PRESSED(0, 71) then
+    if speedBoost and PAD.IS_CONTROL_PRESSED(0, 71) and PAD.IS_CONTROL_PRESSED(0, tdBtn) then
       if validModel or is_boat or is_bike then
         -- prevent face planting when using NOS mid-air
         PAD.DISABLE_CONTROL_ACTION(0, 60, true)
@@ -1235,12 +1259,8 @@ script.register_looped("TDFT", function(script)
           if PAD.IS_DISABLED_CONTROL_PRESSED(0, tdBtn) and PAD.IS_CONTROL_PRESSED(0, 71) then
             VEHICLE.SET_VEHICLE_CHEAT_POWER_INCREASE(current_vehicle, 5.0)
             VEHICLE.MODIFY_VEHICLE_TOP_SPEED(current_vehicle, 100.0)
+            AUDIO.SET_VEHICLE_BOOST_ACTIVE(current_vehicle, true)
             using_nos = true
-            if sfx then
-              AUDIO.SET_VEHICLE_BOOST_ACTIVE(current_vehicle, true)
-            else
-              AUDIO.SET_VEHICLE_BOOST_ACTIVE(current_vehicle, false)
-            end
           end
         else
           if PED.IS_PED_SITTING_IN_ANY_VEHICLE(self.get_ped()) then
@@ -1385,7 +1405,7 @@ script.register_looped("Auto Brake Lights", function()
 end)
 
 script.register_looped("NOS ptfx", function(spbptfx)
-  if speedBoost and ptfx and Game.Self.isDriving() then
+  if speedBoost and Game.Self.isDriving() then
     if validModel or is_boat or is_bike then
       if PAD.IS_DISABLED_CONTROL_PRESSED(0, tdBtn) and PAD.IS_CONTROL_PRESSED(0, 71) then
         if VEHICLE.GET_IS_VEHICLE_ENGINE_RUNNING(current_vehicle) then
@@ -1741,6 +1761,18 @@ script.register_looped("rgbLights", function(rgb)
   else
     rgb:yield()
   end
+end)
+
+script.register_looped("no jacking", function(ctt)
+  if noJacking then
+    if not PED.GET_PED_CONFIG_FLAG(self.get_ped(), 398, 1) then
+      PED.SET_PED_CONFIG_FLAG(self.get_ped(), 398, true)
+    end
+    if PED.GET_PED_CONFIG_FLAG(self.get_ped(), 177, 1) then
+      PED.SET_PED_CONFIG_FLAG(self.get_ped(), 177, true)
+    end
+  end
+  ctt:yield()
 end)
 
 -- World
