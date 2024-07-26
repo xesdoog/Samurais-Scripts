@@ -123,7 +123,7 @@ Labels = {
     },
 
     ["femalesounds"] = {
-        {iso = "en-US", text = "Fale Sounds"},
+        {iso = "en-US", text = "Female Sounds"},
         {iso = "de-DE", text = "Weibliche Geräusche"},
         {iso = "fr-FR", text = "Sons Feminins"},
         {iso = "it-IT", text = "Suoni Femminili"},
