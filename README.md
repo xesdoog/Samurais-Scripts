@@ -7,7 +7,7 @@ A base for a Lua script centered around roleplaying and having fun in a game ful
 ## Contributing To Translations
 #### Editing a pre-existing language:
 1. Fork the repo then open `/lib/Translations.lua`
-2. Find each entry that the language you want to modify/correct and edit the `text = ` field.
+2. Find each entry for the language you want to modify/correct and edit the `text = ` field.
    
    **Example:**
      ```lua
