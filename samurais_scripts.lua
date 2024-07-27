@@ -1675,7 +1675,6 @@ script.register_looped("MISC Vehicle Options", function(mvo)
     if insta180 then
       local vehRot = ENTITY.GET_ENTITY_ROTATION(current_vehicle, 2)
       if PAD.IS_CONTROL_JUST_PRESSED(0, 97) then -- numpad + // mouse scroll down
-        log.info(tostring(vehRot))
         ENTITY.SET_ENTITY_ROTATION(current_vehicle, vehRot.x, vehRot.y, (vehRot.z - 180), 2, true)
       end
     end
