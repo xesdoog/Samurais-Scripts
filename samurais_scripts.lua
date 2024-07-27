@@ -656,7 +656,6 @@ local attached_vehicle = 0
 local xAxis            = 0.0
 local yAxis            = 0.0
 local zAxis            = 0.0
-local debug            = false
 local modelOverride    = false
 flatbed:add_imgui(function()
   local vehicleHandles  = entities.get_all_vehicles_as_handles()
@@ -916,7 +915,7 @@ players_tab:add_imgui(function()
       ImGui.Text("Health:" .. "        " .. tostring(playerHealth))
       if playerArmour ~= nil then
         ImGui.Spacing()
-        ImGui.Text("Armour:" .. "        " .. tostring(playerArmour))
+        ImGui.Text("Armour:" .. "      " .. tostring(playerArmour))
       end
       ImGui.Spacing()
       ImGui.Text("God Mode:" .. "  " .. tostring(godmode))
@@ -1200,10 +1199,11 @@ local function SS_handle_events()
   end
 
   if attached_vehicle ~= nil and attached_vehicle ~= 0 then
-    local modelHash = ENTITY.GET_ENTITY_MODEL(attached_vehicle)
-    local attachedVehicle = ENTITY.GET_ENTITY_OF_TYPE_ATTACHED_TO_ENTITY(
-      PED.GET_VEHICLE_PED_IS_USING(self.get_ped()), modelHash)
+    local modelHash         = ENTITY.GET_ENTITY_MODEL(attached_vehicle)
+    local attachedVehicle   = ENTITY.GET_ENTITY_OF_TYPE_ATTACHED_TO_ENTITY(PED.GET_VEHICLE_PED_IS_USING(self.get_ped()), modelHash)
     local attachedVehcoords = ENTITY.GET_ENTITY_COORDS(attached_vehicle, false)
+    local playerForwardX    = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
+    local playerForwardY    = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
     controlled = entities.take_control_of(attachedVehicle, 300)
     if ENTITY.DOES_ENTITY_EXIST(attachedVehicle) then
       if controlled then
@@ -2161,14 +2161,14 @@ script.register_looped("Carpool", function(cp)
 end)
 
 script.register_looped("flatbed script", function(script)
-  local vehicleHandles = entities.get_all_vehicles_as_handles()
+  local vehicleHandles  = entities.get_all_vehicles_as_handles()
   local current_vehicle = PED.GET_VEHICLE_PED_IS_USING(self.get_ped())
-  local vehicle_model = ENTITY.GET_ENTITY_MODEL(current_vehicle)
-  local flatbedHeading = ENTITY.GET_ENTITY_HEADING(current_vehicle)
-  local flatbedBone = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(current_vehicle, "chassis")
-  local playerPosition = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
-  local playerForwardX = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
-  local playerForwardY = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
+  local vehicle_model   = ENTITY.GET_ENTITY_MODEL(current_vehicle)
+  local flatbedHeading  = ENTITY.GET_ENTITY_HEADING(current_vehicle)
+  local flatbedBone     = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(current_vehicle, "chassis")
+  local playerPosition  = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
+  local playerForwardX  = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
+  local playerForwardY  = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
   for _, veh in ipairs(vehicleHandles) do
       local detectPos = vec3:new(playerPosition.x - (playerForwardX * 10), playerPosition.y - (playerForwardY * 10), playerPosition.z)
       local vehPos = ENTITY.GET_ENTITY_COORDS(veh, false)
