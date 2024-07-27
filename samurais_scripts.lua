@@ -24,6 +24,8 @@ default_config = {
   nosvfx            = false,
   hornLight         = false,
   nosPurge          = false,
+  insta180          = false,
+  flappyDoors       = false,
   rgbLights         = false,
   loud_radio        = false,
   launchCtrl        = false,
@@ -110,7 +112,7 @@ self_tab:add_imgui(function()
   end
 end)
 
-sound_player = self_tab:add_tab(translateLabel"soundplayer")
+local sound_player = self_tab:add_tab(translateLabel"soundplayer")
 local sound_index1    = 0
 local sound_index2    = 0
 local switch          = 0
@@ -240,6 +242,7 @@ local autobrklight       = lua_cfg.read("autobrklight")
 local rgbLights          = lua_cfg.read("rgbLights")
 local holdF              = lua_cfg.read("holdF")
 local noJacking          = lua_cfg.read("noJacking")
+local insta180           = lua_cfg.read("insta180")
 local is_car             = false
 local is_quad            = false
 local is_boat            = false
@@ -543,7 +546,20 @@ vehicle_tab:add_imgui(function()
       lua_cfg.save("noJacking", noJacking)
     end
 
-    rgbLights, rgbToggled = ImGui.Checkbox("RGB Headlights", rgbLights, true)
+    insta180, insta180Used = ImGui.Checkbox("Instant 180°", insta180, true)
+    if insta180Used then
+      UI.widgetSound("Nav2")
+      lua_cfg.save("insta180", insta180)
+    end
+    UI.toolTip(false, translateLabel("insta180_tt"))
+
+    ImGui.SameLine(); ImGui.Dummy(54, 1); ImGui.SameLine(); flappyDoors, flappyDoorsUsed = ImGui.Checkbox("Flappy Doors", flappyDoors, true)
+    if flappyDoorsUsed then
+      UI.widgetSound("Nav2")
+      lua_cfg.save("flappyDoors", flappyDoors)
+    end
+
+    rgbLights, rgbToggled = ImGui.Checkbox(translateLabel("rgbLights"), rgbLights, true)
     if rgbToggled then
       UI.widgetSound("Nav2")
       lua_cfg.save("rgbLights", rgbLights)
@@ -635,92 +651,296 @@ vehicle_tab:add_imgui(function()
   end
 end)
 
+local flatbed = vehicle_tab:add_tab("Flatbed")
+local attached_vehicle = 0
+local xAxis            = 0.0
+local yAxis            = 0.0
+local zAxis            = 0.0
+local debug            = false
+local modelOverride    = false
+flatbed:add_imgui(function()
+  local vehicleHandles  = entities.get_all_vehicles_as_handles()
+  local flatbedModel    = 1353720154
+  local vehicle_model   = Game.getEntityModel(current_vehicle)
+  local playerPosition  = self.get_pos()
+  local playerForwardX  = Game.getForwardX(self.get_ped())
+  local playerForwardY  = Game.getForwardY(self.get_ped())
+  for _, veh in ipairs(vehicleHandles) do
+    script.run_in_fiber(function(detector)
+      local detectPos = vec3:new(playerPosition.x - (playerForwardX * 10), playerPosition.y - (playerForwardY * 10), playerPosition.z)
+      local vehPos    = ENTITY.GET_ENTITY_COORDS(veh, false)
+      local vDist     = SYSTEM.VDIST(detectPos.x, detectPos.y, detectPos.z, vehPos.x, vehPos.y, vehPos.z)
+      if vDist <= 5 then
+        closestVehicle = veh
+      else
+        detector:sleep(50)
+        closestVehicle = nil
+        return
+      end
+    end)
+  end
+  local closestVehicleModel = Game.getEntityModel(closestVehicle)
+  local iscar               = VEHICLE.IS_THIS_MODEL_A_CAR(closestVehicleModel)
+  local isbike              = VEHICLE.IS_THIS_MODEL_A_BIKE(closestVehicleModel)
+  local closestVehicleName  = vehicles.get_vehicle_display_name(closestVehicleModel)
+  if vehicle_model == flatbedModel then
+    is_in_flatbed = true
+  else
+    is_in_flatbed = false
+  end
+  if closestVehicleName == "" then
+    displayText = translateLabel("fltbd_nonearbyvehTxt")
+  elseif tostring(closestVehicleName) == "Flatbed" then
+    displayText = translateLabel("fltbd_nootherfltbdTxt")
+  else
+    displayText = (translateLabel("fltbd_closest_veh") .. tostring(closestVehicleName))
+  end
+  if attached_vehicle ~= 0 then
+    displayText = translateLabel("fltbd_towingTxt") .. vehicles.get_vehicle_display_name(ENTITY.GET_ENTITY_MODEL(attached_vehicle)) .. "."
+  end
+  if modelOverride then
+    towable = true
+  else
+    towable = false
+  end
+  if iscar then
+    towable = true
+  end
+  if isbike then
+    towable = true
+  end
+  if closestVehicleModel == 745926877 then   --Buzzard
+    towable = true
+  end
+  if is_in_flatbed then
+    ImGui.Text(displayText)
+    towPos, towPosUsed = ImGui.Checkbox(translateLabel("Show Towing Position"), towPos, true)
+    UI.helpMarker(false, translateLabel("towpos_tt"))
+    if towPosUsed then
+      UI.widgetSound("Nav2")
+    end
+
+    towEverything, towEverythingUsed = ImGui.Checkbox(translateLabel("Tow Everything"), towEverything, true)
+    UI.helpMarker(false, translateLabel("TowEverything_tt"))
+    if towEverythingUsed then
+      UI.widgetSound("Nav2")
+    end
+    if towEverything then
+      modelOverride = true
+    else
+      modelOverride = false
+    end
+
+    if attached_vehicle == 0 then
+      if ImGui.Button(translateLabel("towBtn")) then
+        UI.widgetSound("Select")
+        if towable and closestVehicle ~= nil and closestVehicleModel ~= flatbedModel then
+          script.run_in_fiber(function()
+            controlled = entities.take_control_of(closestVehicle, 300)
+            if controlled then
+              flatbedHeading = ENTITY.GET_ENTITY_HEADING(current_vehicle)
+              flatbedBone = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(current_vehicle, "chassis_dummy")
+              vehBone = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(closestVehicle, "chassis_dummy")
+              local vehicleClass = VEHICLE.GET_VEHICLE_CLASS(closestVehicle)
+              if vehicleClass == 1 then
+                zAxis = 0.9
+                yAxis = -2.3
+              elseif vehicleClass == 2 then
+                zAxis = 0.993
+                yAxis = -2.17046
+              elseif vehicleClass == 6 then
+                zAxis = 1.00069420
+                yAxis = -2.17046
+              elseif vehicleClass == 7 then
+                zAxis = 1.009
+                yAxis = -2.17036
+              elseif vehicleClass == 15 then
+                zAxis = 1.3
+                yAxis = -2.21069
+              elseif vehicleClass == 16 then
+                zAxis = 1.5
+                yAxis = -2.21069
+              else
+                zAxis = 1.1
+                yAxis = -2.0
+              end
+              ENTITY.SET_ENTITY_HEADING(closestVehicleModel, flatbedHeading)
+              ENTITY.ATTACH_ENTITY_TO_ENTITY(closestVehicle, current_vehicle, flatbedBone, xAxis, yAxis, zAxis, 0.0, 0.0,
+                0.0, true, true, false, false, 1, true, 1)
+              attached_vehicle = closestVehicle
+              ENTITY.SET_ENTITY_CANT_CAUSE_COLLISION_DAMAGED_ENTITY(attached_vehicle, current_vehicle)
+            else
+              gui.show_error("Flatbed Script", translateLabel("failed_veh_ctrl"))
+            end
+          end)
+        end
+        if closestVehicle ~= nil and closestVehicleModel ~= flatbedModel and not towable then
+          gui.show_message("Flatbed Script", translateLabel("fltbd_carsOnlyTxt"))
+        end
+        if closestVehicle ~= nil and closestVehicleModel == flatbedModel then
+          gui.show_message("Flatbed Script", translateLabel("fltbd_nootherfltbdTxt"))
+        end
+      end
+    else
+      if ImGui.Button(translateLabel("detachBtn")) then
+        UI.widgetSound("Select2")
+        script.run_in_fiber(function()
+          local modelHash = ENTITY.GET_ENTITY_MODEL(attached_vehicle)
+          local attachedVehicle = ENTITY.GET_ENTITY_OF_TYPE_ATTACHED_TO_ENTITY(
+          PED.GET_VEHICLE_PED_IS_USING(self.get_ped()), modelHash)
+          local attachedVehcoords = ENTITY.GET_ENTITY_COORDS(attached_vehicle, false)
+          controlled = entities.take_control_of(attachedVehicle, 300)
+          if ENTITY.DOES_ENTITY_EXIST(attachedVehicle) then
+            if controlled then
+              ENTITY.DETACH_ENTITY(attachedVehicle)
+              ENTITY.SET_ENTITY_COORDS(attachedVehicle, attachedVehcoords.x - (playerForwardX * 10),
+                attachedVehcoords.y - (playerForwardY * 10), playerPosition.z, false, false, false, false)
+              VEHICLE.SET_VEHICLE_ON_GROUND_PROPERLY(attached_vehicle, 5.0)
+              attached_vehicle = 0
+            end
+          end
+        end)
+      end
+      ImGui.Spacing(); ImGui.Text(translateLabel("Adjust Vehicle Position"))
+      if ImGui.IsItemHovered() then
+        ImGui.BeginTooltip()
+        ImGui.PushTextWrapPos(ImGui.GetFontSize() * 20)
+        ImGui.TextWrapped(translateLabel("AdjustPosition_tt"))
+        ImGui.PopTextWrapPos()
+        ImGui.EndTooltip()
+      end
+      ImGui.Separator(); ImGui.Spacing()
+      ImGui.Dummy(100, 1); ImGui.SameLine()
+      ImGui.ArrowButton("##Up", 2)
+      if ImGui.IsItemActive() then
+        zAxis = zAxis + 0.01
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(attached_vehicle, current_vehicle, flatbedBone, xAxis, yAxis, zAxis, 0.0, 0.0, 0.0,
+          true, true, false, false, 1, true, 1)
+      end
+      ImGui.Dummy(60, 1); ImGui.SameLine()
+      ImGui.ArrowButton("##Left", 0)
+      if ImGui.IsItemActive() then
+        yAxis = yAxis + 0.01
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(attached_vehicle, current_vehicle, flatbedBone, xAxis, yAxis, zAxis, 0.0, 0.0, 0.0,
+          true, true, false, false, 1, true, 1)
+      end
+      ImGui.SameLine(); ImGui.Dummy(23, 1); ImGui.SameLine()
+      ImGui.ArrowButton("##Right", 1)
+      if ImGui.IsItemActive() then
+        yAxis = yAxis - 0.01
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(attached_vehicle, current_vehicle, flatbedBone, xAxis, yAxis, zAxis, 0.0, 0.0, 0.0,
+          true, true, false, false, 1, true, 1)
+      end
+      ImGui.Dummy(100, 1); ImGui.SameLine()
+      ImGui.ArrowButton("##Down", 3)
+      if ImGui.IsItemActive() then
+        zAxis = zAxis - 0.01
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(attached_vehicle, current_vehicle, flatbedBone, xAxis, yAxis, zAxis, 0.0, 0.0, 0.0,
+          true, true, false, false, 1, true, 1)
+      end
+    end
+  else
+    ImGui.Text(translateLabel("getinsidefltbd"))
+    if ImGui.Button(translateLabel("spawnfltbd")) then
+      script.run_in_fiber(function(script)
+        if not PED.IS_PED_SITTING_IN_ANY_VEHICLE(self.get_ped()) then
+          local try = 0
+          while not STREAMING.HAS_MODEL_LOADED(flatbedModel) do
+            STREAMING.REQUEST_MODEL(flatbedModel)
+            script:yield()
+            if try > 100 then
+              return
+            else
+              try = try + 1
+            end
+          end
+          fltbd = VEHICLE.CREATE_VEHICLE(flatbedModel, playerPosition.x, playerPosition.y, playerPosition.z,
+          ENTITY.GET_ENTITY_HEADING(self.get_ped()), true, false, false)
+          PED.SET_PED_INTO_VEHICLE(self.get_ped(), fltbd, -1)
+          ENTITY.SET_ENTITY_AS_NO_LONGER_NEEDED(fltbd)
+        else
+          gui.show_error("Flatbed Script", translateLabel("Exit your current vehicle first."))
+        end
+      end)
+    end
+  end
+end)
+
 
 --[[
     *players*
 ]]
-local players_tab     = Samurais_scripts:add_tab(translateLabel("playersTab"))
+players_tab = Samurais_scripts:add_tab(translateLabel("playersTab"))
 
 playerIndex           = 0
+local selectedPlayer  = 0
+local playerCount     = 0
 local targetPlayerPed = 0
+local playerHeading   = 0
+local playerHealth    = 0
+local playerArmour    = 0
 local playerVeh       = 0
-local player_name     = "STRING"
+local player_name     = ""
+local playerWallet    = ""
+local playerBank      = ""
+local playerCoords    = vector3
+local godmode         = false
+local player_in_veh   = false
+local player_active   = false
+local targetPlayerIndex
 players_tab:add_imgui(function()
   if Game.isOnline() then
-    UI.coloredText(translateLabel("temporarily disabled"), "yellow", 1, 20)
-    -- local playerCount = Game.getPlayerCount()
-    -- ImGui.Text("Total Players:  [ " .. playerCount .. " ]")
-    -- ImGui.PushItemWidth(320)
-    -- Game.displayPlayerList()
-    -- ImGui.PopItemWidth()
-    -- local selectedPlayer = filteredPlayers[playerIndex + 1]
-    -- ImGui.Spacing()
-    -- -- if ImGui.Button("Open Player Window") then
-    -- targetPlayerPed   = selectedPlayer
-    -- targetPlayerIndex = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(targetPlayerPed)
-    -- player_name       = PLAYER.GET_PLAYER_NAME(targetPlayerIndex)
-    -- --   ImGui.OpenPopup(tostring(player_name))
-    -- -- end
-    -- -- ImGui.SetNextWindowSizeConstraints(400, 100, 600, 800)
-    -- -- if ImGui.BeginPopupModal(tostring(player_name), true, ImGuiWindowFlags.AlwaysAutoResize) then
-    -- if NETWORK.NETWORK_IS_PLAYER_ACTIVE(targetPlayerIndex) then
-    --   local playerWallet  = Game.getPlayerWallet(targetPlayerIndex)
-    --   local playerBank    = Game.getPlayerBank(targetPlayerIndex)
-    --   local playerCoords  = Game.getCoords(targetPlayerPed, false)
-    --   local playerHeading = math.floor(Game.getHeading(targetPlayerPed))
-    --   local playerHealth  = ENTITY.GET_ENTITY_HEALTH(targetPlayerPed)
-    --   local playerArmour  = PED.GET_PED_ARMOUR(targetPlayerPed)
-    --   local godmode       = PLAYER.GET_PLAYER_INVINCIBLE(targetPlayerIndex)
-    --   if PED.IS_PED_SITTING_IN_ANY_VEHICLE(targetPlayerPed) then
-    --     playerVeh = PED.GET_VEHICLE_PED_IS_IN(targetPlayerPed, true)
-    --   end
-    --   ImGui.Spacing()
-    --   ImGui.Text("Cash:" .. "      " .. playerWallet)
-    --   ImGui.Spacing()
-    --   ImGui.Text("Bank:" .. "      " .. playerBank)
-    --   ImGui.Spacing()
-    --   ImGui.Text("Coords:" .. "      " .. tostring(playerCoords))
-    --   if ImGui.IsItemHovered() and ImGui.IsItemClicked(0) then
-    --     log.debug(player_name .. "'s coords: " .. tostring(playerCoords))
-    --     gui.show_message("Samurai's Scripts", player_name .. "'s coordinates logged to console.")
-    --   end
-    --   ImGui.Spacing()
-    --   ImGui.Text("Heading:" .. "     " .. tostring(playerHeading))
-    --   if ImGui.IsItemHovered() and ImGui.IsItemClicked(0) then
-    --     log.debug(player_name .. "'s heading: " .. tostring(playerHeading))
-    --     gui.show_message("Samurai's Scripts", player_name .. "'s heading logged to console.")
-    --   end
-    --   ImGui.Spacing()
-    --   ImGui.Text("Health:" .. "        " .. tostring(playerHealth))
-    --   if playerArmour ~= nil then
-    --     ImGui.Spacing()
-    --     ImGui.Text("Armour:" .. "        " .. tostring(playerArmour))
-    --   end
-    --   ImGui.Spacing()
-    --   ImGui.Text("God Mode:" .. "  " .. tostring(godmode))
-    --   if PED.IS_PED_SITTING_IN_ANY_VEHICLE(targetPlayerPed) then
-    --     ImGui.Spacing()
-    --     ImGui.Text("Vehicle:" .. "  " .. tostring(vehicles.get_vehicle_display_name(ENTITY.GET_ENTITY_MODEL(playerVeh))))
-    --     if ImGui.Button("Delete Vehicle") then
-    --       script.run_in_fiber(function(del)
-    --         local pvCTRL = entities.take_control_of(playerVeh, 350)
-    --         if pvCTRL then
-    --           ENTITY.SET_ENTITY_AS_MISSION_ENTITY(playerVeh, true, true)
-    --           del:sleep(200)
-    --           VEHICLE.DELETE_VEHICLE(playerVeh)
-    --           gui.show_success("Samurai's Scripts", "" .. player_name .. "'s vehicle has been yeeted.")
-    --         else
-    --           gui.show_error("Samurai's Scripts",
-    --             "Failed to delete the vehicle! " .. player_name .. " probably has protections on.")
-    --         end
-    --       end)
-    --     end
-    --   end
-    --   -- ImGui.End()
-    -- else
-    --   ImGui.Text("Player left the session.")
-    -- end
-    -- -- end
+    ImGui.Text(translateLabel("Total Players:") .. "  [ " .. playerCount .. " ]")
+    ImGui.PushItemWidth(320)
+    Game.displayPlayerList()
+    ImGui.PopItemWidth()
+    ImGui.Spacing()
+    if player_active then
+      ImGui.Spacing()
+      ImGui.Text("Cash:" .. "      " .. playerWallet)
+      ImGui.Spacing()
+      ImGui.Text("Bank:" .. "      " .. playerBank)
+      ImGui.Spacing()
+      ImGui.Text("Coords:" .. "      " .. tostring(playerCoords))
+      if ImGui.IsItemHovered() and ImGui.IsItemClicked(0) then
+        log.debug(player_name .. "'s coords: " .. tostring(playerCoords))
+        gui.show_message("Samurai's Scripts", player_name .. "'s coordinates logged to console.")
+      end
+      ImGui.Spacing()
+      ImGui.Text("Heading:" .. "     " .. tostring(playerHeading))
+      if ImGui.IsItemHovered() and ImGui.IsItemClicked(0) then
+        log.debug(player_name .. "'s heading: " .. tostring(playerHeading))
+        gui.show_message("Samurai's Scripts", player_name .. "'s heading logged to console.")
+      end
+      ImGui.Spacing()
+      ImGui.Text("Health:" .. "        " .. tostring(playerHealth))
+      if playerArmour ~= nil then
+        ImGui.Spacing()
+        ImGui.Text("Armour:" .. "        " .. tostring(playerArmour))
+      end
+      ImGui.Spacing()
+      ImGui.Text("God Mode:" .. "  " .. tostring(godmode))
+      if player_in_veh then
+        ImGui.Spacing()
+        ImGui.Text("Vehicle:" .. "  " .. tostring(vehicles.get_vehicle_display_name(ENTITY.GET_ENTITY_MODEL(playerVeh))))
+        if ImGui.Button("Delete Vehicle") then
+          script.run_in_fiber(function(del)
+            local pvCTRL = entities.take_control_of(playerVeh, 350)
+            if pvCTRL then
+              ENTITY.SET_ENTITY_AS_MISSION_ENTITY(playerVeh, true, true)
+              del:sleep(200)
+              VEHICLE.DELETE_VEHICLE(playerVeh)
+              gui.show_success("Samurai's Scripts", "" .. player_name .. "'s vehicle has been yeeted.")
+            else
+              gui.show_error("Samurai's Scripts",
+                "Failed to delete the vehicle! " .. player_name .. " probably has protections on.")
+            end
+          end)
+        end
+      end
+    else
+      ImGui.Text("Player left the session.")
+    end
   else
     ImGui.Text("You are currently in Single Player.")
   end
@@ -843,16 +1063,20 @@ end)
     *settings*
 ]]
 local settings_tab = Samurais_scripts:add_tab(translateLabel("settingsTab"))
-lang_idx = lua_cfg.read("lang_idx")
+lang_idx        = lua_cfg.read("lang_idx")
+disableTooltips = lua_cfg.read("disableTooltips")
+disableUiSounds = lua_cfg.read("disableUiSounds")
+useGameLang     = lua_cfg.read("useGameLang")
 local selected_lang
-local lang_T       = {
+local lang_T = {
   { name = 'English',               iso = 'en-US' },
-  { name = 'French',                iso = 'fr-FR' },
-  { name = 'German',                iso = 'de-DE' },
+  { name = 'Français',              iso = 'fr-FR' },
+  { name = 'Deutsch',               iso = 'de-DE' },
+  { name = 'Italiano',              iso = 'it-IT' },
   { name = 'Chinese (Traditional)', iso = 'zh-TW' },
   { name = 'Chinese (Simplified)',  iso = 'zh-CH' },
-  { name = 'Spanish',               iso = 'es-ES' },
-  { name = 'Portuguese',            iso = 'pt-BR' },
+  { name = 'Español',               iso = 'es-ES' },
+  { name = 'Português (Brasil)',    iso = 'pt-BR' },
 }
 
 function displayLangs()
@@ -863,9 +1087,6 @@ function displayLangs()
   lang_idx, lang_idxUsed = ImGui.Combo("##langs", lang_idx, filteredLangs, #lang_T)
 end
 
-disableTooltips = lua_cfg.read("disableTooltips")
-disableUiSounds = lua_cfg.read("disableUiSounds")
-useGameLang     = lua_cfg.read("useGameLang")
 settings_tab:add_imgui(function()
   disableTooltips, dtUsed = ImGui.Checkbox(translateLabel("Disable Tooltips"), disableTooltips, true)
   if dtUsed then
@@ -887,6 +1108,8 @@ settings_tab:add_imgui(function()
     LANG, current_lang = Game.GetLang()
   end
   if uglUsed then
+    UI.widgetSound("Nav2")
+    gui.show_success("Samurai's Scripts", translateLabel("lang_success_msg"))
     lua_cfg.save("useGameLang", useGameLang)
     lua_cfg.save("LANG", LANG)
     lua_cfg.save("lang_idx", 0)
@@ -894,16 +1117,19 @@ settings_tab:add_imgui(function()
 
   if not useGameLang then
     ImGui.Text(translateLabel("customLangTxt"))
+    ImGui.PushItemWidth(180)
     displayLangs()
+    ImGui.PopItemWidth()
     selected_lang = lang_T[lang_idx + 1]
     ImGui.SameLine()
     if ImGui.Button(translateLabel("saveBtn") .. "##lang") then
+      UI.widgetSound("Select")
       LANG         = selected_lang.iso
       current_lang = selected_lang.name
       lua_cfg.save("lang_idx", lang_idx)
       lua_cfg.save("LANG", LANG)
       lua_cfg.save("current_lang", current_lang)
-      gui.show_success("Samurai's Scripts", "Language settings saved. Please restart the script to apply the changes.")
+      gui.show_success("Samurai's Scripts", translateLabel("lang_success_msg"))
     end
   end
 
@@ -937,6 +1163,8 @@ settings_tab:add_imgui(function()
       nosvfx            = false
       hornLight         = false
       nosPurge          = false
+      insta180          = false
+      flappyDoors       = false
       rgbLights         = false
       loud_radio        = false
       launchCtrl        = false
@@ -948,6 +1176,7 @@ settings_tab:add_imgui(function()
       noJacking         = false
       useGameLang       = false
       DriftIntensity    = 0
+      lang_idx          = 0
       lightSpeed        = 1
       LANG              = "en-US"
       current_lang      = "English"
@@ -962,6 +1191,31 @@ settings_tab:add_imgui(function()
   end
 end)
 
+
+local function SS_handle_events()
+  if attached_ped ~= nil and attached_ped ~= 0 then
+    ENTITY.DETACH_ENTITY(attached_ped, true, true)
+    ENTITY.FREEZE_ENTITY_POSITION(attached_ped, false)
+    TASK.CLEAR_PED_TASKS_IMMEDIATELY(self.get_ped())
+  end
+
+  if attached_vehicle ~= nil and attached_vehicle ~= 0 then
+    local modelHash = ENTITY.GET_ENTITY_MODEL(attached_vehicle)
+    local attachedVehicle = ENTITY.GET_ENTITY_OF_TYPE_ATTACHED_TO_ENTITY(
+      PED.GET_VEHICLE_PED_IS_USING(self.get_ped()), modelHash)
+    local attachedVehcoords = ENTITY.GET_ENTITY_COORDS(attached_vehicle, false)
+    controlled = entities.take_control_of(attachedVehicle, 300)
+    if ENTITY.DOES_ENTITY_EXIST(attachedVehicle) then
+      if controlled then
+        ENTITY.DETACH_ENTITY(attachedVehicle)
+        ENTITY.SET_ENTITY_COORDS(attachedVehicle, attachedVehcoords.x - (playerForwardX * 10),
+          attachedVehcoords.y - (playerForwardY * 10), playerPosition.z, false, false, false, false)
+        VEHICLE.SET_VEHICLE_ON_GROUND_PROPERLY(attached_vehicle, 5.0)
+        attached_vehicle = 0
+      end
+    end
+  end
+end
 
 --[[
     looped scripts
@@ -984,7 +1238,7 @@ script.register_looped("GameInput", function()
 
   if PED.IS_PED_SITTING_IN_ANY_VEHICLE(self.get_ped()) then
     if validModel then
-      if nosPurge then
+      if nosPurge or is_in_flatbed then
         PAD.DISABLE_CONTROL_ACTION(0, 73, true)
       end
     end
@@ -1022,17 +1276,20 @@ script.register_looped("auto-heal", function(ah)
     local maxHp  = Game.Self.maxHealth()
     local myHp   = Game.Self.health()
     local myArmr = Game.Self.armour()
+    if PLAYER.GET_PLAYER_MAX_ARMOUR(self.get_id()) < 100 then
+      PLAYER.SET_PLAYER_MAX_ARMOUR(self.get_id(), 100)
+    end
     if myHp < maxHp and myHp > 0 then
       if PED.IS_PED_IN_COVER(self.get_ped()) then
-        ENTITY.SET_ENTITY_HEALTH(self.get_ped(), myHp + 20, 0, 0)
-      else
         ENTITY.SET_ENTITY_HEALTH(self.get_ped(), myHp + 10, 0, 0)
+      else
+        ENTITY.SET_ENTITY_HEALTH(self.get_ped(), myHp + 1, 0, 0)
       end
     end
     if myArmr == nil then
       PED.SET_PED_ARMOUR(self.get_ped(), 10)
     end
-    if myArmr ~= nil and myArmr < 50 then
+    if myArmr ~= nil and myArmr < 100 then
       PED.ADD_ARMOUR_TO_PED(self.get_ped(), 0.5)
     end
   end
@@ -1147,9 +1404,18 @@ script.register_looped("self features", function(script)
     end
   end
 
-  -- Action mode
+end)
+
+-- Action Mode
+script.register_looped("action mode", function(amode)
   if disableActionMode then
-    PED.SET_PED_USING_ACTION_MODE(self.get_ped(), false, -1, 0)
+    if PED.IS_PED_USING_ACTION_MODE(self.get_ped()) then
+      PLAYER.SET_DISABLE_AMBIENT_MELEE_MOVE(self.get_id(), true)
+      PED.SET_PED_USING_ACTION_MODE(self.get_ped(), false, -1, 0)
+    else
+      amode:sleep(500)
+    end
+    amode:yield()
   end
 end)
 
@@ -1238,8 +1504,10 @@ script.register_looped("TDFT", function(script)
       validModel = false
     end
     if validModel and DriftTires and PAD.IS_CONTROL_PRESSED(0, tdBtn) then
-      VEHICLE.SET_DRIFT_TYRES(current_vehicle, true)
-      VEHICLE.SET_VEHICLE_CHEAT_POWER_INCREASE(current_vehicle, 5.0)
+      if not VEHICLE.GET_DRIFT_TYRES_SET(current_vehicle) then
+        VEHICLE.SET_DRIFT_TYRES(current_vehicle, true)
+      end
+      VEHICLE.SET_VEHICLE_CHEAT_POWER_INCREASE(current_vehicle, 100.0)
     else
       VEHICLE.SET_DRIFT_TYRES(current_vehicle, false)
       VEHICLE.SET_VEHICLE_CHEAT_POWER_INCREASE(current_vehicle, 1.0)
@@ -1248,7 +1516,7 @@ script.register_looped("TDFT", function(script)
     if validModel and driftMode and PAD.IS_CONTROL_PRESSED(0, tdBtn) and not DriftTires then
       VEHICLE.SET_VEHICLE_REDUCE_GRIP(current_vehicle, true)
       VEHICLE.SET_VEHICLE_REDUCE_GRIP_LEVEL(current_vehicle, DriftIntensity)
-      VEHICLE.SET_VEHICLE_CHEAT_POWER_INCREASE(current_vehicle, 5.0)
+      VEHICLE.SET_VEHICLE_CHEAT_POWER_INCREASE(current_vehicle, 100.0)
     else
       VEHICLE.SET_VEHICLE_REDUCE_GRIP(current_vehicle, false)
       VEHICLE.SET_VEHICLE_CHEAT_POWER_INCREASE(current_vehicle, 1.0)
@@ -1396,10 +1664,34 @@ script.register_looped("LCTRL", function(lct)
   lct:yield()
 end)
 
-script.register_looped("Auto Brake Lights", function()
-  if autobrklight and Game.Self.isDriving() then
-    if VEHICLE.IS_VEHICLE_DRIVEABLE(current_vehicle) and VEHICLE.IS_VEHICLE_STOPPED(current_vehicle) and VEHICLE.GET_IS_VEHICLE_ENGINE_RUNNING(current_vehicle) then
-      VEHICLE.SET_VEHICLE_BRAKE_LIGHTS(current_vehicle, true)
+script.register_looped("MISC Vehicle Options", function(mvo)
+  if Game.Self.isDriving() then
+    if autobrklight then
+      if VEHICLE.IS_VEHICLE_DRIVEABLE(current_vehicle) and VEHICLE.IS_VEHICLE_STOPPED(current_vehicle) and VEHICLE.GET_IS_VEHICLE_ENGINE_RUNNING(current_vehicle) then
+        VEHICLE.SET_VEHICLE_BRAKE_LIGHTS(current_vehicle, true)
+      end
+    end
+
+    if insta180 then
+      local vehRot = ENTITY.GET_ENTITY_ROTATION(current_vehicle, 2)
+      if PAD.IS_CONTROL_JUST_PRESSED(0, 97) then -- numpad + // mouse scroll down
+        log.info(tostring(vehRot))
+        ENTITY.SET_ENTITY_ROTATION(current_vehicle, vehRot.x, vehRot.y, (vehRot.z - 180), 2, true)
+      end
+    end
+  end
+  if flappyDoors and is_car then
+    local lastveh = onVehEnter()
+    local n_doors = VEHICLE.GET_NUMBER_OF_VEHICLE_DOORS(lastveh)
+    if n_doors > 0 then
+      for i = -1, n_doors + 1 do
+        if VEHICLE.GET_IS_DOOR_VALID(lastveh, i) then
+          mvo:sleep(180)
+          VEHICLE.SET_VEHICLE_DOOR_OPEN(lastveh, i, false, false)
+          mvo:sleep(180)
+          VEHICLE.SET_VEHICLE_DOOR_SHUT(lastveh, i, false)
+        end
+      end
     end
   end
 end)
@@ -1657,7 +1949,7 @@ end)
 script.register_looped("Purge", function(nosprg)
   if Game.Self.isDriving() then
     if nosPurge and validModel or nosPurge and is_bike then
-      if PAD.IS_DISABLED_CONTROL_PRESSED(0, 73) then
+      if PAD.IS_DISABLED_CONTROL_PRESSED(0, 73) and not is_in_flatbed then
         local dict       = "core"
         local purgeBones = { "suspension_lf", "suspension_rf" }
         if not STREAMING.HAS_NAMED_PTFX_ASSET_LOADED(dict) then
@@ -1866,4 +2158,164 @@ script.register_looped("Carpool", function(cp)
     end
   end
   cp:yield()
+end)
+
+script.register_looped("flatbed script", function(script)
+  local vehicleHandles = entities.get_all_vehicles_as_handles()
+  local current_vehicle = PED.GET_VEHICLE_PED_IS_USING(self.get_ped())
+  local vehicle_model = ENTITY.GET_ENTITY_MODEL(current_vehicle)
+  local flatbedHeading = ENTITY.GET_ENTITY_HEADING(current_vehicle)
+  local flatbedBone = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(current_vehicle, "chassis")
+  local playerPosition = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
+  local playerForwardX = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
+  local playerForwardY = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
+  for _, veh in ipairs(vehicleHandles) do
+      local detectPos = vec3:new(playerPosition.x - (playerForwardX * 10), playerPosition.y - (playerForwardY * 10), playerPosition.z)
+      local vehPos = ENTITY.GET_ENTITY_COORDS(veh, false)
+      local vDist = SYSTEM.VDIST(detectPos.x, detectPos.y, detectPos.z, vehPos.x, vehPos.y, vehPos.z)
+      if vDist <= 5 then
+          closestVehicle = veh
+      end
+  end
+  local closestVehicleModel = ENTITY.GET_ENTITY_MODEL(closestVehicle)
+  local iscar = VEHICLE.IS_THIS_MODEL_A_CAR(closestVehicleModel)
+  local isbike = VEHICLE.IS_THIS_MODEL_A_BIKE(closestVehicleModel)
+  local towable = false
+  if modelOverride then
+      towable = true
+  else
+      towable = false
+  end
+  if iscar then
+      towable = true
+  end
+  if isbike then
+      towable = true
+  end
+  if closestVehicleModel == 745926877 then --Buzzard
+      towable = true
+  end
+  if closestVehicleModel == 1353720154 then
+      towable = false
+  end
+  if vehicle_model == 1353720154 then
+      is_in_flatbed = true
+  else
+      is_in_flatbed = false
+  end
+  if is_in_flatbed and attached_vehicle == 0 then
+      if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) and towable and closestVehicleModel ~= flatbedModel then
+          script:sleep(200)
+          controlled = entities.take_control_of(closestVehicle, 350)
+          if controlled then
+              local vehicleClass = VEHICLE.GET_VEHICLE_CLASS(closestVehicle)
+              if vehicleClass == 1 then
+                  zAxis = 0.9
+                  yAxis = -2.3
+              elseif vehicleClass == 2 then
+                  zAxis = 0.993
+                  yAxis = -2.17046
+              elseif vehicleClass == 6 then
+                  zAxis = 1.00069420
+                  yAxis = -2.17046
+              elseif vehicleClass == 7 then
+                  zAxis = 1.009
+                  yAxis = -2.17036
+              elseif vehicleClass == 15 then
+                  zAxis = 1.3
+                  yAxis = -2.21069
+              elseif vehicleClass == 16 then
+                  zAxis = 1.5
+                  yAxis = -2.21069
+              else
+                  zAxis = 1.1
+                  yAxis = -2.0
+              end
+              ENTITY.SET_ENTITY_HEADING(closestVehicleModel, flatbedHeading)
+              ENTITY.ATTACH_ENTITY_TO_ENTITY(closestVehicle, current_vehicle, flatbedBone, 0.0, yAxis, zAxis, 0.0, 0.0, 0.0, false, true, true, false, 1, true, 1)
+              attached_vehicle = closestVehicle
+              script:sleep(200)
+          else
+              gui.show_error("Flatbed Script", translateLabel("failed_veh_ctrl"))
+          end
+      end
+      if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) and closestVehicle ~= nil and not towable then
+          gui.show_message("Flatbed Script", translateLabel("fltbd_carsOnlyTxt"))
+          script:sleep(400)
+      end
+      if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) and closestVehicleModel == flatbedModel then
+          script:sleep(400)
+          gui.show_message("Flatbed Script", translateLabel("fltbd_nootherfltbdTxt"))
+      end
+  elseif is_in_flatbed and attached_vehicle ~= 0 then
+      if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) then
+          script:sleep(200)
+          for _, v in ipairs(vehicleHandles) do
+              local modelHash         = ENTITY.GET_ENTITY_MODEL(v)
+              local attachedVehicle   = ENTITY.GET_ENTITY_OF_TYPE_ATTACHED_TO_ENTITY(current_vehicle, modelHash)
+              local attachedVehcoords = ENTITY.GET_ENTITY_COORDS(attached_vehicle, false)
+              controlled = entities.take_control_of(attachedVehicle, 350)
+              if ENTITY.DOES_ENTITY_EXIST(attachedVehicle) then
+                  if controlled then
+                      ENTITY.DETACH_ENTITY(attachedVehicle)
+                      ENTITY.SET_ENTITY_COORDS(attachedVehicle, attachedVehcoords.x - (playerForwardX * 10), attachedVehcoords.y - (playerForwardY * 10), playerPosition.z, 0, 0, 0, 0)
+                      VEHICLE.SET_VEHICLE_ON_GROUND_PROPERLY(attached_vehicle, 5.0)
+                      attached_vehicle = 0
+                  end
+              end
+          end
+      end
+  end
+end)
+script.register_looped("TowPos Marker", function()
+  if towPos then
+      if is_in_flatbed and attached_vehicle == 0 then
+          local playerPosition = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
+          local playerForwardX = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
+          local playerForwardY = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
+          local detectPos = vec3:new(playerPosition.x - (playerForwardX * 10), playerPosition.y - (playerForwardY * 10), playerPosition.z)
+          GRAPHICS.DRAW_MARKER_SPHERE(detectPos.x, detectPos.y, detectPos.z, 2.5, 180, 128, 0, 0.115)
+      end
+  end
+end)
+
+-- online players
+script.register_looped("Online Player Info", function(opi)
+  if Game.isOnline() and gui.is_open() and players_tab:is_selected() then
+    playerCount       = Game.getPlayerCount()
+    selectedPlayer    = filteredPlayers[playerIndex + 1]
+    targetPlayerPed   = selectedPlayer
+    targetPlayerIndex = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(targetPlayerPed)
+    player_name       = PLAYER.GET_PLAYER_NAME(targetPlayerIndex)
+    if NETWORK.NETWORK_IS_PLAYER_ACTIVE(targetPlayerIndex) then
+      player_active = true
+      playerWallet  = Game.getPlayerWallet(targetPlayerIndex)
+      playerBank    = Game.getPlayerBank(targetPlayerIndex)
+      playerCoords  = Game.getCoords(targetPlayerPed, false)
+      playerHeading = math.floor(Game.getHeading(targetPlayerPed))
+      playerHealth  = ENTITY.GET_ENTITY_HEALTH(targetPlayerPed)
+      playerArmour  = PED.GET_PED_ARMOUR(targetPlayerPed)
+      godmode       = PLAYER.GET_PLAYER_INVINCIBLE(targetPlayerIndex)
+      if PED.IS_PED_SITTING_IN_ANY_VEHICLE(targetPlayerPed) then
+        player_in_veh = true
+        playerVeh = PED.GET_VEHICLE_PED_IS_IN(targetPlayerPed, true)
+      else
+        player_in_veh = false
+      end
+    else
+      player_active = false
+    end
+  end
+end)
+
+
+--[[ 
+   *event handlers*
+]]
+event.register_handler(menu_event.MenuUnloaded, function()
+  SS_handle_events()
+end)
+
+event.register_handler(menu_event.ScriptsReloaded, function()
+  SS_handle_events()
 end)
