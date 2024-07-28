@@ -1,7 +1,5 @@
 ---@diagnostic disable: undefined-global, lowercase-global
 
-require('lib/samurais_utils')
-
 Labels = {
     ["Self"] = {
         {iso = "en-US", text = "Self "},
@@ -251,6 +249,14 @@ Labels = {
         {iso = "pt-BR", text = "Intensidade"},
     },
 
+    ["driftSmokeCol"] = {
+        {iso = "en-US", text = "Drift Smoke Color"},
+        {iso = "de-DE", text = "Rauchfarbe"},
+        {iso = "fr-FR", text = "Couleur Fumée"},
+        {iso = "it-IT", text = "Colore Fumo"},
+        {iso = "pt-BR", text = "Cor De Fumaça"},
+    },
+
     ["driftSlider_tt"] = {
         {iso = "en-US", text = "0: No Grip (very stiff).\n1: Balanced (Recommended).\n2: Weak Drift.\n3: Weakest Drift."},
         {iso = "de-DE", text = "0: Kein Grip (sehr steif).\n1: Ausgewogen (empfohlen).\n2: Schwacher Drift.\n3: Schwächster Drift."},
@@ -276,11 +282,11 @@ Labels = {
     },
 
     ["driftInvalidVehTxt"] = {
-        {iso = "en-US", text = "\10You can only drift cars, trucks and quad bikes.\10\10"},
-        {iso = "de-DE", text = "\10Das Driften funktioniert nur mit Autos, LKWs und Quads.\10\10"},
-        {iso = "fr-FR", text = "\10Vous ne pouvez faire du drift que sur des voitures, des camions et des quads.\10\10"},
-        {iso = "it-IT", text = "\10Si possono fare drifting solo con auto, camion e quad.\10\10"},
-        {iso = "pt-BR", text = "\10Você só pode fazer drift de carros, caminhões e quadriciclos.\10\10"},
+        {iso = "en-US", text = "You can only drift cars, trucks and quad bikes."},
+        {iso = "de-DE", text = "Das Driften funktioniert nur mit Autos, LKWs und Quads."},
+        {iso = "fr-FR", text = "Vous ne pouvez faire du drift que sur des voitures, des camions et des quads."},
+        {iso = "it-IT", text = "Si possono fare drifting solo con auto, camion e quad."},
+        {iso = "pt-BR", text = "Você só pode fazer drift de carros, caminhões e quadriciclos."},
     },
 
     ["lvoCB"] = {
@@ -387,11 +393,11 @@ Labels = {
     },
 
     ["insta180_tt"] = {
-        {iso = "en-US", text = "Instantly turn your car 180 degrees."},
-        {iso = "de-DE", text = "Drehen Sie Ihr Auto im Handumdrehen um 180 Grad."},
-        {iso = "fr-FR", text = "Tournez instantanément votre voiture de 180 degrés."},
-        {iso = "it-IT", text = "Ruota istantaneamente la tua auto di 180 gradi."},
-        {iso = "pt-BR", text = "Gire instantaneamente seu carro em 180 graus."},
+        {iso = "en-US", text = "Press [NUMPAD-] or [Mouse Scroll Down] to instantly turn your car 180 degrees."},
+        {iso = "de-DE", text = "Drücken Sie [NUMPAD-] oder [Mouse Scroll Down], um Ihr Auto sofort um 180 Grad zu drehen."},
+        {iso = "fr-FR", text = "Appuyez sur [NUMPAD-] ou [Mouse Scroll Down] pour faire pivoter instantanément votre voiture de 180 degrés."},
+        {iso = "it-IT", text = "Premere [NUMPAD-] o [Mouse Scroll Down] per ruotare istantaneamente l'auto di 180 gradi."},
+        {iso = "pt-BR", text = "Pressione [NUMPAD-] ou [Mouse Scroll Down] para girar instantaneamente o carro em 180 graus."},
     },
 
     ["rgbLights"] = {
@@ -787,7 +793,7 @@ Labels = {
     },
 
     ["detachBtn"] = {
-        {iso = "en-US", text = "  Detach  "},
+        {iso = "en-US", text = " Detach "},
         {iso = "de-DE", text = "Trennen Sie"},
         {iso = "fr-FR", text = " Détacher "},
         {iso = "it-IT", text = " Staccare "},
@@ -833,6 +839,206 @@ Labels = {
         {iso = "it-IT", text = "Totale Giocatori:"},
         {iso = "pt-BR", text = "Total De Jogadores:"},
     },
+
+    ["editMode"] = {
+        {iso = "en-US", text = "Edit Mode"},
+        {iso = "de-DE", text = "Editier-Modus"},
+        {iso = "fr-FR", text = "Mode Édition"},
+        {iso = "it-IT", text = "Modo Modifica"},
+        {iso = "pt-BR", text = "Modo Editar"},
+    },
+
+    ["editMode_tt"] = {
+        {iso = "en-US", text = "Reposition the prop after you spawn it."},
+        {iso = "de-DE", text = "Positionieren Sie das Objekt nach dem Erstellen neu."},
+        {iso = "fr-FR", text = "Repositionnez l'objet après l'avoir créé."},
+        {iso = "it-IT", text = "Riposiziona l'oggetto dopo averlo generato."},
+        {iso = "pt-BR", text = "Reposicione o objeto depois de gerá-lo."},
+    },
+
+    ["search_hint"] = {
+        {iso = "en-US", text = "Search"},
+        {iso = "de-DE", text = "Suche"},
+        {iso = "fr-FR", text = "Rechercher"},
+        {iso = "it-IT", text = "Ricerca"},
+        {iso = "pt-BR", text = "Buscar"},
+    },
+
+    ["R*_blacklist"] = {
+        {iso = "en-US", text = "is blacklisted by Rockstar and will not spawn."},
+        {iso = "de-DE", text = "von Rockstar gesperrt und wird nicht erscheinen."},
+        {iso = "fr-FR", text = "bloqué par Rockstar et n'apparaîtra pas."},
+        {iso = "it-IT", text = "bloccato da Rockstar e non apparirà."},
+        {iso = "pt-BR", text = "bloqueado pela Rockstar e não aparecerá."},
+    },
+
+    ["crash_object"] = {
+        {iso = "en-US", text = "may crash your game. Proceed with caution!"},
+        {iso = "de-DE", text = "kann Ihr Spiel zum Absturz bringen. Gehen Sie mit Bedacht vor!"},
+        {iso = "fr-FR", text = "peut faire planter votre jeu. Soyez prudent !"},
+        {iso = "it-IT", text = "potrebbe bloccare il gioco. Procedete con cautela!"},
+        {iso = "pt-BR", text = "pode travar o jogo. Prossiga com cuidado!"},
+    },
+
+    ["Custom Objects"] = {
+        {iso = "en-US", text = "Custom Objects"},
+        {iso = "de-DE", text = "Benutzerdefinierte Objekte"},
+        {iso = "fr-FR", text = "Objets Personnalisés"},
+        {iso = "it-IT", text = "Oggetti Personalizzati"},
+        {iso = "pt-BR", text = "Objetos Personalizados"},
+    },
+
+    ["All Objects"] = {
+        {iso = "en-US", text = "All Objects"},
+        {iso = "de-DE", text = "Alles Objekte"},
+        {iso = "fr-FR", text = "Tous Les Objets"},
+        {iso = "it-IT", text = "Tutti Gli Oggetti"},
+        {iso = "pt-BR", text = "Todos Os Objectos"},
+    },
+
+    ["Preview"] = {
+        {iso = "en-US", text = "Preview"},
+        {iso = "de-DE", text = "Vorschau"},
+        {iso = "fr-FR", text = "Aperçu"},
+        {iso = "it-IT", text = "Anteprima"},
+        {iso = "pt-BR", text = "Previsão"},
+    },
+
+    ["Move_FB"] = {
+        {iso = "en-US", text = "Move Front/Back:"},
+        {iso = "de-DE", text = "Vorne/Hinten Bewegen:"},
+        {iso = "fr-FR", text = "Avant/Arrière"},
+        {iso = "it-IT", text = "Avanti/Indietro:"},
+        {iso = "pt-BR", text = "Frente/Trás:"},
+    },
+
+    ["Move_UD"] = {
+        {iso = "en-US", text = "Move Up/Down:"},
+        {iso = "de-DE", text = "Aufwärts/Abwärts"},
+        {iso = "fr-FR", text = "Haut/Bas"},
+        {iso = "it-IT", text = "Muoversi Su/Giù"},
+        {iso = "pt-BR", text = "Cima/Baixo"},
+    },
+
+    ["Spawn For a Player"] = {
+        {iso = "en-US", text = "Spawn For a Player"},
+        {iso = "de-DE", text = "Erstellen Für Einen Spieler"},
+        {iso = "fr-FR", text = "Créer Pour Un Joueur"},
+        {iso = "it-IT", text = "Spawn Per Un Giocatore"},
+        {iso = "pt-BR", text = "Spawn Para Um Jogador"},
+    },
+
+    ["Spawn"] = {
+        {iso = "en-US", text = "Spawn"},
+        {iso = "de-DE", text = "Erstellen"},
+        {iso = "fr-FR", text = "Créer"},
+        {iso = "it-IT", text = "Creare"},
+        {iso = "pt-BR", text = "Criar"},
+    },
+
+    ["invalid_obj"] = {
+        {iso = "en-US", text = "This object "},
+        {iso = "de-DE", text = "Dieses Objekt "},
+        {iso = "fr-FR", text = "Cet objet "},
+        {iso = "it-IT", text = "Questo oggetto "},
+        {iso = "pt-BR", text = "Esse objeto "},
+    },
+
+    ["spawned_objects"] = {
+        {iso = "en-US", text = "Spawned Objects:"},
+        {iso = "de-DE", text = "Erstellte Objekte:"},
+        {iso = "fr-FR", text = "Objets Créés :"},
+        {iso = "it-IT", text = "Oggetti Creati:"},
+        {iso = "pt-BR", text = "Objetos Criados:"},
+    },
+
+    ["generic_delete"] = {
+        {iso = "en-US", text = "Delete"},
+        {iso = "de-DE", text = "Löschen"},
+        {iso = "fr-FR", text = "Supprimer"},
+        {iso = "it-IT", text = "Cancellare"},
+        {iso = "pt-BR", text = "Apagar"},
+    },
+
+    ["Attach To Self"] = {
+        {iso = "en-US", text = "Attach To Self"},
+        {iso = "de-DE", text = "An Sie Binden"},
+        {iso = "fr-FR", text = "Attacher à Vous"},
+        {iso = "it-IT", text = "Attaccato A Voi"},
+        {iso = "pt-BR", text = "Ligado A Você"},
+    },
+
+    ["Attach To Vehicle"] = {
+        {iso = "en-US", text = "Attach To Vehicle"},
+        {iso = "de-DE", text = "Anbringen Am Fahrzeug"},
+        {iso = "fr-FR", text = "Attacher Au Véhicule"},
+        {iso = "it-IT", text = "Fissare Al Veicolo"},
+        {iso = "pt-BR", text = "Fixação No Veículo"},
+    },
+
+    ["attached_objects"] = {
+        {iso = "en-US", text = "Attached Objects:"},
+        {iso = "de-DE", text = "Angehängte Objekte:"},
+        {iso = "fr-FR", text = "Objets Attachés :"},
+        {iso = "it-IT", text = "Oggetti Allegati:"},
+        {iso = "pt-BR", text = "Objetos Anexados:"},
+    },
+
+    ["attachBtn"] = {
+        {iso = "en-US", text = "Attach"},
+        {iso = "de-DE", text = "Anhängen."},
+        {iso = "fr-FR", text = "Attacher"},
+        {iso = "it-IT", text = "Allegare"},
+        {iso = "pt-BR", text = "Anexar"},
+    },
+
+    ["xyz_multiplier"] = {
+        {iso = "en-US", text = "Multiply X, Y, and Z values:"},
+        {iso = "de-DE", text = "Multiplizieren Sie die X-, Y- und Z-Werte:"},
+        {iso = "fr-FR", text = "Multiplier les valeurs X, Y et Z :"},
+        {iso = "it-IT", text = "Moltiplicare i valori X, Y e Z:"},
+        {iso = "pt-BR", text = "Multiplicar os valores de X, Y e Z:"},
+    },
+
+    ["Move Object:"] = {
+        {iso = "en-US", text = "Move Object:"},
+        {iso = "de-DE", text = "Objekt Verschieben:"},
+        {iso = "fr-FR", text = "Déplacer L'objet :"},
+        {iso = "it-IT", text = "Spostare L'oggetto:"},
+        {iso = "pt-BR", text = "Mover Objeto:"},
+    },
+
+    ["Rotate Object:"] = {
+        {iso = "en-US", text = "Rotate Object:"},
+        {iso = "de-DE", text = "Objekt Rotieren:"},
+        {iso = "fr-FR", text = "Pivoter L'objet :"},
+        {iso = "it-IT", text = "Ruotare L'oggetto:"},
+        {iso = "pt-BR", text = "Rotacionar O Objeto:"},
+    },
+
+    ["generic_reset"] = {
+        {iso = "en-US", text = "Reset"},
+        {iso = "de-DE", text = "Zurücksetzen"},
+        {iso = "fr-FR", text = "Reinitialiser"},
+        {iso = "it-IT", text = "Reset"},
+        {iso = "pt-BR", text = "Reinicialização"},
+    },
+
+    ["resetSlider_tt"] = {
+        {iso = "en-US", text = "Reset the sliders to zero and the prop position to default."},
+        {iso = "de-DE", text = "Setzen Sie die Schieberegler auf Null und die Objektposition auf die Standardwerte zurück."},
+        {iso = "fr-FR", text = "Remettre les curseurs à zéro et la position de l'objet par défaut."},
+        {iso = "it-IT", text = "Azzera i cursori e riporta la posizione dell'oggetto ai valori predefiniti."},
+        {iso = "pt-BR", text = "Redefina os controles deslizantes para zero e a posição do objeto para o padrão."},
+    },
+
+    ["hex_tt"] = {
+        {iso = "en-US", text = "Input your own custom Hex color. Example: \"#FF0000\""},
+        {iso = "de-DE", text = "Geben Sie Ihre eigene benutzerdefinierte Hex ein. Beispiel: \"#FF0000\""},
+        {iso = "fr-FR", text = "Saisissez votre propre couleur hexadecimale personnalisée. Exemple : \"#FF0000\""},
+        {iso = "it-IT", text = "Immettere il colore esadecimale personalizzato. Esempio: \"#FF0000\""},
+        {iso = "pt-BR", text = "Insira sua própria cor hexadecimal personalizada. Exemplo: \"#FF0000\""},
+    }
 }
 
 

@@ -1,4 +1,9 @@
 ---@diagnostic disable: undefined-global, lowercase-global, undefined-doc-name, undefined-field
+---@alias RAGE_Entity
+---| 'Entity' # A game entity (object, ped, vehicle...) represented by a an integer.
+
+
+
 
 -------------------------------------------------- Lua Funcs -----------------------------------------------------------------
 lua_Fn = {
@@ -24,7 +29,12 @@ lua_Fn = {
     return str:sub(- #suffix) == suffix
   end,
 
-  ---Inserts a string into another string at the given position. (Indexes start from 0).
+  ---Inserts a string into another string at the given position. (index starts from 0).
+  --[[ -- Example:
+
+      str_insert("Hello", 5, " World")
+        -> "Hello World"
+  ]]
   ---@param str string
   ---@param pos integer
   ---@param text string
@@ -50,13 +60,25 @@ lua_Fn = {
     return result
   end,
 
+  --- Rounds a float to x number of decimals.
+  --[[ -- Example:
+
+      round(420.69458797, 2)
+        -> 420.69
+  ]]
+  ---@param n number
+  ---@param points integer
+  round = function(n, points)
+    return tonumber(string.format("%." .. (points or 0) .. "f", n))
+  end,
+
   ---Returns a string containing the input value separated by the thousands and prefixed by a dollar sign.
-  ---@param value integer | string
   --[[ -- Example:
 
       formatMoney(42069)
         -> "$42,069"
   ]]
+  ---@param value number | string
   formatMoney = function(value)
     return "$" .. tostring(value):reverse():gsub("%d%d%d", "%1,"):reverse():gsub("^,", "")
   end,
@@ -71,19 +93,53 @@ lua_Fn = {
       os.clock() > ntime
   end,
 
-  ---Converts HEX strings to RGB integers. Returns 3 separate numbers representing Red, Green and Blue respectively.
+  --[[ Converts a HEX string to RGB integers and returns 3 numbers representing Red, Green and Blue respectively.
+
+  - Example:
+
+        red, green, blue = hexToRGB("#E0D0B6")
+          -> 224, 208, 182
+  - Another example:
+
+        r, g, b = hexToRGB("0B4")
+          -> 0, 187, 68
+  ]]
   ---@param hex string
   hexToRGB = function(hex)
     local r, g, b
     hex = hex:gsub("#", "")
     if hex:len() == 3 then -- short HEX
-      r, g, b = (tonumber("0x" .. hex:sub(1, 1)) * 17) / 255, (tonumber("0x" .. hex:sub(2, 2)) * 17) / 255,
-          (tonumber("0x" .. hex:sub(3, 3)) * 17) / 255
+      r, g, b = (tonumber("0x" .. hex:sub(1, 1)) * 17), (tonumber("0x" .. hex:sub(2, 2)) * 17),
+          (tonumber("0x" .. hex:sub(3, 3)) * 17)
     else
-      r, g, b = tonumber("0x" .. hex:sub(1, 2)) / 255, tonumber("0x" .. hex:sub(3, 4)) / 255,
-          tonumber("0x" .. hex:sub(5, 6)) / 255
+      r, g, b = tonumber("0x" .. hex:sub(1, 2)), tonumber("0x" .. hex:sub(3, 4)),
+          tonumber("0x" .. hex:sub(5, 6))
     end
     return r, g, b
+  end,
+
+  --[[ Decodes hexadecimal to string.
+
+  HEX must be provided in a string format.
+      
+  - Example:
+
+        hexToString("63756e74")
+          -> "cunt"
+  ]]
+  ---@param hex string
+  ---@return string
+  hexToString = function(hex)
+    return (hex:gsub("%x%x", function(digits)
+      return string.char(tonumber(digits, 16))
+    end))
+  end,
+
+  ---Encodes a string into hexadecimal
+  ---@param str string
+  ---@return string
+  stringToHex = function(str)
+    return (str:gsub(".", function(char) return string.format("%02x", char:byte()) end))
   end,
 
   ---Iterates over a table and returns the value from each key.
@@ -150,6 +206,84 @@ lua_Fn = {
 
 -------------------------------------------------- ImGui Stuff ---------------------------------------------------------------
 UI = {
+
+  getKeyPressed = function()
+    local btn, kbm, gpad
+    local controls_T = {
+      { ctrl = 7,   kbm = "[L]",                          gpad = "[R3]" },
+      { ctrl = 10,  kbm = "[PAGE UP]",                    gpad = "[LT]" },
+      { ctrl = 11,  kbm = "[PAGE DOWN]",                  gpad = "[RT]" },
+      { ctrl = 14,  kbm = "[ARROW DOWN]",                 gpad = "[DPAD RIGHT]" },
+      { ctrl = 15,  kbm = "[SCROLLWHEEL UP]",             gpad = "[DPAD LEFT]" },
+      { ctrl = 19,  kbm = "[LEFT ALT]",                   gpad = "[DPAD DOWN]" },
+      { ctrl = 20,  kbm = "[Z]",                          gpad = "[DPAD DOWN]" },
+      { ctrl = 21,  kbm = "[LEFT SHIFT]",                 gpad = "[A]" },
+      { ctrl = 22,  kbm = "[SPACEBAR]",                   gpad = "[X]" },
+      { ctrl = 23,  kbm = "[F]",                          gpad = "[Y]" },
+      { ctrl = 27,  kbm = "[ARROW UP]",                   gpad = "[DPAD UP]" },
+      { ctrl = 29,  kbm = "[B]",                          gpad = "[R3]" },
+      { ctrl = 30,  kbm = "[D]",                          gpad = "[LEFT STICK]" },
+      { ctrl = 34,  kbm = "[A]",                          gpad = "[LEFT STICK]" },
+      { ctrl = 36,  kbm = "[LEFT CTRL]",                  gpad = "[L3]" },
+      { ctrl = 37,  kbm = "[TAB]",                        gpad = "[LB]" },
+      { ctrl = 38,  kbm = "[E]",                          gpad = "[LB]" },
+      { ctrl = 42,  kbm = "[ ] ]",                        gpad = "[DPAD UP]" },
+      { ctrl = 43,  kbm = "[ [ ]",                        gpad = "[DPAD DOWN]" },
+      { ctrl = 44,  kbm = "[Q]",                          gpad = "[RB]" },
+      { ctrl = 45,  kbm = "[R]",                          gpad = "[B]" },
+      { ctrl = 46,  kbm = "[E]",                          gpad = "[DPAD RIGHT]" },
+      { ctrl = 47,  kbm = "[G]",                          gpad = "[DPAD LEFT]" },
+      { ctrl = 56,  kbm = "[F9]",                         gpad = "[Y]" },
+      { ctrl = 57,  kbm = "[F10]",                        gpad = "[B]" },
+      { ctrl = 70,  kbm = "[RIGHT CTRL]",                 gpad = "[A]" },
+      { ctrl = 71,  kbm = "[W]",                          gpad = "[RT]" },
+      { ctrl = 72,  kbm = "[S]",                          gpad = "[LT]" },
+      { ctrl = 73,  kbm = "[X]",                          gpad = "[A]" },
+      { ctrl = 74,  kbm = "[H]",                          gpad = "[DPAD RIGHT]" },
+      { ctrl = 75,  kbm = "[F]",                          gpad = "[Y]" },
+      { ctrl = 76,  kbm = "[SPACE]",                      gpad = "[RB]" },
+      { ctrl = 79,  kbm = "[C]",                          gpad = "[R3]" },
+      { ctrl = 81,  kbm = "[.]",                          gpad = "(NONE)" },
+      { ctrl = 82,  kbm = "[,]",                          gpad = "(NONE)" },
+      { ctrl = 83,  kbm = "[=]",                          gpad = "(NONE)" },
+      { ctrl = 84,  kbm = "[-]",                          gpad = "(NONE)" },
+      { ctrl = 84,  kbm = "[Q]",                          gpad = "[DPAD LEFT]" },
+      { ctrl = 96,  kbm = "[NUMPAD+ / SCROLLWHEEL UP]",   gpad = "(NONE)" },
+      { ctrl = 97,  kbm = "[NUMPAD- / SCROLLWHEEL DOWN]", gpad = "(NONE)" },
+      { ctrl = 124, kbm = "[NUMPAD 4]",                   gpad = "[LEFT STICK]" },
+      { ctrl = 125, kbm = "[NUMPAD 6]",                   gpad = "[LEFT STICK]" },
+      { ctrl = 112, kbm = "[NUMPAD 5]",                   gpad = "[LEFT STICK]" },
+      { ctrl = 127, kbm = "[NUMPAD 8]",                   gpad = "[LEFT STICK]" },
+      { ctrl = 117, kbm = "[NUMPAD 7]",                   gpad = "[LB]" },
+      { ctrl = 118, kbm = "[NUMPAD 9]",                   gpad = "[RB]" },
+      { ctrl = 167, kbm = "[F6]",                         gpad = "(NONE)" },
+      { ctrl = 168, kbm = "[F7]",                         gpad = "(NONE)" },
+      { ctrl = 169, kbm = "[F8]",                         gpad = "(NONE)" },
+      { ctrl = 170, kbm = "[F3]",                         gpad = "[B]" },
+      { ctrl = 178, kbm = "[DELETE]",                     gpad = "[Y]" },
+      { ctrl = 194, kbm = "[BACKSPACE]",                  gpad = "[B]" },
+      { ctrl = 243, kbm = "[~]",                          gpad = "(NONE)" },
+      { ctrl = 244, kbm = "[M]",                          gpad = "[BACK]" },
+      { ctrl = 249, kbm = "[N]",                          gpad = "(NONE)" },
+      { ctrl = 288, kbm = "[F1]",                         gpad = "[A]" },
+      { ctrl = 289, kbm = "[F2]",                         gpad = "[X]" },
+      { ctrl = 303, kbm = "[U]",                          gpad = "[DPAD UP]" },
+      { ctrl = 307, kbm = "[ARROW RIGHT]",                gpad = "[DPAD RIGHT]" },
+      { ctrl = 308, kbm = "[ARROW LEFT]",                 gpad = "[DPAD LEFT]" },
+      { ctrl = 311, kbm = "[K]",                          gpad = "[DPAD DOWN]" },
+      { ctrl = 318, kbm = "[F5]",                         gpad = "[START]" },
+      { ctrl = 322, kbm = "[ESC]",                        gpad = "(NONE)" },
+      { ctrl = 344, kbm = "[F11]",                        gpad = "[DPAD RIGHT]" },
+    }
+    for _, v in ipairs(controls_T) do
+      if PAD.IS_CONTROL_JUST_PRESSED(0, v.ctrl) then
+        btn, kbm, gpad  = v.ctrl, v.kbm, v.gpad
+        break
+      end
+    end
+    return btn, kbm, gpad
+  end,
+
   ---@param col string | table
   getColor = function(col)
     local r, g, b
@@ -157,6 +291,7 @@ UI = {
     if type(col) == "string" then
       if col:find("^#") then
         r, g, b = lua_Fn.hexToRGB(col)
+        r, g , b = lua_Fn.round((r / 255), 1), lua_Fn.round((g / 255), 1), lua_Fn.round((b / 255), 1)
       elseif col == "black" then
         r, g, b = 0, 0, 0
       elseif col == "white" then
@@ -192,7 +327,16 @@ UI = {
       end
       r, g, b = col[1], col[2], col[3]
     end
-    return r, g, b, errorMsg
+    return lua_Fn.round(r, 3), lua_Fn.round(g, 3), lua_Fn.round(b, 3), errorMsg
+  end,
+
+  ---Creates a text wrapped around the provided size. (You can use coloredText() and set the color to white but this is simpler.)
+  ---@param text string
+  ---@param wrap_size integer
+  wrappedText = function(text, wrap_size)
+    ImGui.PushTextWrapPos(ImGui.GetFontSize() * wrap_size)
+    ImGui.TextWrapped(text)
+    ImGui.PopTextWrapPos()
   end,
 
   ---Creates a colored ImGui text.
@@ -486,7 +630,7 @@ Game = {
   -- Returns the player's cash
   ---@param player integer
   getPlayerWallet = function(player)
-    local wallet     = (tonumber(lua_Fn.str_replace(MONEY.NETWORK_GET_STRING_WALLET_BALANCE(player), "$", "")))
+    local wallet     = (tonumber(lua_Fn.str_replace(MONEY.NETWORK_GET_STRING_WALLET_BALANCE(player), "$", "")) * 1)
     local wallet_int = wallet
     local formatted  = lua_Fn.formatMoney(wallet)
     return formatted, wallet_int
@@ -751,17 +895,45 @@ Game = {
 
   Self = {
 
+    ---@return integer
+    get_ped = function()
+      return self.get_ped()
+    end,
+
+    ---@return integer
+    get_id = function()
+      return self.get_id()
+    end,
+
+    ---@return userdata
+    get_coords = function()
+      return self.get_pos()
+    end,
+
+    ---@return number
+    get_elevation = function()
+      return ENTITY.GET_ENTITY_HEIGHT_ABOVE_GROUND(self.get_ped())
+    end,
+
+    ---@return boolean
+    is_ragdoll = function()
+      return PED.IS_PED_RAGDOLL(self.get_ped())
+    end,
+
     -- Returns localPlayer's maximum health.
+    ---@return integer
     maxHealth = function()
       return ENTITY.GET_ENTITY_MAX_HEALTH(self.get_ped())
     end,
 
     -- Returns localPlayer's current health.
+    ---@return integer
     health = function()
       return ENTITY.GET_ENTITY_HEALTH(self.get_ped())
     end,
 
     -- Returns localPlayer's current armour
+    ---@return integer
     armour = function()
       return PED.GET_PED_ARMOUR(self.get_ped())
     end,

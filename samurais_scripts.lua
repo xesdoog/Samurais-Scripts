@@ -2,6 +2,7 @@
 
 require('lib/samurais_utils')
 require('lib/Translations')
+require("objects")
 Samurais_scripts = gui.get_tab("Samurai's Scripts")
 
 default_config = {
@@ -112,7 +113,7 @@ self_tab:add_imgui(function()
   end
 end)
 
-local sound_player = self_tab:add_tab(translateLabel"soundplayer")
+local sound_player    = self_tab:add_tab(translateLabel "soundplayer")
 local sound_index1    = 0
 local sound_index2    = 0
 local switch          = 0
@@ -222,7 +223,7 @@ end)
 --[[
     *vehicle*
 ]]
-local vehicle_tab = Samurais_scripts:add_tab(translateLabel("vehicleTab"))
+local vehicle_tab        = Samurais_scripts:add_tab(translateLabel("vehicleTab"))
 local popsnd, sndRef
 local flame_size
 local driftMode          = lua_cfg.read("driftMode")
@@ -249,6 +250,7 @@ local is_boat            = false
 local is_bike            = false
 local validModel         = false
 local has_xenon          = false
+local tire_smoke         = false
 local purge_started      = false
 local nos_started        = false
 local twostep_started    = false
@@ -258,18 +260,25 @@ local started_lct        = false
 local launch_active      = false
 local started_popSound   = false
 local started_popSound2  = false
+local customSmokeCol     = false
 local timerA             = 0
 local timerB             = 0
 local lastVeh            = 0
 local defaultXenon       = 0
 local vehSound_index     = 0
+local driftSmokeIndex    = 0
+local selected_smoke_col = 0
 local tdBtn              = 21
 local search_term        = ""
+local smokeHex           = ""
+local smokePtfx_t        = {}
 local nosptfx_t          = {}
 local purgePtfx_t        = {}
 local lctPtfx_t          = {}
 local popSounds_t        = {}
 local popsPtfx_t         = {}
+local driftSmoke         = {r = 255, g = 255, b = 255}
+local driftSmokeColors   = {"Black", "White", "Red", "Green", "Blue", "Yellow", "Orange", "Pink", "Purple"}
 local gta_vehicles       = { "Airbus", "Airtug", "akula", "akuma", "aleutian", "alkonost", "alpha", "alphaz1",
   "AMBULANCE", "annihilator", "annihilator2", "apc", "ardent", "armytanker", "armytrailer", "armytrailer2", "asbo",
   "asea", "asea2", "asterope", "asterope2", "astron", "autarch", "avarus", "avenger", "avenger2", "avenger3", "avenger4",
@@ -353,7 +362,7 @@ local gta_vehicles       = { "Airbus", "Airtug", "akula", "akuma", "aleutian", "
   "yosemite2", "yosemite3", "youga", "youga2", "youga3", "youga4", "z190", "zeno", "zentorno", "zhaba", "zion", "zion2",
   "zion3", "zombiea", "zombieb", "zorrusso", "zr350", "zr380", "zr3802", "zr3803", "Ztype", }
 
-local vehOffsets = {
+local vehOffsets         = {
   fc   = 0x001C,
   ft   = 0x0014,
   rc   = 0x0020,
@@ -423,12 +432,12 @@ vehicle_tab:add_imgui(function()
       end
       if driftMode then
         DriftTires = false
-        ImGui.Spacing()
-        ImGui.Text(translateLabel("driftSlider"))
-        ImGui.PushItemWidth(250)
+        ImGui.SameLine()
+        -- ImGui.Text(translateLabel("driftSlider"))
+        ImGui.PushItemWidth(160)
         DriftIntensity, DriftIntensityUsed = ImGui.SliderInt("##Intensity", DriftIntensity, 0, 3)
-        UI.toolTip(false, translateLabel("driftSlider_tt"))
         ImGui.PopItemWidth()
+        UI.toolTip(false, translateLabel("driftSlider_tt"))
         if DriftIntensityUsed then
           UI.widgetSound("Nav")
           lua_cfg.save("DriftIntensity", DriftIntensity)
@@ -444,11 +453,44 @@ vehicle_tab:add_imgui(function()
         lua_cfg.save("DriftTires", DriftTires)
         lua_cfg.save("driftMode", false)
       end
+      if driftMode or DriftTires then
+        ImGui.Spacing(); ImGui.Text(translateLabel("driftSmokeCol"))
+        if not customSmokeCol then
+          driftSmokeIndex, dsiUsed = ImGui.Combo("##tireSmoke", driftSmokeIndex, driftSmokeColors, #driftSmokeColors); ImGui.SameLine()
+          if dsiUsed then
+            selected_smoke_col = driftSmokeColors[driftSmokeIndex + 1]
+            local r, g, b = UI.getColor(string.lower(selected_smoke_col))
+            r, g, b = lua_Fn.round((r * 255), 2), lua_Fn.round((g * 255), 2), lua_Fn.round((b * 255), 2)
+            driftSmoke.r, driftSmoke.g, driftSmoke.b = r, g, b
+          end
+        else
+          smokeHex, smokeHexEntered = ImGui.InputTextWithHint("##customHex", "HEX", smokeHex, 8, ImGuiInputTextFlags.EnterReturnsTrue | ImGuiInputTextFlags.CharsNoBlank); ImGui.SameLine()
+          if ImGui.IsItemActive() then
+            is_typing = true
+          else
+            is_typing = false
+          end
+          UI.toolTip(false, translateLabel("hex_tt"))
+          if smokeHexEntered then
+            if smokeHex ~= nil then
+              if not smokeHex:find("^#") then
+                smokeHex = "#" .. smokeHex
+              end
+              driftSmoke.r, driftSmoke.g, driftSmoke.b = lua_Fn.hexToRGB(smokeHex)
+            end
+          end
+        end
+        customSmokeCol, cscUsed = ImGui.Checkbox(translateLabel("customLangTxt"), customSmokeCol, true)
+        if cscUsed then
+          UI.widgetSound("Nav2")
+        end
+      end
     else
-      ImGui.TextWrapped("\10You can only drift cars, trucks and quad bikes.\10\10")
+      UI.wrappedText(translateLabel("driftInvalidVehTxt"), 15)
     end
 
-    ImGui.Separator(); ImGui.Spacing(); limitVehOptions, lvoUsed = ImGui.Checkbox(translateLabel("lvoCB"), limitVehOptions, true)
+    ImGui.Separator(); ImGui.Spacing(); limitVehOptions, lvoUsed = ImGui.Checkbox(translateLabel("lvoCB"),
+      limitVehOptions, true)
     UI.toolTip(false, translateLabel("lvo_tt"))
     if lvoUsed then
       UI.widgetSound("Nav2")
@@ -539,7 +581,8 @@ vehicle_tab:add_imgui(function()
       lua_cfg.save("holdF", holdF)
     end
 
-    ImGui.SameLine(); ImGui.Dummy(25, 1); ImGui.SameLine(); noJacking, noJackingUsed = ImGui.Checkbox("Can't Touch This!", noJacking, true)
+    ImGui.SameLine(); ImGui.Dummy(25, 1); ImGui.SameLine(); noJacking, noJackingUsed = ImGui.Checkbox(
+      "Can't Touch This!", noJacking, true)
     UI.toolTip(false, translateLabel("canttouchthis_tt"))
     if noJackingUsed then
       UI.widgetSound("Nav2")
@@ -553,7 +596,8 @@ vehicle_tab:add_imgui(function()
     end
     UI.toolTip(false, translateLabel("insta180_tt"))
 
-    ImGui.SameLine(); ImGui.Dummy(54, 1); ImGui.SameLine(); flappyDoors, flappyDoorsUsed = ImGui.Checkbox("Flappy Doors", flappyDoors, true)
+    ImGui.SameLine(); ImGui.Dummy(54, 1); ImGui.SameLine(); flappyDoors, flappyDoorsUsed = ImGui.Checkbox("Flappy Doors",
+      flappyDoors, true)
     if flappyDoorsUsed then
       UI.widgetSound("Nav2")
       lua_cfg.save("flappyDoors", flappyDoors)
@@ -651,22 +695,23 @@ vehicle_tab:add_imgui(function()
   end
 end)
 
-local flatbed = vehicle_tab:add_tab("Flatbed")
+local flatbed          = vehicle_tab:add_tab("Flatbed")
 local attached_vehicle = 0
 local xAxis            = 0.0
 local yAxis            = 0.0
 local zAxis            = 0.0
 local modelOverride    = false
 flatbed:add_imgui(function()
-  local vehicleHandles  = entities.get_all_vehicles_as_handles()
-  local flatbedModel    = 1353720154
-  local vehicle_model   = Game.getEntityModel(current_vehicle)
-  local playerPosition  = self.get_pos()
-  local playerForwardX  = Game.getForwardX(self.get_ped())
-  local playerForwardY  = Game.getForwardY(self.get_ped())
+  local vehicleHandles = entities.get_all_vehicles_as_handles()
+  local flatbedModel   = 1353720154
+  local vehicle_model  = Game.getEntityModel(current_vehicle)
+  local playerPosition = self.get_pos()
+  local playerForwardX = Game.getForwardX(self.get_ped())
+  local playerForwardY = Game.getForwardY(self.get_ped())
   for _, veh in ipairs(vehicleHandles) do
     script.run_in_fiber(function(detector)
-      local detectPos = vec3:new(playerPosition.x - (playerForwardX * 10), playerPosition.y - (playerForwardY * 10), playerPosition.z)
+      local detectPos = vec3:new(playerPosition.x - (playerForwardX * 10), playerPosition.y - (playerForwardY * 10),
+        playerPosition.z)
       local vehPos    = ENTITY.GET_ENTITY_COORDS(veh, false)
       local vDist     = SYSTEM.VDIST(detectPos.x, detectPos.y, detectPos.z, vehPos.x, vehPos.y, vehPos.z)
       if vDist <= 5 then
@@ -695,7 +740,8 @@ flatbed:add_imgui(function()
     displayText = (translateLabel("fltbd_closest_veh") .. tostring(closestVehicleName))
   end
   if attached_vehicle ~= 0 then
-    displayText = translateLabel("fltbd_towingTxt") .. vehicles.get_vehicle_display_name(ENTITY.GET_ENTITY_MODEL(attached_vehicle)) .. "."
+    displayText = translateLabel("fltbd_towingTxt") ..
+        vehicles.get_vehicle_display_name(ENTITY.GET_ENTITY_MODEL(attached_vehicle)) .. "."
   end
   if modelOverride then
     towable = true
@@ -708,7 +754,7 @@ flatbed:add_imgui(function()
   if isbike then
     towable = true
   end
-  if closestVehicleModel == 745926877 then   --Buzzard
+  if closestVehicleModel == 745926877 then --Buzzard
     towable = true
   end
   if is_in_flatbed then
@@ -786,7 +832,7 @@ flatbed:add_imgui(function()
         script.run_in_fiber(function()
           local modelHash = ENTITY.GET_ENTITY_MODEL(attached_vehicle)
           local attachedVehicle = ENTITY.GET_ENTITY_OF_TYPE_ATTACHED_TO_ENTITY(
-          PED.GET_VEHICLE_PED_IS_USING(self.get_ped()), modelHash)
+            PED.GET_VEHICLE_PED_IS_USING(self.get_ped()), modelHash)
           local attachedVehcoords = ENTITY.GET_ENTITY_COORDS(attached_vehicle, false)
           controlled = entities.take_control_of(attachedVehicle, 300)
           if ENTITY.DOES_ENTITY_EXIST(attachedVehicle) then
@@ -854,7 +900,7 @@ flatbed:add_imgui(function()
             end
           end
           fltbd = VEHICLE.CREATE_VEHICLE(flatbedModel, playerPosition.x, playerPosition.y, playerPosition.z,
-          ENTITY.GET_ENTITY_HEADING(self.get_ped()), true, false, false)
+            ENTITY.GET_ENTITY_HEADING(self.get_ped()), true, false, false)
           PED.SET_PED_INTO_VEHICLE(self.get_ped(), fltbd, -1)
           ENTITY.SET_ENTITY_AS_NO_LONGER_NEEDED(fltbd)
         else
@@ -869,7 +915,7 @@ end)
 --[[
     *players*
 ]]
-players_tab = Samurais_scripts:add_tab(translateLabel("playersTab"))
+players_tab           = Samurais_scripts:add_tab(translateLabel("playersTab"))
 
 playerIndex           = 0
 local selectedPlayer  = 0
@@ -949,8 +995,7 @@ end)
 --[[
     *world*
 ]]
-local world_tab = Samurais_scripts:add_tab(translateLabel("worldTab"))
-
+local world_tab          = Samurais_scripts:add_tab(translateLabel("worldTab"))
 local pedGrabber         = false
 local ped_grabbed        = false
 local carpool            = false
@@ -1057,24 +1102,705 @@ world_tab:add_imgui(function()
   end
 end)
 
+local object_spawner         = world_tab:add_tab("Object Spawner")
+local coords                 = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
+local heading                = ENTITY.GET_ENTITY_HEADING(self.get_ped())
+local forwardX               = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
+local forwardY               = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
+local searchQuery            = ""
+local propName               = ""
+local invalidType            = ""
+local showCustomProps        = true
+local edit_mode              = false
+local activeX                = false
+local activeY                = false
+local activeZ                = false
+local rotX                   = false
+local rotY                   = false
+local rotZ                   = false
+local attached               = false
+local attachToSelf           = false
+local attachToVeh            = false
+local previewStarted         = false
+local isChanged              = false
+local showInvalidObjText     = false
+local blacklisted_obj        = false
+local prop                   = 0
+local propHash               = 0
+local os_switch              = 0
+local prop_index             = 0
+local objects_index          = 0
+local spawned_index          = 0
+local selectedObject         = 0
+local axisMult               = 1
+local selected_bone          = 0
+local previewEntity          = 0
+local currentObjectPreview   = 0
+local attached_index         = 0
+local zOffset                = 0
+local spawned_props          = {}
+local spawnedNames           = {}
+local filteredSpawnNames     = {}
+local selfAttachments        = {}
+local selfAttachNames        = {}
+local vehAttachments         = {}
+local vehAttachNames         = {}
+local filteredVehAttachNames = {}
+local filteredAttachNames    = {}
+local spawnDistance          = { x = 0, y = 0, z = 0 }
+local spawnRot               = { x = 0, y = 0, z = 0 }
+local attachPos              = { x = 0.0, y = 0.0, z = 0.0, rotX = 0.0, rotY = 0.0, rotZ = 0.0 }
+local pedBones               = {
+  { name = "Root",       ID = 0 },
+  { name = "Head",       ID = 12844 },
+  { name = "Spine 00",   ID = 23553 },
+  { name = "Spine 01",   ID = 24816 },
+  { name = "Spine 02",   ID = 24817 },
+  { name = "Spine 03",   ID = 24818 },
+  { name = "Right Hand", ID = 6286 },
+  { name = "Left Hand",  ID = 18905 },
+  { name = "Right Foot", ID = 35502 },
+  { name = "Left Foot",  ID = 14201 },
+}
+local vehBones               = { "chassis", "chassis_lowlod", "chassis_dummy", "seat_dside_f", "seat_dside_r",
+  "seat_dside_r1", "seat_dside_r2", "seat_dside_r3", "seat_dside_r4", "seat_dside_r5", "seat_dside_r6", "seat_dside_r7",
+  "seat_pside_f", "seat_pside_r", "seat_pside_r1", "seat_pside_r2", "seat_pside_r3", "seat_pside_r4", "seat_pside_r5",
+  "seat_pside_r6", "seat_pside_r7", "window_lf1", "window_lf2", "window_lf3", "window_rf1", "window_rf2", "window_rf3",
+  "window_lr1", "window_lr2", "window_lr3", "window_rr1", "window_rr2", "window_rr3", "door_dside_f", "door_dside_r",
+  "door_pside_f", "door_pside_r", "handle_dside_f", "handle_dside_r", "handle_pside_f", "handle_pside_r", "wheel_lf",
+  "wheel_rf", "wheel_lm1", "wheel_rm1", "wheel_lm2", "wheel_rm2", "wheel_lm3", "wheel_rm3", "wheel_lr", "wheel_rr",
+  "suspension_lf", "suspension_rf", "suspension_lm", "suspension_rm", "suspension_lr", "suspension_rr", "spring_rf",
+  "spring_lf", "spring_rr", "spring_lr", "transmission_f", "transmission_m", "transmission_r", "hub_lf", "hub_rf",
+  "hub_lm1", "hub_rm1", "hub_lm2", "hub_rm2", "hub_lm3", "hub_rm3", "hub_lr", "hub_rr", "windscreen", "windscreen_r",
+  "window_lf", "window_rf", "window_lr", "window_rr", "window_lm", "window_rm", "bodyshell", "bumper_f", "bumper_r",
+  "wing_rf", "wing_lf", "bonnet", "boot", "exhaust", "exhaust_2", "exhaust_3", "exhaust_4", "exhaust_5", "exhaust_6",
+  "exhaust_7", "exhaust_8", "exhaust_9", "exhaust_10", "exhaust_11", "exhaust_12", "exhaust_13", "exhaust_14",
+  "exhaust_15", "exhaust_16", "engine", "overheat", "overheat_2", "petrolcap", "petroltank", "petroltank_l",
+  "petroltank_r", "steering", "hbgrip_l", "hbgrip_r", "headlight_l", "headlight_r", "taillight_l", "taillight_r",
+  "indicator_lf", "indicator_rf", "indicator_lr", "indicator_rr", "brakelight_l", "brakelight_r", "brakelight_m",
+  "reversinglight_l", "reversinglight_r", "extralight_1", "extralight_2", "extralight_3", "extralight_4", "numberplate",
+  "interiorlight", "siren1", "siren2", "siren3", "siren4", "siren5", "siren6", "siren7", "siren8", "siren9", "siren10",
+  "siren11", "siren12", "siren13", "siren14", "siren15", "siren16", "siren17", "siren18", "siren19", "siren20",
+  "siren_glass1", "siren_glass2", "siren_glass3", "siren_glass4", "siren_glass5", "siren_glass6", "siren_glass7",
+  "siren_glass8", "siren_glass9", "siren_glass10", "siren_glass11", "siren_glass12", "siren_glass13", "siren_glass14",
+  "siren_glass15", "siren_glass16", "siren_glass17", "siren_glass18", "siren_glass19", "siren_glass20", "spoiler",
+  "struts", "misc_a", "misc_b", "misc_c", "misc_d", "misc_e", "misc_f", "misc_g", "misc_h", "misc_i", "misc_j", "misc_k",
+  "misc_l", "misc_m", "misc_n", "misc_o", "misc_p", "misc_q", "misc_r", "misc_s", "misc_t", "misc_u", "misc_v", "misc_w",
+  "misc_x", "misc_y", "misc_z", "misc_1", "misc_2", "weapon_1a", "weapon_1b", "weapon_1c", "weapon_1d", "weapon_1a_rot",
+  "weapon_1b_rot", "weapon_1c_rot", "weapon_1d_rot", "weapon_2a", "weapon_2b", "weapon_2c", "weapon_2d", "weapon_2a_rot",
+  "weapon_2b_rot", "weapon_2c_rot", "weapon_2d_rot", "weapon_3a", "weapon_3b", "weapon_3c", "weapon_3d", "weapon_3a_rot",
+  "weapon_3b_rot", "weapon_3c_rot", "weapon_3d_rot", "weapon_4a", "weapon_4b", "weapon_4c", "weapon_4d", "weapon_4a_rot",
+  "weapon_4b_rot", "weapon_4c_rot", "weapon_4d_rot", "turret_1base", "turret_1barrel", "turret_2base", "turret_2barrel",
+  "turret_3base", "turret_3barrel", "ammobelt", "searchlight_base", "searchlight_light", "attach_female", "roof", "roof2",
+  "soft_1", "soft_2", "soft_3", "soft_4", "soft_5", "soft_6", "soft_7", "soft_8", "soft_9", "soft_10", "soft_11",
+  "soft_12", "soft_13", "forks", "mast", "carriage", "fork_l", "fork_r", "forks_attach", "frame_1", "frame_2", "frame_3",
+  "frame_pickup_1", "frame_pickup_2", "frame_pickup_3", "frame_pickup_4", "freight_cont", "freight_bogey",
+  "freightgrain_slidedoor", "door_hatch_r", "door_hatch_l", "tow_arm", "tow_mount_a", "tow_mount_b", "tipper",
+  "combine_reel", "combine_auger", "slipstream_l", "slipstream_r", "arm_1", "arm_2", "arm_3", "arm_4", "scoop", "boom",
+  "stick", "bucket", "shovel_2", "shovel_3", "Lookat_UpprPiston_head", "Lookat_LowrPiston_boom", "Boom_Driver",
+  "cutter_driver", "vehicle_blocker", "extra_1", "extra_2", "extra_3", "extra_4", "extra_5", "extra_6", "extra_7",
+  "extra_8", "extra_9", "extra_ten", "extra_11", "extra_12", "break_extra_1", "break_extra_2", "break_extra_3",
+  "break_extra_4", "break_extra_5", "break_extra_6", "break_extra_7", "break_extra_8", "break_extra_9", "break_extra_10",
+  "mod_col_1", "mod_col_2", "mod_col_3", "mod_col_4", "mod_col_5", "handlebars", "forks_u", "forks_l", "wheel_f",
+  "swingarm", "wheel_r", "crank", "pedal_r", "pedal_l", "static_prop", "moving_prop", "static_prop2", "moving_prop2",
+  "rudder", "rudder2", "wheel_rf1_dummy", "wheel_rf2_dummy", "wheel_rf3_dummy", "wheel_rb1_dummy", "wheel_rb2_dummy",
+  "wheel_rb3_dummy", "wheel_lf1_dummy", "wheel_lf2_dummy", "wheel_lf3_dummy", "wheel_lb1_dummy", "wheel_lb2_dummy",
+  "wheel_lb3_dummy", "bogie_front", "bogie_rear", "rotor_main", "rotor_rear", "rotor_main_2", "rotor_rear_2", "elevators",
+  "tail", "outriggers_l", "outriggers_r", "rope_attach_a", "rope_attach_b", "prop_1", "prop_2", "elevator_l",
+  "elevator_r", "rudder_l", "rudder_r", "prop_3", "prop_4", "prop_5", "prop_6", "prop_7", "prop_8", "rudder_2",
+  "aileron_l", "aileron_r", "airbrake_l", "airbrake_r", "wing_l", "wing_r", "wing_lr", "wing_rr", "engine_l", "engine_r",
+  "nozzles_f", "nozzles_r", "afterburner", "wingtip_1", "wingtip_2", "gear_door_fl", "gear_door_fr", "gear_door_rl1",
+  "gear_door_rr1", "gear_door_rl2", "gear_door_rr2", "gear_door_rml", "gear_door_rmr", "gear_f", "gear_rl", "gear_lm1",
+  "gear_rr", "gear_rm1", "gear_rm", "prop_left", "prop_right", "legs", "attach_male", "draft_animal_attach_lr",
+  "draft_animal_attach_rr", "draft_animal_attach_lm", "draft_animal_attach_rm", "draft_animal_attach_lf",
+  "draft_animal_attach_rf", "wheelcover_l", "wheelcover_r", "barracks", "pontoon_l", "pontoon_r", "no_ped_col_step_l",
+  "no_ped_col_strut_1_l", "no_ped_col_strut_2_l", "no_ped_col_step_r", "no_ped_col_strut_1_r", "no_ped_col_strut_2_r",
+  "light_cover", "emissives", "neon_l", "neon_r", "neon_f", "neon_b", "dashglow", "doorlight_lf", "doorlight_rf",
+  "doorlight_lr", "doorlight_rr", "unknown_id", "dials", "engineblock", "bobble_head", "bobble_base", "bobble_hand",
+  "chassis_Control", }
 
+local function resetSliders()
+  spawnDistance = { x = 0, y = 0, z = 0 }
+  spawnRot      = { x = 0, y = 0, z = 0 }
+  attachPos     = { x = 0.0, y = 0.0, z = 0.0, rotX = 0.0, rotY = 0.0, rotZ = 0.0 }
+end
+
+object_spawner:add_imgui(function()
+  ImGui.PushItemWidth(280)
+  searchQuery, used = ImGui.InputTextWithHint("##searchObjects", translateLabel("search_hint"), searchQuery, 32)
+  ImGui.PopItemWidth()
+  if ImGui.IsItemActive() then
+    is_typing = true
+  else
+    is_typing = false
+  end
+end)
+
+local function updateFilteredProps()
+  filteredProps = {}
+  for _, p in ipairs(custom_props) do
+    if string.find(string.lower(p.name), string.lower(searchQuery)) then
+      table.insert(filteredProps, p)
+    end
+    table.sort(custom_props, function(a, b)
+      return a.name < b.name
+    end)
+  end
+end
+local function displayFilteredProps()
+  updateFilteredProps()
+  local propNames = {}
+  for _, p in ipairs(filteredProps) do
+    table.insert(propNames, p.name)
+  end
+  prop_index, used = ImGui.ListBox("##propList", prop_index, propNames, #filteredProps)
+  prop = filteredProps[prop_index + 1]
+  if prop ~= nil then
+    propHash = prop.hash
+    propName = prop.name
+  end
+end
+local function getAllObjects()
+  filteredObjects = {}
+  for _, object in ipairs(gta_objets) do
+    if searchQuery ~= "" then
+      if string.find(string.lower(object), string.lower(searchQuery)) then
+        table.insert(filteredObjects, object)
+      end
+    else
+      table.insert(filteredObjects, object)
+    end
+  end
+  objects_index, used = ImGui.ListBox("##gtaObjectsList", objects_index, filteredObjects, #filteredObjects)
+  prop                = filteredObjects[objects_index + 1]
+  propHash            = joaat(prop)
+  propName            = prop
+  if gui.is_open() and os_switch ~= 0 then
+    for _, b in ipairs(mp_blacklist) do
+      if propName == b then
+        showInvalidObjText = true
+        blacklisted_obj    = true
+        invalidType = translateLabel("R*_blacklist")
+        break
+      else
+        showInvalidObjText = false
+        blacklisted_obj    = false
+      end
+      for _, c in ipairs(crash_objects) do
+        if propName == c then
+          showInvalidObjText = true
+          invalidType = translateLabel("crash_object")
+          break
+        else
+          showInvalidObjText = false
+        end
+      end
+    end
+  end
+end
+
+local function updateSelfBones()
+  filteredSelfBones = {}
+  for _, bone in ipairs(pedBones) do
+    table.insert(filteredSelfBones, bone)
+  end
+end
+
+local function displaySelfBones()
+  updateSelfBones()
+  local boneNames = {}
+  for _, bone in ipairs(filteredSelfBones) do
+    table.insert(boneNames, bone.name)
+  end
+  selected_bone, used = ImGui.Combo("##pedBones", selected_bone, boneNames, #filteredSelfBones)
+end
+
+local function updateVehBones()
+  filteredVehBones = {}
+  for _, bone in ipairs(vehBones) do
+    local bone_idx = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(current_vehicle, bone)
+    if bone_idx ~= nil and bone_idx ~= -1 then
+      table.insert(filteredVehBones, bone)
+    end
+  end
+end
+
+local function displayVehBones()
+  updateVehBones()
+  local boneNames = {}
+  for _, bone in ipairs(filteredVehBones) do
+    table.insert(boneNames, bone)
+  end
+  selected_bone, used = ImGui.Combo("##vehBones", selected_bone, boneNames, #filteredVehBones)
+end
+
+local function clearPreviewData()
+  pedPreviewModel     = 0
+  vehiclePreviewModel = 0
+  objectPreviewModel  = 0
+  previewEntity       = 0
+end
+
+local function stopPreview()
+  if previewStarted then
+    previewStarted = false
+  end
+  clearPreviewData()
+end
+
+object_spawner:add_imgui(function()
+  os_switch, _ = ImGui.RadioButton(translateLabel("Custom Objects"), os_switch, 0)
+  ImGui.SameLine(); os_switch, _ = ImGui.RadioButton(translateLabel("All Objects"), os_switch, 1)
+  if os_switch == 0 then
+    ImGui.PushItemWidth(300)
+    displayFilteredProps()
+    ImGui.PopItemWidth()
+  else
+    ImGui.PushItemWidth(300)
+    getAllObjects()
+    ImGui.PopItemWidth()
+  end
+  ImGui.Spacing()
+  if blacklisted_obj then
+    ImGui.BeginDisabled()
+    preview, _ = ImGui.Checkbox(translateLabel("Preview"), preview, true)
+    ImGui.EndDisabled()
+  else
+    preview, _ = ImGui.Checkbox(translateLabel("Preview"), preview, true)
+  end
+  if preview then
+    spawnCoords            = ENTITY.GET_ENTITY_COORDS(previewEntity, false)
+    previewLoop            = true
+    currentObjectPreview   = propHash
+    local previewObjectPos = ENTITY.GET_ENTITY_COORDS(previewEntity, false)
+    ImGui.Text(translateLabel("Move_FB")); ImGui.SameLine(); ImGui.Spacing(); ImGui.SameLine(); ImGui.Text(translateLabel("Move_UD"))
+    ImGui.Dummy(10, 1); ImGui.SameLine()
+    ImGui.ArrowButton("##f2", 2)
+    if ImGui.IsItemActive() then
+      forwardX = forwardX * 0.1
+      forwardY = forwardY * 0.1
+      ENTITY.SET_ENTITY_COORDS(previewEntity, previewObjectPos.x + forwardX, previewObjectPos.y + forwardY,
+        previewObjectPos.z)
+    end
+    ImGui.SameLine()
+    ImGui.ArrowButton("##f3", 3)
+    if ImGui.IsItemActive() then
+      forwardX = forwardX * 0.1
+      forwardY = forwardY * 0.1
+      ENTITY.SET_ENTITY_COORDS(previewEntity, previewObjectPos.x - forwardX, previewObjectPos.y - forwardY,
+        previewObjectPos.z)
+    end
+    ImGui.SameLine()
+    ImGui.Dummy(60, 1); ImGui.SameLine()
+    ImGui.ArrowButton("##z2", 2)
+    if ImGui.IsItemActive() then
+      zOffset = zOffset + 0.01
+      ENTITY.SET_ENTITY_COORDS(previewEntity, previewObjectPos.x, previewObjectPos.y, previewObjectPos.z + 0.01)
+    end
+    ImGui.SameLine()
+    ImGui.ArrowButton("##z3", 3)
+    if ImGui.IsItemActive() then
+      zOffset = zOffset - 0.01
+      ENTITY.SET_ENTITY_COORDS(previewEntity, previewObjectPos.x, previewObjectPos.y, previewObjectPos.z - 0.01)
+    end
+  else
+    previewStarted = false
+    previewLoop    = false
+    zOffset        = 0.0
+    forwardX       = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
+    forwardY       = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
+  end
+  if NETWORK.NETWORK_IS_SESSION_ACTIVE() then
+    if not preview then
+      ImGui.SameLine()
+    end
+    if blacklisted_obj then
+      ImGui.BeginDisabled()
+      spawnForPlayer, _ = ImGui.Checkbox(translateLabel("Spawn For a Player"), spawnForPlayer, true)
+      ImGui.EndDisabled()
+    else
+      spawnForPlayer, _ = ImGui.Checkbox(translateLabel("Spawn For a Player"), spawnForPlayer, true)
+    end
+  end
+  if spawnForPlayer then
+    ImGui.PushItemWidth(200)
+    Game.displayPlayerList()
+    ImGui.PopItemWidth()
+    selectedPlayer = filteredPlayers[playerIndex + 1]
+    coords         = ENTITY.GET_ENTITY_COORDS(selectedPlayer, false)
+    heading        = ENTITY.GET_ENTITY_HEADING(selectedPlayer)
+    forwardX       = ENTITY.GET_ENTITY_FORWARD_X(selectedPlayer)
+    forwardY       = ENTITY.GET_ENTITY_FORWARD_Y(selectedPlayer)
+    ImGui.SameLine()
+  else
+    coords   = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
+    heading  = ENTITY.GET_ENTITY_HEADING(self.get_ped())
+    forwardX = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
+    forwardY = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
+  end
+  if blacklisted_obj then
+    ImGui.BeginDisabled()
+    ImGui.Button("   " .. translateLabel("Spawn") .. "  ")
+    ImGui.EndDisabled()
+  else
+    if ImGui.Button("   " .. translateLabel("Spawn") .. "  ") then
+      script.run_in_fiber(function()
+        while not STREAMING.HAS_MODEL_LOADED(propHash) do
+          STREAMING.REQUEST_MODEL(propHash)
+          coroutine.yield()
+        end
+        if preview then
+          spawnedObject = OBJECT.CREATE_OBJECT(propHash, spawnCoords.x, spawnCoords.y, spawnCoords.z, true, true, false)
+        else
+          spawnedObject = OBJECT.CREATE_OBJECT(propHash, coords.x + (forwardX * 3), coords.y + (forwardY * 3), coords.z,
+            true, true, false)
+        end
+        if ENTITY.DOES_ENTITY_EXIST(spawnedObject) then
+          ENTITY.SET_ENTITY_HEADING(spawnedObject, heading)
+          OBJECT.PLACE_OBJECT_ON_GROUND_PROPERLY(spawnedObject)
+          table.insert(spawned_props, spawnedObject)
+          table.insert(spawnedNames, propName)
+          local dupes = lua_Fn.getTableDupes(spawnedNames, propName)
+          if dupes > 1 then
+            newPropName = propName .. " #" .. tostring(dupes)
+            table.insert(filteredSpawnNames, newPropName)
+          else
+            table.insert(filteredSpawnNames, propName)
+          end
+        end
+      end)
+    end
+  end
+  if showInvalidObjText then
+    UI.coloredText(translateLabel("invalid_obj") .. invalidType, "#EED202", 1, 15)
+  end
+  if spawned_props[1] ~= nil then
+    ImGui.Text(translateLabel("spawned_objects"))
+    ImGui.PushItemWidth(230)
+    spawned_index, used = ImGui.Combo("##Spawned Objects", spawned_index, filteredSpawnNames, #spawned_props)
+    ImGui.PopItemWidth()
+    selectedObject = spawned_props[spawned_index + 1]
+    ImGui.SameLine()
+    if ImGui.Button(translateLabel("generic_delete") .. "##objects") then
+      script.run_in_fiber(function(script)
+        if ENTITY.DOES_ENTITY_EXIST(selectedObject) then
+          ENTITY.SET_ENTITY_AS_MISSION_ENTITY(selectedObject)
+          script:sleep(100)
+          ENTITY.DELETE_ENTITY(selectedObject)
+          table.remove(spawnedNames, spawned_index + 1)
+          table.remove(filteredSpawnNames, spawned_index + 1)
+          table.remove(spawned_props, spawned_index + 1)
+          spawned_index = 0
+          if spawned_index > 1 then
+            spawned_index = spawned_index - 1
+          end
+          if selfAttachments[1] ~= nil or vehAttachments[1] ~= nil then
+            attachPos      = { x = 0.0, y = 0.0, z = 0.0, rotX = 0.0, rotY = 0.0, rotZ = 0.0 }
+            attached       = false
+            attachedToSelf = false
+            attachedToVeh  = false
+          end
+        end
+      end)
+    end
+    ImGui.Separator()
+    attachToSelf, attachToSelfUsed = ImGui.Checkbox(translateLabel("Attach To Self"), attachToSelf, true)
+    if attachToSelfUsed then
+      UI.widgetSound("Nav2")
+    end
+    if current_vehicle ~= nil and current_vehicle ~= 0 then
+      ImGui.SameLine(); attachToVeh, attachToVehUsed = ImGui.Checkbox(translateLabel("Attach To Vehicle"), attachToVeh, true)
+      if attachToVehUsed then
+        attachToSelf = false
+        UI.widgetSound("Nav2")
+      end
+    else
+      ImGui.BeginDisabled()
+      ImGui.SameLine(); attachToVeh, attachToVehUsed = ImGui.Checkbox(translateLabel("Attach To Vehicle"), attachToVeh, true)
+      ImGui.EndDisabled()
+      UI.toolTip(false, translateLabel("getinveh"))
+    end
+    if attachToSelf then
+      attachToVeh = false
+      displaySelfBones()
+      boneData = filteredSelfBones[selected_bone + 1]
+      ImGui.SameLine()
+      if ImGui.Button(" " .. translateLabel("attachBtn") .. " " .. "##self") then
+        script.run_in_fiber(function()
+          ENTITY.ATTACH_ENTITY_TO_ENTITY(selectedObject, self.get_ped(),
+            PED.GET_PED_BONE_INDEX(self.get_ped(), boneData.ID), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, false, false, false, false,
+            2, true, 1)
+          attached = true
+          attachedObject = selectedObject
+          attachedObjectName = propName
+          if selfAttachments[1] ~= nil then
+            for _, v in ipairs(selfAttachments) do
+              if attachedObject ~= v then
+                table.insert(selfAttachments, attachedObject)
+                table.insert(selfAttachNames, attachedObjectName)
+              end
+            end
+          else
+            table.insert(selfAttachments, attachedObject)
+            table.insert(selfAttachNames, attachedObjectName)
+          end
+          local attach_dupes = lua_Fn.getTableDupes(selfAttachNames, propName)
+          if attach_dupes > 1 then
+            attach_name = attachedObjectName .. " #" .. tostring(attach_dupes)
+            table.insert(filteredAttachNames, attach_name)
+          else
+            table.insert(filteredAttachNames, propName)
+          end
+        end)
+      end
+      if selfAttachments[1] ~= nil then
+        ImGui.Text(translateLabel("attached_objects"))
+        ImGui.PushItemWidth(200)
+        attached_index, used = ImGui.Combo("##Attached Objects", attached_index, filteredAttachNames, #selfAttachments)
+        ImGui.PopItemWidth()
+        selectedAttachment = selfAttachments[attached_index + 1]
+        ImGui.SameLine()
+        if ImGui.Button(translateLabel("detachBtn") .. "##self") then
+          script.run_in_fiber(function()
+            ENTITY.DETACH_ENTITY(selectedAttachment, true, true)
+            attachPos = { x = 0.0, y = 0.0, z = 0.0, rotX = 0.0, rotY = 0.0, rotZ = 0.0 }
+          end)
+        end
+      end
+    end
+    if attachToVeh then
+      attachToSelf = false
+      displayVehBones()
+      boneData = filteredVehBones[selected_bone + 1]
+      ImGui.SameLine()
+      if ImGui.Button(" " .. translateLabel("attachBtn") .. " " .. "##veh") then
+        script.run_in_fiber(function()
+          ENTITY.ATTACH_ENTITY_TO_ENTITY(selectedObject, current_vehicle,
+            ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(current_vehicle, boneData), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, false, false, false,
+            false,
+            2, true, 1)
+          attached = true
+          attachedObject = selectedObject
+          attachedObjectName = propName
+          if vehAttachments[1] ~= nil then
+            for _, v in ipairs(vehAttachments) do
+              if attachedObject ~= v then
+                table.insert(vehAttachments, attachedObject)
+                table.insert(vehAttachNames, attachedObjectName)
+              end
+            end
+          else
+            table.insert(vehAttachments, attachedObject)
+            table.insert(vehAttachNames, attachedObjectName)
+          end
+          local attach_dupes = lua_Fn.getTableDupes(vehAttachNames, propName)
+          if attach_dupes > 1 then
+            attach_name = attachedObjectName .. " #" .. tostring(attach_dupes)
+            table.insert(filteredVehAttachNames, attach_name)
+          else
+            table.insert(filteredVehAttachNames, propName)
+          end
+        end)
+      end
+      if vehAttachments[1] ~= nil then
+        ImGui.Text(translateLabel("attached_objects"))
+        ImGui.PushItemWidth(200)
+        attached_index, used = ImGui.Combo("##vehAttachedObjects", attached_index, filteredVehAttachNames,
+          #vehAttachments)
+        ImGui.PopItemWidth()
+        selectedAttachment = vehAttachments[attached_index + 1]
+        ImGui.SameLine()
+        if ImGui.Button(translateLabel("detachBtn") .. "##veh") then
+          script.run_in_fiber(function()
+            ENTITY.DETACH_ENTITY(selectedAttachment, true, true)
+            attachPos = { x = 0.0, y = 0.0, z = 0.0, rotX = 0.0, rotY = 0.0, rotZ = 0.0 }
+          end)
+        end
+      end
+    end
+    ImGui.Separator()
+    edit_mode, used = ImGui.Checkbox(translateLabel("editMode"), edit_mode, true)
+    UI.helpMarker(false, translateLabel("editMode_tt"))
+    if edit_mode and not attached then
+      ImGui.Text(translateLabel("xyz_multiplier"))
+      ImGui.PushItemWidth(280)
+      axisMult, _ = ImGui.InputInt("##multiplier", axisMult, 1, 2, 0)
+      ImGui.Text(translateLabel("Move Object:"))
+      ImGui.Text("                        X Axis :")
+      spawnDistance.x, _ = ImGui.SliderFloat(" ", spawnDistance.x, -0.1 * axisMult, 0.1 * axisMult)
+      activeX = ImGui.IsItemActive()
+      ImGui.Separator()
+      ImGui.Text("                        Y Axis :")
+      spawnDistance.y, _ = ImGui.SliderFloat("  ", spawnDistance.y, -0.1 * axisMult, 0.1 * axisMult)
+      activeY = ImGui.IsItemActive()
+      ImGui.Separator()
+      ImGui.Text("                        Z Axis :")
+      spawnDistance.z, _ = ImGui.SliderFloat("   ", spawnDistance.z, -0.05 * axisMult, 0.05 * axisMult)
+      activeZ = ImGui.IsItemActive()
+      ImGui.Separator(); ImGui.Text(translateLabel("Rotate Object:"))
+      ImGui.Text("                        X Axis :")
+      spawnRot.x, _ = ImGui.SliderFloat("##xRot", spawnRot.x, -0.1 * axisMult, 0.1 * axisMult)
+      rotX = ImGui.IsItemActive()
+      ImGui.Separator()
+      ImGui.Text("                        Y Axis :")
+      spawnRot.y, _ = ImGui.SliderFloat("##yRot", spawnRot.y, -0.1 * axisMult, 0.1 * axisMult)
+      rotY = ImGui.IsItemActive()
+      ImGui.Separator()
+      ImGui.Text("                        Z Axis :")
+      spawnRot.z, _ = ImGui.SliderFloat("##zRot", spawnRot.z, -0.5 * axisMult, 0.5 * axisMult)
+      rotZ = ImGui.IsItemActive()
+      ImGui.PopItemWidth()
+    else
+      if edit_mode and selfAttachments[1] ~= nil or edit_mode and vehAttachments[1] ~= nil then
+        ImGui.Text(translateLabel("Move Object:") .. "##attached"); ImGui.Separator(); ImGui.Spacing()
+        if attachToSelf then
+          target     = self.get_ped()
+          attachBone = PED.GET_PED_BONE_INDEX(self.get_ped(), boneData.ID)
+        elseif attachToVeh then
+          target     = current_vehicle
+          attachBone = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(current_vehicle, boneData)
+        end
+        ImGui.Text(translateLabel("xyz_multiplier"))
+        ImGui.PushItemWidth(271)
+        axisMult, _ = ImGui.InputInt("##AttachMultiplier", axisMult, 1, 2, 0)
+        ImGui.PopItemWidth()
+        ImGui.Spacing()
+        ImGui.Text("X Axis :"); ImGui.SameLine(); ImGui.Dummy(25, 1); ImGui.SameLine(); ImGui.Text("Y Axis :"); ImGui
+            .SameLine()
+        ImGui.Dummy(25, 1); ImGui.SameLine(); ImGui.Text("Z Axis :")
+        ImGui.ArrowButton("##Xleft", 0)
+        if ImGui.IsItemActive() then
+          attachPos.x = attachPos.x + 0.001
+          ENTITY.ATTACH_ENTITY_TO_ENTITY(selectedObject, target, attachBone, attachPos.x,
+            attachPos.y, attachPos.z, attachPos.rotX, attachPos.rotY, attachPos.rotZ, false, false, false, false, 2, true,
+            1)
+        end
+        ImGui.SameLine()
+        ImGui.ArrowButton("##XRight", 1)
+        if ImGui.IsItemActive() then
+          attachPos.x = attachPos.x - 0.001 * axisMult
+          ENTITY.ATTACH_ENTITY_TO_ENTITY(selectedObject, target, attachBone, attachPos.x,
+            attachPos.y, attachPos.z, attachPos.rotX, attachPos.rotY, attachPos.rotZ, false, false, false, false, 2, true,
+            1)
+        end
+        ImGui.SameLine()
+        ImGui.Dummy(5, 1); ImGui.SameLine()
+        ImGui.ArrowButton("##Yleft", 0)
+        if ImGui.IsItemActive() then
+          attachPos.y = attachPos.y + 0.001 * axisMult
+          ENTITY.ATTACH_ENTITY_TO_ENTITY(selectedObject, target, attachBone, attachPos.x,
+            attachPos.y, attachPos.z, attachPos.rotX, attachPos.rotY, attachPos.rotZ, false, false, false, false, 2, true,
+            1)
+        end
+        ImGui.SameLine()
+        ImGui.ArrowButton("##YRight", 1)
+        if ImGui.IsItemActive() then
+          attachPos.y = attachPos.y - 0.001 * axisMult
+          ENTITY.ATTACH_ENTITY_TO_ENTITY(selectedObject, target, attachBone, attachPos.x,
+            attachPos.y, attachPos.z, attachPos.rotX, attachPos.rotY, attachPos.rotZ, false, false, false, false, 2, true,
+            1)
+        end
+        ImGui.SameLine()
+        ImGui.Dummy(5, 1); ImGui.SameLine()
+        ImGui.ArrowButton("##zUp", 2)
+        if ImGui.IsItemActive() then
+          attachPos.z = attachPos.z + 0.001 * axisMult
+          ENTITY.ATTACH_ENTITY_TO_ENTITY(selectedObject, target, attachBone, attachPos.x,
+            attachPos.y, attachPos.z, attachPos.rotX, attachPos.rotY, attachPos.rotZ, false, false, false, false, 2, true,
+            1)
+        end
+        ImGui.SameLine()
+        ImGui.ArrowButton("##zDown", 3)
+        if ImGui.IsItemActive() then
+          attachPos.z = attachPos.z - 0.001 * axisMult
+          ENTITY.ATTACH_ENTITY_TO_ENTITY(selectedObject, target, attachBone, attachPos.x,
+            attachPos.y, attachPos.z, attachPos.rotX, attachPos.rotY, attachPos.rotZ, false, false, false, false, 2, true,
+            1)
+        end
+        ImGui.Text("X Rotation :"); ImGui.SameLine(); ImGui.Text("Y Rotation :"); ImGui.SameLine(); ImGui.Text(
+          "Z Rotation :")
+        ImGui.ArrowButton("##rotXleft", 0)
+        if ImGui.IsItemActive() then
+          attachPos.rotX = attachPos.rotX + 1 * axisMult
+          ENTITY.ATTACH_ENTITY_TO_ENTITY(selectedObject, target, attachBone, attachPos.x,
+            attachPos.y, attachPos.z, attachPos.rotX, attachPos.rotY, attachPos.rotZ, false, false, false, false, 2, true,
+            1)
+        end
+        ImGui.SameLine()
+        ImGui.ArrowButton("##rotXright", 1)
+        if ImGui.IsItemActive() then
+          attachPos.rotX = attachPos.rotX - 1 * axisMult
+          ENTITY.ATTACH_ENTITY_TO_ENTITY(selectedObject, target, attachBone, attachPos.x,
+            attachPos.y, attachPos.z, attachPos.rotX, attachPos.rotY, attachPos.rotZ, false, false, false, false, 2, true,
+            1)
+        end
+        ImGui.SameLine()
+        ImGui.Dummy(5, 1); ImGui.SameLine()
+        ImGui.ArrowButton("##rotYleft", 0)
+        if ImGui.IsItemActive() then
+          attachPos.rotY = attachPos.rotY + 1 * axisMult
+          ENTITY.ATTACH_ENTITY_TO_ENTITY(selectedObject, target, attachBone, attachPos.x,
+            attachPos.y, attachPos.z, attachPos.rotX, attachPos.rotY, attachPos.rotZ, false, false, false, false, 2, true,
+            1)
+        end
+        ImGui.SameLine()
+        ImGui.ArrowButton("##rotYright", 1)
+        if ImGui.IsItemActive() then
+          attachPos.rotY = attachPos.rotY - 1 * axisMult
+          ENTITY.ATTACH_ENTITY_TO_ENTITY(selectedObject, target, attachBone, attachPos.x,
+            attachPos.y, attachPos.z, attachPos.rotX, attachPos.rotY, attachPos.rotZ, false, false, false, false, 2, true,
+            1)
+        end
+        ImGui.SameLine()
+        ImGui.Dummy(5, 1); ImGui.SameLine()
+        ImGui.ArrowButton("##rotZup", 2)
+        if ImGui.IsItemActive() then
+          attachPos.rotZ = attachPos.rotZ + 1 * axisMult
+          ENTITY.ATTACH_ENTITY_TO_ENTITY(selectedObject, target, attachBone, attachPos.x,
+            attachPos.y, attachPos.z, attachPos.rotX, attachPos.rotY, attachPos.rotZ, false, false, false, false, 2, true,
+            1)
+        end
+        ImGui.SameLine()
+        ImGui.ArrowButton("##rotZdown", 3)
+        if ImGui.IsItemActive() then
+          attachPos.rotZ = attachPos.rotZ - 1 * axisMult
+          ENTITY.ATTACH_ENTITY_TO_ENTITY(selectedObject, target, attachBone, attachPos.x,
+            attachPos.y, attachPos.z, attachPos.rotX, attachPos.rotY, attachPos.rotZ, false, false, false, false, 2, true,
+            1)
+        end
+      end
+    end
+    if ImGui.Button("   " .. translateLabel("generic_reset") .. "   ") then
+      resetSliders()
+      if attached then
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(selectedObject, target, attachBone, 0.0, 0.0, 0.0,
+          0.0, 0.0, 0.0, false, false, false, false, 2, true, 1)
+      else
+        ENTITY.SET_ENTITY_COORDS(selectedObject, coords.x + (forwardX * 3), coords.y + (forwardY * 3), coords.z)
+        ENTITY.SET_ENTITY_HEADING(selectedObject, heading)
+        OBJECT.PLACE_OBJECT_ON_GROUND_OR_OBJECT_PROPERLY(selectedObject)
+      end
+    end
+    UI.helpMarker(false, translateLabel("resetSlider_tt"))
+  end
+end)
 --[[
     *settings*
 ]]
 local settings_tab = Samurais_scripts:add_tab(translateLabel("settingsTab"))
-lang_idx        = lua_cfg.read("lang_idx")
-disableTooltips = lua_cfg.read("disableTooltips")
-disableUiSounds = lua_cfg.read("disableUiSounds")
-useGameLang     = lua_cfg.read("useGameLang")
+lang_idx           = lua_cfg.read("lang_idx")
+disableTooltips    = lua_cfg.read("disableTooltips")
+disableUiSounds    = lua_cfg.read("disableUiSounds")
+useGameLang        = lua_cfg.read("useGameLang")
 local selected_lang
-local lang_T = {
+local lang_T       = {
   { name = 'English',               iso = 'en-US' },
   { name = 'Français',              iso = 'fr-FR' },
   { name = 'Deutsch',               iso = 'de-DE' },
   { name = 'Italiano',              iso = 'it-IT' },
-  { name = 'Chinese (Traditional)', iso = 'zh-TW' },
-  { name = 'Chinese (Simplified)',  iso = 'zh-CH' },
-  { name = 'Español',               iso = 'es-ES' },
+  -- { name = 'Chinese (Traditional)', iso = 'zh-TW' },
+  -- { name = 'Chinese (Simplified)',  iso = 'zh-CH' },
+  -- { name = 'Español',               iso = 'es-ES' },
   { name = 'Português (Brasil)',    iso = 'pt-BR' },
 }
 
@@ -1200,19 +1926,41 @@ local function SS_handle_events()
 
   if attached_vehicle ~= nil and attached_vehicle ~= 0 then
     local modelHash         = ENTITY.GET_ENTITY_MODEL(attached_vehicle)
-    local attachedVehicle   = ENTITY.GET_ENTITY_OF_TYPE_ATTACHED_TO_ENTITY(PED.GET_VEHICLE_PED_IS_USING(self.get_ped()), modelHash)
+    local attachedVehicle   = ENTITY.GET_ENTITY_OF_TYPE_ATTACHED_TO_ENTITY(PED.GET_VEHICLE_PED_IS_USING(self.get_ped()),
+      modelHash)
     local attachedVehcoords = ENTITY.GET_ENTITY_COORDS(attached_vehicle, false)
     local playerForwardX    = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
     local playerForwardY    = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
-    controlled = entities.take_control_of(attachedVehicle, 300)
+    controlled              = entities.take_control_of(attachedVehicle, 300)
     if ENTITY.DOES_ENTITY_EXIST(attachedVehicle) then
       if controlled then
-        ENTITY.DETACH_ENTITY(attachedVehicle)
+        ENTITY.DETACH_ENTITY(attachedVehicle, true, true)
         ENTITY.SET_ENTITY_COORDS(attachedVehicle, attachedVehcoords.x - (playerForwardX * 10),
           attachedVehcoords.y - (playerForwardY * 10), playerPosition.z, false, false, false, false)
         VEHICLE.SET_VEHICLE_ON_GROUND_PROPERLY(attached_vehicle, 5.0)
         attached_vehicle = 0
       end
+    end
+  end
+
+  if spawned_props[1] ~= nil then
+    for _, p in ipairs(spawned_props) do
+      if ENTITY.DOES_ENTITY_EXIST(p) then
+        ENTITY.SET_ENTITY_AS_MISSION_ENTITY(p)
+        ENTITY.DELETE_ENTITY(p)
+      end
+    end
+  end
+
+  if selfAttachments[1] ~= nil then
+    for _, v in ipairs(selfAttachments) do
+      ENTITY.DETACH_ENTITY(v, true, true)
+    end
+  end
+
+  if vehAttachments[1] ~= nil then
+    for _, v in ipairs(vehAttachments) do
+      ENTITY.DETACH_ENTITY(v, true, true)
     end
   end
 end
@@ -1223,6 +1971,10 @@ end
 
 -- Game Input
 script.register_looped("GameInput", function()
+  if is_typing then
+    PAD.DISABLE_ALL_CONTROL_ACTIONS(0)
+  end
+
   if HashGrabber then
     PAD.DISABLE_CONTROL_ACTION(0, 24, 1)
     PAD.DISABLE_CONTROL_ACTION(0, 257, 1)
@@ -1230,10 +1982,6 @@ script.register_looped("GameInput", function()
 
   if replaceSneakAnim then
     PAD.DISABLE_CONTROL_ACTION(0, 36, 1)
-  end
-
-  if is_typing then
-    PAD.DISABLE_ALL_CONTROL_ACTIONS(0)
   end
 
   if PED.IS_PED_SITTING_IN_ANY_VEHICLE(self.get_ped()) then
@@ -1403,7 +2151,6 @@ script.register_looped("self features", function(script)
       PED.SET_PED_CONFIG_FLAG(self.get_ped(), 426, false)
     end
   end
-
 end)
 
 -- Action Mode
@@ -1492,11 +2239,11 @@ end)
 script.register_looped("TDFT", function(script)
   script:yield()
   if PED.IS_PED_SITTING_IN_ANY_VEHICLE(self.get_ped()) then
-    _, _, current_vehicle, _ = onVehEnter()
-    is_car                   = VEHICLE.IS_THIS_MODEL_A_CAR(ENTITY.GET_ENTITY_MODEL(current_vehicle))
-    is_quad                  = VEHICLE.IS_THIS_MODEL_A_QUADBIKE(ENTITY.GET_ENTITY_MODEL(current_vehicle))
-    is_bike                  = (VEHICLE.IS_THIS_MODEL_A_BIKE(ENTITY.GET_ENTITY_MODEL(current_vehicle)) and VEHICLE.GET_VEHICLE_CLASS(current_vehicle) ~= 13)
-    is_boat                  = VEHICLE.IS_THIS_MODEL_A_BOAT(ENTITY.GET_ENTITY_MODEL(current_vehicle)) or
+    lastVeh, _, current_vehicle, _ = onVehEnter()
+    is_car                         = VEHICLE.IS_THIS_MODEL_A_CAR(ENTITY.GET_ENTITY_MODEL(current_vehicle))
+    is_quad                        = VEHICLE.IS_THIS_MODEL_A_QUADBIKE(ENTITY.GET_ENTITY_MODEL(current_vehicle))
+    is_bike                        = (VEHICLE.IS_THIS_MODEL_A_BIKE(ENTITY.GET_ENTITY_MODEL(current_vehicle)) and VEHICLE.GET_VEHICLE_CLASS(current_vehicle) ~= 13)
+    is_boat                        = VEHICLE.IS_THIS_MODEL_A_BOAT(ENTITY.GET_ENTITY_MODEL(current_vehicle)) or
         VEHICLE.IS_THIS_MODEL_A_JETSKI(ENTITY.GET_ENTITY_MODEL(current_vehicle))
     if is_car or is_quad then
       validModel = true
@@ -1606,6 +2353,43 @@ script.register_looped("TDFT", function(script)
   end
 end)
 
+script.register_looped("tire smoke", function(smkptfx)
+  if driftMode or DriftTires then
+    if is_car and PAD.IS_CONTROL_PRESSED(0, tdBtn) and VEHICLE.GET_VEHICLE_CURRENT_DRIVE_GEAR_(current_vehicle) > 0 and ENTITY.GET_ENTITY_SPEED(current_vehicle) > 6 then
+      local dict = "scr_ba_bb"
+      local wheels = { "wheel_lr", "wheel_rr" }
+      if VEHICLE.IS_VEHICLE_ON_ALL_WHEELS(current_vehicle) and not VEHICLE.IS_VEHICLE_STOPPED(current_vehicle) then
+        if Game.requestNamedPtfxAsset(dict) then
+          for _, boneName in ipairs(wheels) do
+            local r_wheels = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(current_vehicle, boneName)
+            GRAPHICS.USE_PARTICLE_FX_ASSET(dict)
+            smokePtfx = GRAPHICS.START_NETWORKED_PARTICLE_FX_LOOPED_ON_ENTITY_BONE("scr_ba_bb_plane_smoke_trail",
+              current_vehicle,
+              -0.4, 0.0, 0.0, 0.0, 0.0, 0.0, r_wheels, 0.3, false, false, false, 0, 0, 0)
+            GRAPHICS.SET_PARTICLE_FX_LOOPED_COLOUR(smokePtfx, driftSmoke.r, driftSmoke.g, driftSmoke.b, 0)
+            table.insert(smokePtfx_t, smokePtfx)
+            GRAPHICS.STOP_PARTICLE_FX_LOOPED(smoke)
+            tire_smoke = true
+          end
+          if tire_smoke then
+            repeat
+              smkptfx:sleep(50)
+            until
+              PAD.IS_CONTROL_RELEASED(0, tdBtn) or PAD.IS_CONTROL_RELEASED(0, 71)
+            for _, smoke in ipairs(smokePtfx_t) do
+              if GRAPHICS.DOES_PARTICLE_FX_LOOPED_EXIST(smoke) then
+                GRAPHICS.STOP_PARTICLE_FX_LOOPED(smoke)
+                GRAPHICS.REMOVE_PARTICLE_FX(smoke)
+              end
+            end
+            tire_smoke = false
+          end
+        end
+      end
+    end
+  end
+end)
+
 script.register_looped("LCTRL", function(lct)
   if launchCtrl and Game.Self.isDriving() then
     if limitVehOptions then
@@ -1676,6 +2460,9 @@ script.register_looped("MISC Vehicle Options", function(mvo)
       local vehRot = ENTITY.GET_ENTITY_ROTATION(current_vehicle, 2)
       if PAD.IS_CONTROL_JUST_PRESSED(0, 97) then -- numpad + // mouse scroll down
         ENTITY.SET_ENTITY_ROTATION(current_vehicle, vehRot.x, vehRot.y, (vehRot.z - 180), 2, true)
+        if VEHICLE.IS_VEHICLE_STOPPED(current_vehicle) then
+          VEHICLE.SET_VEHICLE_ON_GROUND_PROPERLY(current_vehicle, 5.0)
+        end
       end
     end
   end
@@ -1958,15 +2745,15 @@ script.register_looped("Purge", function(nosprg)
         for _, boneName in ipairs(purgeBones) do
           local purge_exit = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(current_vehicle, boneName)
           if boneName == "suspension_lf" then
-            rotZ = -180.0
-            posX = -0.3
+            purge_rotZ = -180.0
+            purge_posX = -0.3
           else
-            rotZ = 0.0
-            posX = 0.3
+            purge_rotZ = 0.0
+            purge_posX = 0.3
           end
           GRAPHICS.USE_PARTICLE_FX_ASSET(dict)
           purgePtfx = GRAPHICS.START_NETWORKED_PARTICLE_FX_LOOPED_ON_ENTITY_BONE("weap_extinguisher", current_vehicle,
-            posX, -0.33, 0.2, 0.0, -17.5, rotZ, purge_exit, 0.4, false, false, false, 0, 0, 0)
+            purge_posX, -0.33, 0.2, 0.0, -17.5, purge_rotZ, purge_exit, 0.4, false, false, false, 0, 0, 0)
           table.insert(purgePtfx_t, purgePtfx)
           purge_started = true
         end
@@ -2116,13 +2903,11 @@ end)
 
 script.register_looped("Carpool", function(cp)
   if carpool then
-
     if PED.IS_PED_SITTING_IN_ANY_VEHICLE(self.get_ped()) then
       stop_searching = true
     else
       stop_searching = false
     end
-
     if not stop_searching then
       nearestVeh = Game.getClosestVehicle(self.get_ped(), 10)
     end
@@ -2159,6 +2944,113 @@ script.register_looped("Carpool", function(cp)
   cp:yield()
 end)
 
+-- object spawner
+script.register_looped("Preview", function(preview)
+  if previewLoop and gui.is_open() then
+    local currentHeading = ENTITY.GET_ENTITY_HEADING(previewEntity)
+    if currentObjectPreview ~= previewEntity then
+      ENTITY.DELETE_ENTITY(previewEntity)
+      previewStarted = false
+    end
+    if isChanged then
+      ENTITY.DELETE_ENTITY(previewEntity)
+      previewStarted = false
+    end
+    if not ENTITY.IS_ENTITY_DEAD(self.get_ped()) then
+      while not STREAMING.HAS_MODEL_LOADED(propHash) do
+        STREAMING.REQUEST_MODEL(propHash)
+        coroutine.yield()
+      end
+      if not previewStarted then
+        previewEntity = OBJECT.CREATE_OBJECT(propHash, coords.x + forwardX * 5, coords.y + forwardY * 5, coords.z,
+          currentHeading, false, false, false)
+        ENTITY.SET_ENTITY_ALPHA(previewEntity, 200.0, false)
+        ENTITY.SET_ENTITY_COLLISION(previewEntity, false, false)
+        ENTITY.SET_ENTITY_CAN_BE_DAMAGED(previewEntity, false)
+        ENTITY.SET_ENTITY_PROOFS(previewEntity, true, true, true, true, true, true, true, true)
+        ENTITY.SET_CAN_CLIMB_ON_ENTITY(previewEntity, false)
+        OBJECT.SET_OBJECT_ALLOW_LOW_LOD_BUOYANCY(previewEntity, false)
+        currentObjectPreview = ENTITY.GET_ENTITY_MODEL(previewEntity)
+        previewStarted = true
+      end
+      if PED.IS_PED_STOPPED(self.get_ped()) then
+        while true do
+          preview:yield()
+          if gui.is_open() then
+            currentHeading = currentHeading + 1
+            ENTITY.SET_ENTITY_HEADING(previewEntity, currentHeading)
+            preview:sleep(10)
+            if currentObjectPreview ~= ENTITY.GET_ENTITY_MODEL(previewEntity) then
+              ENTITY.DELETE_ENTITY(previewEntity)
+              previewStarted = false
+            end
+            if not PED.IS_PED_STOPPED(self.get_ped()) or not previewStarted then
+              previewStarted = false
+              break
+            end
+          else
+            ENTITY.DELETE_ENTITY(previewEntity)
+            previewStarted = false
+          end
+        end
+      else
+        return
+      end
+    end
+  else
+    ENTITY.DELETE_ENTITY(previewEntity)
+    stopPreview()
+  end
+end)
+script.register_looped("edit mode", function()
+  if spawned_props[1] ~= nil then
+    if edit_mode and selfAttachments[1] == nil and vehAttachments[1] == nil then
+      local current_coords   = ENTITY.GET_ENTITY_COORDS(selectedObject)
+      local current_rotation = ENTITY.GET_ENTITY_ROTATION(selectedObject, 2)
+      if activeX then
+        ENTITY.SET_ENTITY_COORDS(selectedObject, current_coords.x + spawnDistance.x, current_coords.y, current_coords.z)
+      end
+      if activeY then
+        ENTITY.SET_ENTITY_COORDS(selectedObject, current_coords.x, current_coords.y + spawnDistance.y, current_coords.z)
+      end
+      if activeZ then
+        ENTITY.SET_ENTITY_COORDS(selectedObject, current_coords.x, current_coords.y, current_coords.z + spawnDistance.z)
+      end
+      if rotX then
+        ENTITY.SET_ENTITY_ROTATION(selectedObject, current_rotation.x + spawnRot.x, current_rotation.y,
+          current_rotation.z, 2, true)
+      end
+      if rotY then
+        ENTITY.SET_ENTITY_ROTATION(selectedObject, current_rotation.x, current_rotation.y + spawnRot.y,
+          current_rotation.z, 2, true)
+      end
+      if rotZ then
+        ENTITY.SET_ENTITY_ROTATION(selectedObject, current_rotation.x, current_rotation.y,
+          current_rotation.z + spawnRot.z, 2, true)
+      end
+    end
+    for k, v in ipairs(spawned_props) do
+      if not ENTITY.DOES_ENTITY_EXIST(v) then
+        table.remove(spawned_props, k)
+      end
+    end
+  end
+  if selfAttachments[1] ~= nil then
+    for index, entity in ipairs(selfAttachments) do
+      if not ENTITY.IS_ENTITY_ATTACHED_TO_ENTITY(entity, self.get_ped()) then
+        table.remove(selfAttachments, index)
+      end
+    end
+  end
+  if vehAttachments[1] ~= nil then
+    for index, entity in ipairs(vehAttachments) do
+      if not ENTITY.IS_ENTITY_ATTACHED_TO_ENTITY(entity, lastVeh) then
+        table.remove(vehAttachments, index)
+      end
+    end
+  end
+end)
+
 script.register_looped("flatbed script", function(script)
   local vehicleHandles  = entities.get_all_vehicles_as_handles()
   local current_vehicle = PED.GET_VEHICLE_PED_IS_USING(self.get_ped())
@@ -2169,112 +3061,116 @@ script.register_looped("flatbed script", function(script)
   local playerForwardX  = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
   local playerForwardY  = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
   for _, veh in ipairs(vehicleHandles) do
-      local detectPos = vec3:new(playerPosition.x - (playerForwardX * 10), playerPosition.y - (playerForwardY * 10), playerPosition.z)
-      local vehPos = ENTITY.GET_ENTITY_COORDS(veh, false)
-      local vDist = SYSTEM.VDIST(detectPos.x, detectPos.y, detectPos.z, vehPos.x, vehPos.y, vehPos.z)
-      if vDist <= 5 then
-          closestVehicle = veh
-      end
+    local detectPos = vec3:new(playerPosition.x - (playerForwardX * 10), playerPosition.y - (playerForwardY * 10),
+      playerPosition.z)
+    local vehPos = ENTITY.GET_ENTITY_COORDS(veh, false)
+    local vDist = SYSTEM.VDIST(detectPos.x, detectPos.y, detectPos.z, vehPos.x, vehPos.y, vehPos.z)
+    if vDist <= 5 then
+      closestVehicle = veh
+    end
   end
   local closestVehicleModel = ENTITY.GET_ENTITY_MODEL(closestVehicle)
   local iscar = VEHICLE.IS_THIS_MODEL_A_CAR(closestVehicleModel)
   local isbike = VEHICLE.IS_THIS_MODEL_A_BIKE(closestVehicleModel)
   local towable = false
   if modelOverride then
-      towable = true
+    towable = true
   else
-      towable = false
+    towable = false
   end
   if iscar then
-      towable = true
+    towable = true
   end
   if isbike then
-      towable = true
+    towable = true
   end
   if closestVehicleModel == 745926877 then --Buzzard
-      towable = true
+    towable = true
   end
   if closestVehicleModel == 1353720154 then
-      towable = false
+    towable = false
   end
   if vehicle_model == 1353720154 then
-      is_in_flatbed = true
+    is_in_flatbed = true
   else
-      is_in_flatbed = false
+    is_in_flatbed = false
   end
   if is_in_flatbed and attached_vehicle == 0 then
-      if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) and towable and closestVehicleModel ~= flatbedModel then
-          script:sleep(200)
-          controlled = entities.take_control_of(closestVehicle, 350)
-          if controlled then
-              local vehicleClass = VEHICLE.GET_VEHICLE_CLASS(closestVehicle)
-              if vehicleClass == 1 then
-                  zAxis = 0.9
-                  yAxis = -2.3
-              elseif vehicleClass == 2 then
-                  zAxis = 0.993
-                  yAxis = -2.17046
-              elseif vehicleClass == 6 then
-                  zAxis = 1.00069420
-                  yAxis = -2.17046
-              elseif vehicleClass == 7 then
-                  zAxis = 1.009
-                  yAxis = -2.17036
-              elseif vehicleClass == 15 then
-                  zAxis = 1.3
-                  yAxis = -2.21069
-              elseif vehicleClass == 16 then
-                  zAxis = 1.5
-                  yAxis = -2.21069
-              else
-                  zAxis = 1.1
-                  yAxis = -2.0
-              end
-              ENTITY.SET_ENTITY_HEADING(closestVehicleModel, flatbedHeading)
-              ENTITY.ATTACH_ENTITY_TO_ENTITY(closestVehicle, current_vehicle, flatbedBone, 0.0, yAxis, zAxis, 0.0, 0.0, 0.0, false, true, true, false, 1, true, 1)
-              attached_vehicle = closestVehicle
-              script:sleep(200)
-          else
-              gui.show_error("Flatbed Script", translateLabel("failed_veh_ctrl"))
-          end
+    if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) and towable and closestVehicleModel ~= flatbedModel then
+      script:sleep(200)
+      controlled = entities.take_control_of(closestVehicle, 350)
+      if controlled then
+        local vehicleClass = VEHICLE.GET_VEHICLE_CLASS(closestVehicle)
+        if vehicleClass == 1 then
+          zAxis = 0.9
+          yAxis = -2.3
+        elseif vehicleClass == 2 then
+          zAxis = 0.993
+          yAxis = -2.17046
+        elseif vehicleClass == 6 then
+          zAxis = 1.00069420
+          yAxis = -2.17046
+        elseif vehicleClass == 7 then
+          zAxis = 1.009
+          yAxis = -2.17036
+        elseif vehicleClass == 15 then
+          zAxis = 1.3
+          yAxis = -2.21069
+        elseif vehicleClass == 16 then
+          zAxis = 1.5
+          yAxis = -2.21069
+        else
+          zAxis = 1.1
+          yAxis = -2.0
+        end
+        ENTITY.SET_ENTITY_HEADING(closestVehicleModel, flatbedHeading)
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(closestVehicle, current_vehicle, flatbedBone, 0.0, yAxis, zAxis, 0.0, 0.0, 0.0,
+          false, true, true, false, 1, true, 1)
+        attached_vehicle = closestVehicle
+        script:sleep(200)
+      else
+        gui.show_error("Flatbed Script", translateLabel("failed_veh_ctrl"))
       end
-      if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) and closestVehicle ~= nil and not towable then
-          gui.show_message("Flatbed Script", translateLabel("fltbd_carsOnlyTxt"))
-          script:sleep(400)
-      end
-      if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) and closestVehicleModel == flatbedModel then
-          script:sleep(400)
-          gui.show_message("Flatbed Script", translateLabel("fltbd_nootherfltbdTxt"))
-      end
+    end
+    if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) and closestVehicle ~= nil and not towable then
+      gui.show_message("Flatbed Script", translateLabel("fltbd_carsOnlyTxt"))
+      script:sleep(400)
+    end
+    if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) and closestVehicleModel == flatbedModel then
+      script:sleep(400)
+      gui.show_message("Flatbed Script", translateLabel("fltbd_nootherfltbdTxt"))
+    end
   elseif is_in_flatbed and attached_vehicle ~= 0 then
-      if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) then
-          script:sleep(200)
-          for _, v in ipairs(vehicleHandles) do
-              local modelHash         = ENTITY.GET_ENTITY_MODEL(v)
-              local attachedVehicle   = ENTITY.GET_ENTITY_OF_TYPE_ATTACHED_TO_ENTITY(current_vehicle, modelHash)
-              local attachedVehcoords = ENTITY.GET_ENTITY_COORDS(attached_vehicle, false)
-              controlled = entities.take_control_of(attachedVehicle, 350)
-              if ENTITY.DOES_ENTITY_EXIST(attachedVehicle) then
-                  if controlled then
-                      ENTITY.DETACH_ENTITY(attachedVehicle)
-                      ENTITY.SET_ENTITY_COORDS(attachedVehicle, attachedVehcoords.x - (playerForwardX * 10), attachedVehcoords.y - (playerForwardY * 10), playerPosition.z, 0, 0, 0, 0)
-                      VEHICLE.SET_VEHICLE_ON_GROUND_PROPERLY(attached_vehicle, 5.0)
-                      attached_vehicle = 0
-                  end
-              end
+    if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) then
+      script:sleep(200)
+      for _, v in ipairs(vehicleHandles) do
+        local modelHash         = ENTITY.GET_ENTITY_MODEL(v)
+        local attachedVehicle   = ENTITY.GET_ENTITY_OF_TYPE_ATTACHED_TO_ENTITY(current_vehicle, modelHash)
+        local attachedVehcoords = ENTITY.GET_ENTITY_COORDS(attached_vehicle, false)
+        controlled              = entities.take_control_of(attachedVehicle, 350)
+        if ENTITY.DOES_ENTITY_EXIST(attachedVehicle) then
+          if controlled then
+            ENTITY.DETACH_ENTITY(attachedVehicle)
+            ENTITY.SET_ENTITY_COORDS(attachedVehicle, attachedVehcoords.x - (playerForwardX * 10),
+              attachedVehcoords.y - (playerForwardY * 10), playerPosition.z, 0, 0, 0, 0)
+            VEHICLE.SET_VEHICLE_ON_GROUND_PROPERLY(attached_vehicle, 5.0)
+            attached_vehicle = 0
           end
+        end
       end
+    end
   end
 end)
 script.register_looped("TowPos Marker", function()
   if towPos then
-      if is_in_flatbed and attached_vehicle == 0 then
-          local playerPosition = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
-          local playerForwardX = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
-          local playerForwardY = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
-          local detectPos = vec3:new(playerPosition.x - (playerForwardX * 10), playerPosition.y - (playerForwardY * 10), playerPosition.z)
-          GRAPHICS.DRAW_MARKER_SPHERE(detectPos.x, detectPos.y, detectPos.z, 2.5, 180, 128, 0, 0.115)
-      end
+    if is_in_flatbed and attached_vehicle == 0 then
+      local playerPosition = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
+      local playerForwardX = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
+      local playerForwardY = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
+      local detectPos      = vec3:new(playerPosition.x - (playerForwardX * 10), playerPosition.y - (playerForwardY * 10),
+        playerPosition.z)
+      GRAPHICS.DRAW_MARKER_SPHERE(detectPos.x, detectPos.y, detectPos.z, 2.5, 180, 128, 0, 0.115)
+    end
   end
 end)
 
@@ -2308,7 +3204,7 @@ script.register_looped("Online Player Info", function(opi)
 end)
 
 
---[[ 
+--[[
    *event handlers*
 ]]
 event.register_handler(menu_event.MenuUnloaded, function()
