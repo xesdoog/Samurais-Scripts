@@ -34,7 +34,7 @@ A base for a Lua script centered around roleplaying and having fun in a game ful
 
 ## TODO:
 
-- [ ] Merge all my scripts into this one. Why? Because then all of them will have translations, look prettier, perform better and most importantly, be able to interact with eachother.
+- [ ] Merge YimActions.
 - [ ] Add new features.
 
 ## Credits
