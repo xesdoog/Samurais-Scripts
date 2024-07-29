@@ -114,11 +114,11 @@ Labels = {
     },
 
     ["ActionMode_tooltip"] = {
-        {iso = "en-US", text = "Disables the forced movement style the player uses after firing a weapon. Note that this also disables stealth mode."},
-        {iso = "de-DE", text = "Deaktiviert den erzwungenen Bewegungsstil des Charakters, nach dem Abfeuern einer Waffe. Das Schleichen [STRG] wird dadurch deaktiviert."},
-        {iso = "fr-FR", text = "Désactive le style de mouvement forcé que le joueur utilise après avoir tiré avec une arme. Notez que cela désactive également le mode furtif."},
-        {iso = "it-IT", text = "Disattiva lo stile di movimento forzato che il giocatore usa dopo aver sparato con un'arma. Nota che questo disattiva anche la modalità stealth."},
-        {iso = "pt-BR", text = "Desativa o estilo de movimento forçado que o jogador usa depois de disparar uma arma. Observe que isso também desativa o modo furtivo."},
+        {iso = "en-US", text = "Disables the forced movement style the player uses after firing a weapon."},
+        {iso = "de-DE", text = "Deaktiviert den erzwungenen Bewegungsstil des Charakters, nach dem Abfeuern einer Waffe."},
+        {iso = "fr-FR", text = "Désactive le style de mouvement forcé que le joueur utilise après avoir tiré avec une arme."},
+        {iso = "it-IT", text = "Disattiva lo stile di movimento forzato che il giocatore usa dopo aver sparato con un'arma."},
+        {iso = "pt-BR", text = "Desativa o estilo de movimento forçado que o jogador usa depois de disparar uma arma."},
     },
 
     ["soundplayer"] = {
@@ -145,12 +145,20 @@ Labels = {
         {iso = "pt-BR", text = "Sons Femininos"},
     },
 
-    ["playButton"] = {
+    ["generic_play_btn"] = {
         {iso = "en-US", text = " Play "},
         {iso = "de-DE", text = " Spielen "},
         {iso = "fr-FR", text = " Jouer "},
         {iso = "it-IT", text = " Giocare "},
         {iso = "pt-BR", text = " Jogar "},
+    },
+
+    ["generic_stop_btn"] = {
+        {iso = "en-US", text = " Stop "},
+        {iso = "de-DE", text = " Stop "},
+        {iso = "fr-FR", text = " Arrêter "},
+        {iso = "it-IT", text = " Fermarsi "},
+        {iso = "pt-BR", text = " Parar "},
     },
 
     ["weaponTab"] = {
@@ -215,6 +223,46 @@ Labels = {
         {iso = "fr-FR", text = "Tuez automatiquement tous les ennemis à proximité."},
         {iso = "it-IT", text = "Uccidi automaticamente tutti i nemici nelle tue vicinanze."},
         {iso = "pt-BR", text = "Mate automaticamente todos os inimigos que estiverem próximos a você."},
+    },
+
+    ["runawayCB"] = {
+        {iso = "en-US", text = "Enemies Flee"},
+        {iso = "de-DE", text = "Feinde Fliehen"},
+        {iso = "fr-FR", text = "Ennemis S'enfuient"},
+        {iso = "it-IT", text = "I Nemici Fuggono"},
+        {iso = "pt-BR", text = "Inimigos Fogem"},
+    },
+
+    ["runaway_tt"] = {
+        {iso = "en-US", text = "Nearby enemies will run away from you."},
+        {iso = "de-DE", text = "Feinde in der Nähe laufen vor Ihnen weg."},
+        {iso = "fr-FR", text = "Les ennemis proches vous fuiront."},
+        {iso = "it-IT", text = "I nemici vicini fuggiranno da voi."},
+        {iso = "pt-BR", text = "Os inimigos próximos fugirão de você."},
+    },
+
+    ["laserSightCB"] = {
+        {iso = "en-US", text = "Laser Sight"},
+        {iso = "de-DE", text = "Laser-Visier"},
+        {iso = "fr-FR", text = "Viseur Laser"},
+        {iso = "it-IT", text = "Mirino Laser"},
+        {iso = "pt-BR", text = "Visor Laser"},
+    },
+
+    ["laserSight_tt"] = {
+        {iso = "en-US", text = "Render a laser sight on your weapons."},
+        {iso = "de-DE", text = "Aktivieren Sie ein Laserzielgerät für Ihre Waffen."},
+        {iso = "fr-FR", text = "Activez une visée laser sur vos armes."},
+        {iso = "it-IT", text = "Attivare un mirino laser sulle armi."},
+        {iso = "pt-BR", text = "Habilite uma mira a laser em suas armas."},
+    },
+
+    ["laserChoice_txt"] = {
+        {iso = "en-US", text = "Laser Color: "},
+        {iso = "de-DE", text = "Laser Farbe: "},
+        {iso = "fr-FR", text = "Couleur Du Laser: "},
+        {iso = "it-IT", text = "Colore Laser: "},
+        {iso = "pt-BR", text = "Cor Do Laser: "},
     },
 
     ["vehicleTab"] = {
@@ -832,6 +880,14 @@ Labels = {
         {iso = "pt-BR", text = "Saia primeiro de seu veículo atual."},
     },
 
+    ["noSpawnInside"] = {
+        {iso = "en-US", text = "You cannot spawn a flatbed truck inside interiors."},
+        {iso = "de-DE", text = "Sie können einen Pritschenwagen nicht in Innenräumen absetzen."},
+        {iso = "fr-FR", text = "Il n'est pas possible de crééer un camion lorsque vous êtes à l'intérieur."},
+        {iso = "it-IT", text = "Non è possibile spawnare un autocarro con pianale all'interno degli interni."},
+        {iso = "pt-BR", text = "Não é possível desovar um caminhão-plataforma dentro de interiores."},
+    },
+
     ["Total Players:"] = {
         {iso = "en-US", text = "Total Players:"},
         {iso = "de-DE", text = "Spieler Insgesamt:"},
@@ -1033,12 +1089,116 @@ Labels = {
     },
 
     ["hex_tt"] = {
-        {iso = "en-US", text = "Input your own custom Hex color. Example: \"#FF0000\""},
-        {iso = "de-DE", text = "Geben Sie Ihre eigene benutzerdefinierte Hex ein. Beispiel: \"#FF0000\""},
-        {iso = "fr-FR", text = "Saisissez votre propre couleur hexadecimale personnalisée. Exemple : \"#FF0000\""},
-        {iso = "it-IT", text = "Immettere il colore esadecimale personalizzato. Esempio: \"#FF0000\""},
-        {iso = "pt-BR", text = "Insira sua própria cor hexadecimal personalizada. Exemplo: \"#FF0000\""},
-    }
+        {iso = "en-US", text = "Input your own custom Hex color then press [ENTER] to apply. Example: \"#FF0000\""},
+        {iso = "de-DE", text = "Geben Sie Ihre eigene benutzerdefinierte Hex ein und drücken Sie dann [ENTER], um sie zu übernehmen. Beispiel: \"#FF0000\""},
+        {iso = "fr-FR", text = "Saisissez votre propre couleur hexadecimale puis appuyez sur [Entrée] pour l'appliquer. Exemple : \"#FF0000\""},
+        {iso = "it-IT", text = "Immettere il colore esadecimale personalizzato quindi premere [ENTER] per applicare. Esempio: \"#FF0000\""},
+        {iso = "pt-BR", text = "Insira sua própria cor hexadecimal personalizada e pressione [ENTER] para aplicar. Exemplo: \"#FF0000\""},
+    },
+
+    ["animations"] = {
+        {iso = "en-US", text = "Animations"},
+        {iso = "de-DE", text = "Animationen"},
+        {iso = "fr-FR", text = "Animations"},
+        {iso = "it-IT", text = "Animazioni"},
+        {iso = "pt-BR", text = "Animações"},
+    },
+
+    ["scenarios"] = {
+        {iso = "en-US", text = "Animations"},
+        {iso = "de-DE", text = "Szenarien"},
+        {iso = "fr-FR", text = "Scénarios"},
+        {iso = "it-IT", text = "Scenari"},
+        {iso = "pt-BR", text = "Cenários"},
+    },
+
+    ["edit_flags"] = {
+        {iso = "en-US", text = "Edit Flags"},
+        {iso = "de-DE", text = "Ändern Sie Indikatoren"},
+        {iso = "fr-FR", text = "Modifier Les Indicateurs"},
+        {iso = "it-IT", text = "Modificare Gli Indicatori"},
+        {iso = "pt-BR", text = "Modificar Os indicadores"},
+    },
+
+    ["flags_tt"] = {
+        {iso = "en-US", text = "Allows you to customize how the animation plays.\10Example: if an animation is set to loop but you want it to freeze, activate this then choose your desired settings."},
+        {iso = "de-DE", text = "Ermöglicht es Ihnen, die Art und Weise, wie die Animation abgespielt wird, anzupassen.\10Beispiel: Wenn eine Animation als Schleife eingestellt ist, Sie sie aber einfrieren möchten, aktivieren Sie dies und wählen Sie dann die gewünschten Einstellungen."},
+        {iso = "fr-FR", text = "Permet de personnaliser la façon dont l'animation est jouée.\10Exemple : si une animation est réglée pour tourner en boucle mais que vous souhaitez qu'elle se fige, activez cette option puis choisissez les paramètres souhaités."},
+        {iso = "it-IT", text = "Permette di personalizzare il modo in cui l'animazione viene riprodotta.\10Esempio: se un'animazione è impostata su loop ma si desidera che si blocchi, attivare questa opzione e scegliere le impostazioni desiderate."},
+        {iso = "pt-BR", text = "Permite que você personalize a forma como a animação é reproduzida.\10Exemplo: se uma animação estiver definida para loop, mas você quiser que ela congele, ative essa opção e escolha as configurações desejadas."},
+    },
+
+    ["Disable Props"] = {
+        {iso = "en-US", text = "Disable Props"},
+        {iso = "de-DE", text = "Objekte Deaktivieren"},
+        {iso = "fr-FR", text = "Désactiver Les Objets"},
+        {iso = "it-IT", text = "Disattivare Gli Oggetti"},
+        {iso = "pt-BR", text = "Desativar Objetos"},
+    },
+
+    ["DisableProps_tt"] = {
+        {iso = "en-US", text = "Choose whether to play animations with props or not. Check or Un-check this before playing the animation."},
+        {iso = "de-DE", text = "Wählen Sie, ob Animationen mit Requisiten abgespielt werden sollen oder nicht. Aktivieren oder deaktivieren Sie diese Option, bevor Sie die Animation abspielen."},
+        {iso = "fr-FR", text = "Permet de choisir si les animations doivent être jouées avec des accessoires ou non. Cochez ou décochez cette case avant de jouer l'animation."},
+        {iso = "it-IT", text = "Scegliere se riprodurre o meno le animazioni con gli oggetti di scena. Selezionare o deselezionare questa opzione prima di riprodurre l'animazione."},
+        {iso = "pt-BR", text = "Escolha se deseja reproduzir animações com adereços ou não. Marque ou desmarque essa opção antes de reproduzir a animação."},
+    },
+
+    ["Allow Control"] = {
+        {iso = "en-US", text = "Allow Control"},
+        {iso = "de-DE", text = "Kontrolle Zulassen"},
+        {iso = "fr-FR", text = "Autoriser Le Contrôle"},
+        {iso = "it-IT", text = "Consentire Il Controllo"},
+        {iso = "pt-BR", text = "Permitir Controle"},
+    },
+
+    ["AllowControl_tt"] = {
+        {iso = "en-US", text = "Allows you to keep control of your character and/or vehicle. If paired with 'Upper Body Only', you can play animations and walk/run/drive around."},
+        {iso = "de-DE", text = "Ermöglicht es Ihnen, die Kontrolle über Ihren Charakter und/oder Ihr Fahrzeug zu behalten. In Verbindung mit „Nur Oberkörper“ können Sie Animationen abspielen und herumlaufen/laufen/fahren."},
+        {iso = "fr-FR", text = "Vous permet de garder le contrôle de votre personnage et/ou de votre véhicule. S'il est associé à « Upper Body Only », vous pouvez jouer des animations et marcher/courir/conduire."},
+        {iso = "it-IT", text = "Consente di mantenere il controllo del personaggio e/o del veicolo. Se abbinato a “Solo corpo superiore”, è possibile riprodurre animazioni e camminare/correre/guidare."},
+        {iso = "pt-BR", text = "Permite que você mantenha o controle do personagem e/ou do veículo. Se for combinado com “Upper Body Only”, você poderá reproduzir animações e andar/correr/dirigir."},
+    },
+
+    ["looped_tt"] = {
+        {iso = "en-US", text = "Plays the animation forever until you manually stop it."},
+        {iso = "de-DE", text = "Spielt die Animation so lange ab, bis Sie sie manuell stoppen."},
+        {iso = "fr-FR", text = "Joue l'animation indéfiniment jusqu'à ce que vous l'arrêtiez manuellement."},
+        {iso = "it-IT", text = "Riproduce l'animazione per sempre finché non la si interrompe manualmente."},
+        {iso = "pt-BR", text = "Reproduz a animação para sempre até que você a interrompa manualmente."},
+    },
+
+    ["Upper Body Only"] = {
+        {iso = "en-US", text = "Upper Body Only"},
+        {iso = "de-DE", text = "Nur Oberkörper"},
+        {iso = "fr-FR", text = "Corps Supérieur Uniquement"},
+        {iso = "it-IT", text = "Solo Corpo Superiore"},
+        {iso = "pt-BR", text = "Somente Parte Superior Do Corpo"},
+    },
+
+    ["UpperBodyOnly_tt"] = {
+        {iso = "en-US", text = "Only plays the animation on your character's upperbody (from the waist up)."},
+        {iso = "de-DE", text = "Spielt nur die Animation des Oberkörpers deiner Figur ab (von der Taille aufwärts)."},
+        {iso = "fr-FR", text = "Joue uniquement l'animation sur le haut du corps de votre personnage (à partir de la taille)."},
+        {iso = "it-IT", text = "Riproduce l'animazione solo sulla parte superiore del corpo del personaggio (dalla vita in su)."},
+        {iso = "pt-BR", text = "Reproduz a animação somente na parte superior do corpo do personagem (da cintura para cima)."},
+    },
+
+    ["Freeze"] = {
+        {iso = "en-US", text = "Freeze"},
+        {iso = "de-DE", text = "Einfrieren"},
+        {iso = "fr-FR", text = "Geler"},
+        {iso = "it-IT", text = "Congelare"},
+        {iso = "pt-BR", text = "Congelar"},
+    },
+
+    ["Freeze_tt"] = {
+        {iso = "en-US", text = "Freezes the animation at the very last frame. Useful for ragdoll/sleeping/dead animations."},
+        {iso = "de-DE", text = "Friert die Animation am allerletzten Bild ein. Nützlich für Ragdoll-/Schlaf-/Tot-Animationen."},
+        {iso = "fr-FR", text = "Arrête l'animation à la toute dernière image. Utile pour les animations 'ragdoll', de sommeil ou de mort."},
+        {iso = "it-IT", text = "Congela l'animazione all'ultimo fotogramma. Utile per le animazioni ragdoll/sleeping/dead."},
+        {iso = "pt-BR", text = "Congela a animação no último quadro. Útil para animações de bonecas de pano, dormindo ou mortas."},
+    },
 }
 
 

@@ -532,10 +532,17 @@ UI = {
 ----------------------------------------------- GTA Funcs -------------------------------------------------------
 Game = {
 
-  -- Returns GTA V's latest build number.
+  -- Returns GTA V's current build number.
+  ---@return string
   GetBuildNumber = function()
     local game_build = memory.scan_pattern("8B C3 33 D2 C6 44 24 20"):add(0x24):rip()
-    return tonumber(game_build:get_string())
+    return game_build:get_string()
+  end,
+
+  -- Returns GTA Online's current version.
+  ---@return string
+  GetOnlineVersion = function()
+    return NETWORK.GET_ONLINE_VERSION()
   end,
 
   GetLang = function()
