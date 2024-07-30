@@ -57,6 +57,22 @@ Labels = {
         {iso = "pt-BR", text = "Substituir a animação de esgueirar-se do modo furtivo (CTRL Esquerda) por agachar-se."},
     },
 
+    ["rpaCB"] = {
+        {iso = "en-US", text = "Replace 'Point' Action"},
+        {iso = "de-DE", text = ""}, -- ???
+        {iso = "fr-FR", text = "Remplacer L'action de 'Pointer'"},
+        {iso = "it-IT", text = ""}, -- ???
+        {iso = "pt-BR", text = ""}, -- ???
+    },
+
+    ["rpa_tooltip"] = {
+        {iso = "en-US", text = "Replace the 'Point' action when pressing [B] with 'Hands Up' animation."},
+        {iso = "de-DE", text = ""}, -- ???
+        {iso = "fr-FR", text = "Remplacer l'action 'Pointer' lorsque l'on appuie sur [B] par l'animation 'Mains En L'air'."},
+        {iso = "it-IT", text = ""}, -- ???
+        {iso = "pt-BR", text = ""}, -- ???
+    },
+
     ["PhoneAnimCB"] = {
         {iso = "en-US", text = "Enable Phone Animations"},
         {iso = "de-DE", text = "Aktiviere Handy-animationen"},
@@ -130,19 +146,19 @@ Labels = {
     },
 
     ["malesounds"] = {
-        {iso = "en-US", text = "Male Sounds"},
-        {iso = "de-DE", text = "Männliche Geräusche"},
-        {iso = "fr-FR", text = "Sons Masculins"},
-        {iso = "it-IT", text = "Suoni Maschili"},
-        {iso = "pt-BR", text = "Sons Masculinos"},
+        {iso = "en-US", text = "Male"},
+        {iso = "de-DE", text = "Männlich"},
+        {iso = "fr-FR", text = "Masculin"},
+        {iso = "it-IT", text = "Uomo"},
+        {iso = "pt-BR", text = "Masculino"},
     },
 
     ["femalesounds"] = {
-        {iso = "en-US", text = "Female Sounds"},
-        {iso = "de-DE", text = "Weibliche Geräusche"},
-        {iso = "fr-FR", text = "Sons Feminins"},
-        {iso = "it-IT", text = "Suoni Femminili"},
-        {iso = "pt-BR", text = "Sons Femininos"},
+        {iso = "en-US", text = "Female"},
+        {iso = "de-DE", text = "Weiblich"},
+        {iso = "fr-FR", text = "Feminin"},
+        {iso = "it-IT", text = "Femminile"},
+        {iso = "pt-BR", text = "Feminino"},
     },
 
     ["generic_play_btn"] = {
@@ -327,6 +343,14 @@ Labels = {
         {iso = "fr-FR", text = "Cela équipera votre voiture de pneus de drift lorsque vous appuierez sur [MAJ Droite]. Vos pneus seront réinitialisés lorsque vous relâcherez le bouton."},
         {iso = "it-IT", text = "Questo equipaggerà l'auto con pneumatici da drift quando si preme [Left Shift]. I pneumatici verranno ripristinati quando si rilascia il pulsante."},
         {iso = "pt-BR", text = "Isso equipará seu carro com pneus de drift sempre que você pressionar [Left Shift]. Seus pneus serão zerados quando você soltar o botão."},
+    },
+
+    ["DriftSmoke_tt"] = {
+        {iso = "en-US", text = "Creates a smoke effect when drifting. You can change the smoke color but it's not related to the games tire smoke color."},
+        {iso = "de-DE", text = "Erzeugt einen Raucheffekt beim Driften. Sie können die Rauchfarbe ändern, aber es ist nicht auf die Spiele Reifen Rauch Farbe bezogen."},
+        {iso = "fr-FR", text = "Crée un effet de fumée lorsque vous drifter. Vous pouvez changer la couleur de la fumée, mais elle n'est pas liée à la couleur de la fumée du pneu du jeu."},
+        {iso = "it-IT", text = "Crea un effetto fumo durante la derapata. È possibile modificare il colore del fumo, ma non è correlato al colore del fumo delle gomme del gioco."},
+        {iso = "pt-BR", text = "Cria um efeito de fumaça durante a deriva. É possível alterar a cor da fumaça, mas ela não está relacionada à cor da fumaça do pneu do jogo."},
     },
 
     ["driftInvalidVehTxt"] = {
@@ -1105,19 +1129,11 @@ Labels = {
     },
 
     ["scenarios"] = {
-        {iso = "en-US", text = "Animations"},
+        {iso = "en-US", text = "Scenarios"},
         {iso = "de-DE", text = "Szenarien"},
         {iso = "fr-FR", text = "Scénarios"},
         {iso = "it-IT", text = "Scenari"},
         {iso = "pt-BR", text = "Cenários"},
-    },
-
-    ["edit_flags"] = {
-        {iso = "en-US", text = "Edit Flags"},
-        {iso = "de-DE", text = "Ändern Sie Indikatoren"},
-        {iso = "fr-FR", text = "Modifier Les Indicateurs"},
-        {iso = "it-IT", text = "Modificare Gli Indicatori"},
-        {iso = "pt-BR", text = "Modificar Os indicadores"},
     },
 
     ["flags_tt"] = {
@@ -1126,14 +1142,6 @@ Labels = {
         {iso = "fr-FR", text = "Permet de personnaliser la façon dont l'animation est jouée.\10Exemple : si une animation est réglée pour tourner en boucle mais que vous souhaitez qu'elle se fige, activez cette option puis choisissez les paramètres souhaités."},
         {iso = "it-IT", text = "Permette di personalizzare il modo in cui l'animazione viene riprodotta.\10Esempio: se un'animazione è impostata su loop ma si desidera che si blocchi, attivare questa opzione e scegliere le impostazioni desiderate."},
         {iso = "pt-BR", text = "Permite que você personalize a forma como a animação é reproduzida.\10Exemplo: se uma animação estiver definida para loop, mas você quiser que ela congele, ative essa opção e escolha as configurações desejadas."},
-    },
-
-    ["Disable Props"] = {
-        {iso = "en-US", text = "Disable Props"},
-        {iso = "de-DE", text = "Objekte Deaktivieren"},
-        {iso = "fr-FR", text = "Désactiver Les Objets"},
-        {iso = "it-IT", text = "Disattivare Gli Oggetti"},
-        {iso = "pt-BR", text = "Desativar Objetos"},
     },
 
     ["DisableProps_tt"] = {
@@ -1199,6 +1207,127 @@ Labels = {
         {iso = "it-IT", text = "Congela l'animazione all'ultimo fotogramma. Utile per le animazioni ragdoll/sleeping/dead."},
         {iso = "pt-BR", text = "Congela a animação no último quadro. Útil para animações de bonecas de pano, dormindo ou mortas."},
     },
+
+    ["You can not play animations while grabbing an NPC."] = {
+        {iso = "en-US", text = "You can not play animations while grabbing an NPC."},
+        {iso = "de-DE", text = "Du kannst keine Animationen abspielen, während du einen NPC ergreifst."},
+        {iso = "fr-FR", text = "Vous ne pouvez pas jouer des animations lorsque vous saisissez un NPC."},
+        {iso = "it-IT", text = "Non è possibile riprodurre animazioni mentre si afferra un NPC."},
+        {iso = "pt-BR", text = "Você não pode reproduzir animações enquanto estiver agarrando um NPC."},
+    },
+
+    ["You can not play scenarios while grabbing an NPC."] = {
+        {iso = "en-US", text = "You can not play scenarios while grabbing an NPC."},
+        {iso = "de-DE", text = "Du kannst keine szenarien abspielen, während du einen NPC ergreifst."},
+        {iso = "fr-FR", text = "Vous ne pouvez pas jouer des scénarios lorsque vous saisissez un NPC."},
+        {iso = "it-IT", text = "Non è possibile riprodurre scenari mentre si afferra un NPC."},
+        {iso = "pt-BR", text = "Você não pode reproduzir senários enquanto estiver agarrando um NPC."},
+    },
+
+    ["stopAnims_tt"] = {
+        {iso = "en-US", text = "TIP: You can also stop Animations by pressing [G] on keyboard or [DPAD LEFT] on controller."},
+        {iso = "de-DE", text = "TIPP: Sie können Animationen auch anhalten, indem Sie [G] auf der Tastatur oder [DPAD LEFT] auf dem Controller drücken."},
+        {iso = "fr-FR", text = "ASTUCE : Vous pouvez également arrêter les Animations en appuyant sur [G] sur le clavier ou sur [DPAD LEFT] sur le contrôleur."},
+        {iso = "it-IT", text = "SUGGERIMENTO: è possibile interrompere le Animazioni anche premendo [G] sulla tastiera o [DPAD LEFT] sul controller."},
+        {iso = "pt-BR", text = "DICA: Você também pode interromper as Animações pressionando [G] no teclado ou [DPAD LEFT] no controle."},
+    },
+
+    ["stopScenarios_tt"] = {
+        {iso = "en-US", text = "TIP: You can also stop Scenarios by pressing [G] on keyboard or [DPAD LEFT] on controller."},
+        {iso = "de-DE", text = "TIPP: Sie können Szenarien auch anhalten, indem Sie [G] auf der Tastatur oder [DPAD LEFT] auf dem Controller drücken."},
+        {iso = "fr-FR", text = "ASTUCE : Vous pouvez également arrêter les Scénarios en appuyant sur [G] sur le clavier ou sur [DPAD LEFT] sur le contrôleur."},
+        {iso = "it-IT", text = "SUGGERIMENTO: è possibile interrompere le Scenari anche premendo [G] sulla tastiera o [DPAD LEFT] sul controller."},
+        {iso = "pt-BR", text = "DICA: Você também pode interromper as Cenários pressionando [G] no teclado ou [DPAD LEFT] no controle."},
+    },
+
+    ["scenarios_spinner"] = {
+        {iso = "en-US", text = "Stopping scenario..."},
+        {iso = "de-DE", text = "Anhalten des Szenarios..."},
+        {iso = "fr-FR", text = "Arrêt du scénario..."},
+        {iso = "it-IT", text = "Fermate lo scenario..."},
+        {iso = "pt-BR", text = "Cenário de parada..."},
+    },
+
+    ["Remove Attachments"] = {
+        {iso = "en-US", text = "Remove Attachments"},
+        {iso = "de-DE", text = "Anhänge Entfernen"},
+        {iso = "fr-FR", text = "Supprimer Les Objets"},
+        {iso = "it-IT", text = "Rimuovere Gli Allegati"},
+        {iso = "pt-BR", text = "Remover Anexos"},
+    },
+
+    ["RemoveAttachments_tt"] = {
+        {iso = "en-US", text = "Detaches all props."},
+        {iso = "de-DE", text = "Löst alle Stützen."},
+        {iso = "fr-FR", text = "Détache tous les accessoires."},
+        {iso = "it-IT", text = "Stacca tutti gli oggetti di scena."},
+        {iso = "pt-BR", text = "Retira todos os adereços."},
+    },
+
+    ["Movement Options:"] = {
+        {iso = "en-US", text = "Detaches all props."},
+        {iso = "de-DE", text = "Bewegungsoptionen:"},
+        {iso = "fr-FR", text = "Options De Mouvement :"},
+        {iso = "it-IT", text = "Opzioni Di Movimento:"},
+        {iso = "pt-BR", text = "Opções De Movimento:"},
+    },
+
+    ["Play Animations On NPCs:"] = {
+        {iso = "en-US", text = "Play Animations On NPCs:"},
+        {iso = "de-DE", text = "Animationen auf NPCs abspielen:"},
+        {iso = "fr-FR", text = "Jouer des animations sur les PNJ :"},
+        {iso = "it-IT", text = "Riprodurre animazioni sui PNG:"},
+        {iso = "pt-BR", text = "Reproduzir animações em NPCs:"},
+    },
+
+    ["Play Scenarios On NPCs:"] = {
+        {iso = "en-US", text = "Play Animations On NPCs:"},
+        {iso = "de-DE", text = "Szenarien auf NPCs abspielen:"},
+        {iso = "fr-FR", text = "Jouer des scénarios sur les PNJ :"},
+        {iso = "it-IT", text = "Riprodurre scenari sui PNG:"},
+        {iso = "pt-BR", text = "Reproduzir cenários em NPCs:"},
+    },
+
+
+    ["Spawn NPCs in God Mode."] = {
+        {iso = "en-US", text = "Play Animations On NPCs:"},
+        {iso = "de-DE", text = "NPCs im Gott-Modus spawnen."},
+        {iso = "fr-FR", text = "Faire naître des PNJ en mode Dieu."},
+        {iso = "it-IT", text = "Generare PNG in modalità Dio."},
+        {iso = "pt-BR", text = "Gera NPCs no Modo Deus."},
+    },
+
+    ["animKeys_tt"] = {
+        {iso = "en-US", text = "Use experimental hotkeys to play animations. These hotkeys may interfere with gameplay, hence why there is an option to disable them.\10\10Current Setup:\10-[PAGE UP]: Scroll up the list.\10-[PAGE DOWN]: Scroll down the list.\10-[DEL]: Play.\10-[G]: Stop."},
+        {iso = "de-DE", text = "Verwenden Sie experimentelle Hotkeys, um Animationen abzuspielen. Diese Hotkeys können das Spielgeschehen stören, weshalb es eine Option gibt, um sie zu deaktivieren.\10\10Aktuelles Setup:\10-[PAGE UP]: In der Liste nach oben blättern.\10-[PAGE DOWN]: In der Liste nach unten blättern.\10-[ENTF]: Wiedergabe.\10-[G]: Stopp."},
+        {iso = "fr-FR", text = "Utilisez des touches de raccourci expérimentales pour jouer les animations. Ces touches de raccourci peuvent interférer avec le gameplay, c'est pourquoi il existe une option pour les désactiver.\10-[PAGE UP] : Fait défiler la liste vers le haut.\10-[PAGE DOWN] : Défilement vers le bas de la liste.\10-[DEL] : Lecture.\10-[G] : Stop."},
+        {iso = "it-IT", text = "Utilizzare i tasti di scelta rapida sperimentali per riprodurre le animazioni. Questi tasti di scelta rapida possono interferire con il gioco, per cui è disponibile un'opzione per disabilitarli.\1010Impostazione attuale:\10-[PAGINA SU]: Scorre l'elenco verso l'alto.\10-[PAGINA GIÙ]: Scorre l'elenco verso il basso.\10-[DEL]: Riproduzione.\10-[G]: Stop."},
+        {iso = "pt-BR", text = "Use teclas de atalho experimentais para reproduzir animações. Essas teclas de atalho podem interferir na jogabilidade, por isso há uma opção para desativá-las.\10\10Configuração atual:\10-[PAGE UP]: Rolar a lista para cima.\10-[PAGE DOWN]: Rolar a lista para baixo.\10-[DEL]: Reproduzir.\10-[G]: Parar."},
+    },
+
+    ["clumsy_tt"] = {
+        {iso = "en-US", text = "Makes You trip and fall when you collide with any object.\10(Doesn't work with 'Ragdoll On Demand')"},
+        {iso = "de-DE", text = "Lässt dich stolpern und fallen, wenn du mit irgendeinem Objekt zusammenstößt.\10(Funktioniert nicht mit 'Ragdoll On Demand')"},
+        {iso = "fr-FR", text = "Vous fait trébucher et tomber lorsque vous entrez en collision avec n'importe quel objet.\10(Ne fonctionne pas avec 'Ragdoll On Demand')"},
+        {iso = "it-IT", text = "Ti fa inciampare e cadere quando ti scontri con qualsiasi oggetto.\10(Non funziona con 'Ragdoll On Demand')"},
+        {iso = "pt-BR", text = "Faz com que você tropece e caia ao colidir com qualquer objeto.\10(Não funciona com 'Ragdoll On Demand')"},
+    },
+
+    ["rod_tt"] = {
+        {iso = "en-US", text = "Press [X] On Keyboard or [LT] On Controller To Instantly Ragdoll. The Longer You Hold The Button, The Longer You Stay On The Ground.\10(Doesn't work with 'Clumsy')"},
+        {iso = "de-DE", text = "Drücken Sie [X] auf der Tastatur oder [LT] auf dem Controller, um sofort Ragdoll zu spielen. Je länger du die Taste gedrückt hältst, desto länger bleibst du auf dem Boden.\10(Funktioniert nicht mit 'Clumsy')"},
+        {iso = "fr-FR", text = "Appuyez sur [X] sur le clavier ou sur [LT] sur la manette pour ragdoller instantanément. Plus vous maintenez le bouton enfoncé, plus vous restez au sol.\10(Ne fonctionne pas avec 'Clumsy')"},
+        {iso = "it-IT", text = "Premi [X] sulla tastiera o [LT] sul controller per fare immediatamente Ragdoll. Più a lungo tieni premuto il pulsante, più a lungo rimani a terra.\10(Non funziona con 'Maldestro')"},
+        {iso = "pt-BR", text = "Pressione [X] no teclado ou [LT] no controle para fazer Ragdoll instantaneamente. Quanto mais tempo você segurar o botão, mais tempo ficará no chão.\10(Não funciona com 'Clumsy')"},
+    },
+
+    ["radioStations_tt"] = {
+        {iso = "en-US", text = "This is not the same as 'Mobile Radio'. Everyone near you can hear the music, assuming you're not lagging and there are no radio sync issues caused by the game or the menu."},
+        {iso = "de-DE", text = "Dies ist nicht dasselbe wie „Mobile Radio“. Jeder in Ihrer Nähe kann die Musik hören, vorausgesetzt, Sie sind nicht verzögert und es gibt keine durch das Spiel oder das Menü verursachten Synchronisationsprobleme."},
+        {iso = "fr-FR", text = "Ce n'est pas la même chose que la « Radio Mobile ». Tout le monde près de vous peut entendre la musique, à condition que vous ne soyez pas à la traîne et qu'il n'y ait pas de problèmes de synchronisation radio causés par le jeu ou le menu."},
+        {iso = "it-IT", text = "Non è la stessa cosa della 'Radio Mobile'. Tutti coloro che si trovano nelle vicinanze possono sentire la musica, a patto che non ci sia un rallentamento e che non ci siano problemi di sincronizzazione della radio causati dal gioco o dal menu."},
+        {iso = "pt-BR", text = "Isso não é o mesmo que 'Rádio Móvel'. Todos que estiverem perto de você poderão ouvir a música, desde que você não esteja com atraso e que não haja problemas de sincronização de rádio causados pelo jogo ou pelo menu."},
+    },
 }
 
 
@@ -1207,7 +1336,7 @@ Labels = {
 local logMsg = true
 --[[
 
-Translates text to the script language.
+Translates text to the user's language.
 
 If the label to translate is missing or the language is invalid then it defaults to English (US).
 ]]

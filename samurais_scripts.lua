@@ -6,7 +6,7 @@ require('lib/Translations')
 require("data/objects")
 require("data/actions")
 
-SCRIPT_VERSION  = '0.3-a' -- 0.3 alpha
+SCRIPT_VERSION  = '0.4-a' -- 0.4 alpha
 TARGET_BUILD    = '3274'  -- Only YimResupplier needs a version check.
 TARGET_VERSION  = '1.69'
 CURRENT_BUILD   = Game.GetBuildNumber()
@@ -33,6 +33,7 @@ default_config   = {
   freeze            = false,
   usePlayKey        = false,
   replaceSneakAnim  = false,
+  replacePointAct   = false,
   disableActionMode = false,
   disableSound      = false,
   npc_godMode       = false,
@@ -44,6 +45,7 @@ default_config   = {
   disableUiSounds   = false,
   driftMode         = false,
   DriftTires        = false,
+  DriftSmoke        = false,
   speedBoost        = false,
   nosvfx            = false,
   hornLight         = false,
@@ -69,25 +71,352 @@ default_config   = {
   current_lang      = 'English',
 }
 
-LANG = lua_cfg.read("LANG")
-current_lang = lua_cfg.read("current_lang")
+LANG                = lua_cfg.read("LANG")
+current_lang        = lua_cfg.read("current_lang")
+Regen               = lua_cfg.read("Regen")
+objectiveTP         = lua_cfg.read("objectiveTP")
+phoneAnim           = lua_cfg.read("phoneAnim")
+sprintInside        = lua_cfg.read("sprintInside")
+lockPick            = lua_cfg.read("lockPick")
+replaceSneakAnim    = lua_cfg.read("replaceSneakAnim")
+replacePointAct     = lua_cfg.read("replacePointAct")
+disableActionMode   = lua_cfg.read("disableActionMode")
+rod                 = lua_cfg.read("rod")
+clumsy              = lua_cfg.read("clumsy")
+manualFlags         = lua_cfg.read("manualFlags")
+controllable        = lua_cfg.read("controllable")
+looped              = lua_cfg.read("looped")
+upperbody           = lua_cfg.read("upperbody")
+freeze              = lua_cfg.read("freeze")
+disableProps        = lua_cfg.read("disableProps")
+npc_godMode         = lua_cfg.read("npc_godMode")
+usePlayKey          = lua_cfg.read("usePlayKey")
+Triggerbot          = lua_cfg.read("Triggerbot")
+aimEnemy            = lua_cfg.read("aimEnemy")
+autoKill            = lua_cfg.read("autoKill")
+runaway             = lua_cfg.read("runaway")
+laserSight          = lua_cfg.read("laserSight")
+laser_switch        = lua_cfg.read("laser_switch")
+laser_choice        = lua_cfg.read("laser_choice")
+driftMode           = lua_cfg.read("driftMode")
+DriftIntensity      = lua_cfg.read("DriftIntensity")
+DriftTires          = lua_cfg.read("DriftTires")
+DriftSmoke          = lua_cfg.read("DriftSmoke")
+speedBoost          = lua_cfg.read("speedBoost")
+nosvfx              = lua_cfg.read("nosvfx")
+hornLight           = lua_cfg.read("hornLight")
+nosPurge            = lua_cfg.read("nosPurge")
+lightSpeed          = lua_cfg.read("lightSpeed")
+loud_radio          = lua_cfg.read("loud_radio")
+launchCtrl          = lua_cfg.read("launchCtrl")
+popsNbangs          = lua_cfg.read("popsNbangs")
+louderPops          = lua_cfg.read("louderPops")
+limitVehOptions     = lua_cfg.read("limitVehOptions")
+autobrklight        = lua_cfg.read("autobrklight")
+rgbLights           = lua_cfg.read("rgbLights")
+holdF               = lua_cfg.read("holdF")
+noJacking           = lua_cfg.read("noJacking")
+insta180            = lua_cfg.read("insta180")
+tab1Sound           = true
+tab2Sound           = true
+tab3Sound           = true
+is_playing_anim     = false
+anim_music          = false
+is_playing_scenario = false
+is_playing_radio    = false
+aimBool             = false
+HashGrabber         = false
+drew_laser          = false
+isCrouched          = false
+is_handsUp          = false
+is_car              = false
+is_quad             = false
+is_boat             = false
+is_bike             = false
+validModel          = false
+has_xenon           = false
+tire_smoke          = false
+purge_started       = false
+nos_started         = false
+twostep_started     = false
+is_typing           = false
+open_sounds_window  = false
+started_lct         = false
+launch_active       = false
+started_popSound    = false
+started_popSound2   = false
+customSmokeCol      = false
+pedGrabber          = false
+ped_grabbed         = false
+carpool             = false
+show_npc_veh_ctrls  = false
+stop_searching      = false
+hijack_started      = false
+sound_btn_off       = false
+grp_anim_index      = 0
+attached_ped        = 0
+thisVeh             = 0
+anim_index          = 0
+scenario_index      = 0
+npc_index           = 0
+actions_switch      = 0
+Entity              = 0
+timerA              = 0
+timerB              = 0
+lastVeh             = 0
+defaultXenon        = 0
+vehSound_index      = 0
+driftSmokeIndex     = 0
+selected_smoke_col  = 0
+pBus                = 0
+dummyDriver         = 0
+sound_index1        = 0
+sound_index2        = 0
+sound_switch        = 0
+radio_index         = 0
+pedthrowF           = 10
+tdBtn               = 21
+actions_search      = ""
+currentMvmt         = ""
+currentStrf         = ""
+currentWmvmt        = ""
+search_term         = ""
+smokeHex            = ""
+selected_sound      = {}
+selected_radio      = {}
+smokePtfx_t         = {}
+nosptfx_t           = {}
+purgePtfx_t         = {}
+lctPtfx_t           = {}
+popSounds_t         = {}
+popsPtfx_t          = {}
+npc_blips           = {}
+spawned_npcs        = {}
+plyrProps           = {}
+npcProps            = {}
+selfPTFX            = {}
+npcPTFX             = {}
+curr_playing_anim   = {}
+laserPtfx_T         = {}
+driftSmoke_T        = {r = 255, g = 255, b = 255}
+weapbones_T         = {"WAPLasr", "WAPLasr_2", "WAPFlshLasr", "WAPFlshLasr_2", "WAPFlsh", "WAPFlsh_2", "gun_barrels", "gun_muzzle"}
+driftSmokeColors    = {"White", "Black", "Red", "Green", "Blue", "Yellow", "Orange", "Pink", "Purple"}
+objectives_T        = { 0, 1, 2, 143, 144, 145, 146, 280, 502, 503, 504, 505, 506, 507, 508, 509, 510, 511, 535, 536, 537, 538, 539, 540, 541, 542 }
+vehOffsets          = { fc = 0x001C, ft = 0x0014, rc = 0x0020, rt = 0x0018, cg = 0x0882, ng = 0x0880, tg = 0x0886, vm = 0x000C, dfm = 0x0014, accm = 0x004C, cofm = 0x0020, bf = 0x006C, }
+radio_stations      = {
+  {station = "RADIO_11_TALK_02",               name = "Blaine County Radio"},
+  {station = "RADIO_21_DLC_XM17",              name = "Blonded Los Santos 97.8 FM"},
+  {station = "RADIO_04_PUNK",                  name = "Channel X"},
+  {station = "RADIO_08_MEXICAN",               name = "East Los FM"},
+  {station = "RADIO_14_DANCE_02",              name = "FlyLo FM"},
+  {station = "RADIO_23_DLC_XM19_RADIO",        name = "iFruit Radio"},
+  {station = "RADIO_34_DLC_HEI4_KULT",         name = "Kult FM"},
+  {station = "RADIO_01_CLASS_ROCK",            name = "Los Santos Rock Radio"},
+  {station = "RADIO_22_DLC_BATTLE_MIX1_RADIO", name = "Los Santos Underground Radio"},
+  {station = "RADIO_36_AUDIOPLAYER",           name = "Media Player"},
+  {station = "RADIO_02_POP",                   name = "Non-Stop-Pop FM"},
+  {station = "RADIO_03_HIPHOP_NEW",            name = "Radio Los Santos"},
+  {station = "RADIO_16_SILVERLAKE",            name = "Radio Mirror Park"},
+  {station = "RADIO_06_COUNTRY",               name = "Rebel Radio"},
+  {station = "RADIO_19_USER",                  name = "Self Radio"},
+  {station = "RADIO_07_DANCE_01",              name = "Soulwax FM"},
+  {station = "RADIO_17_FUNK",                  name = "Space 103.2"},
+  {station = "RADIO_27_DLC_PRHEI4",            name = "Still Slipping Los Santos"},
+  {station = "RADIO_12_REGGAE",                name = "The Blue Ark"},
+  {station = "RADIO_20_THELAB",                name = "The Lab"},
+  {station = "RADIO_15_MOTOWN",                name = "The Lowdown 9.11"},
+  {station = "RADIO_35_DLC_HEI4_MLR",          name = "The Music Locker"},
+  {station = "RADIO_18_90S_ROCK",              name = "Vinewood Boulevard Radio"},
+  {station = "RADIO_09_HIPHOP_OLD",            name = "West Coast Classics"},
+  {station = "RADIO_05_TALK_01",               name = "West Coast Talk Radio"},
+  {station = "RADIO_13_JAZZ",                  name = "Worldwide FM"},
+  }
+male_sounds_T  = {
+  { name = "Angry Chinese",     soundName = "GENERIC_INSULT_HIGH",      soundRef = "MP_M_SHOPKEEP_01_CHINESE_MINI_01" },
+  { name = "Begging Chinese",   soundName = "GUN_BEG",                  soundRef = "MP_M_SHOPKEEP_01_CHINESE_MINI_01" },
+  { name = "Call The Cops!",    soundName = "PHONE_CALL_COPS",          soundRef = "MP_M_SHOPKEEP_01_CHINESE_MINI_01" },
+  { name = "CHARGE!!",          soundName = "GENERIC_WAR_CRY",          soundRef = "S_M_Y_BLACKOPS_01_BLACK_MINI_01" },
+  { name = "Creep",             soundName = "SHOUT_PERV_AT_WOMAN_PERV", soundRef = "A_M_Y_MEXTHUG_01_LATINO_FULL_01" },
+  { name = "Clown Dying",       soundName = "CLOWN_DEATH",              soundRef = "CLOWNS" },
+  { name = "Clown Laughing",    soundName = "CLOWN_LAUGH",              soundRef = "CLOWNS" },
+  { name = "Franklin Laughing", soundName = "LAUGH",                    soundRef = "WAVELOAD_PAIN_FRANKLIN" },
+  { name = "How are you?",      soundName = "GENERIC_HOWS_IT_GOING",    soundRef = "S_M_M_PILOT_01_WHITE_FULL_01" },
+  { name = "Insult",            soundName = "GENERIC_INSULT_HIGH",      soundRef = "S_M_Y_SHERIFF_01_WHITE_FULL_01" },
+  { name = "Insult 02",         soundName = "GENERIC_FUCK_YOU",         soundRef = "FRANKLIN_DRUNK" },
+  { name = "Pain",              soundName = "ELECTROCUTION",            soundRef = "MISTERK" },
+  { name = "Pain 02",           soundName = "TOOTHPULL_PAIN",           soundRef = "MISTERK" },
+  { name = "Threaten",          soundName = "CHALLENGE_THREATEN",       soundRef = "S_M_Y_BLACKOPS_01_BLACK_MINI_01" },
+  { name = "You Look Stupid!",  soundName = "FRIEND_LOOKS_STUPID",      soundRef = "FRANKLIN_DRUNK" },
+}
+female_sounds_T = {
+  { name = "Blowjob",        soundName = "SEX_ORAL",                   soundRef = "S_F_Y_HOOKER_03_BLACK_FULL_01" },
+  { name = "Call The Cops!", soundName = "PHONE_CALL_COPS",            soundRef = "A_F_M_SALTON_01_WHITE_FULL_01" },
+  { name = "Hooker Offer",   soundName = "HOOKER_OFFER_SERVICE",       soundRef = "S_F_Y_HOOKER_03_BLACK_FULL_01" },
+  { name = "How are you?",   soundName = "GENERIC_HOWS_IT_GOING",      soundRef = "S_F_Y_HOOKER_03_BLACK_FULL_01" },
+  { name = "Insult",         soundName = "GENERIC_INSULT_HIGH",        soundRef = "S_F_Y_HOOKER_03_BLACK_FULL_01" },
+  { name = "Let's Go!",      soundName = "CHALLENGE_ACCEPTED_GENERIC", soundRef = "A_F_M_SALTON_01_WHITE_FULL_01" },
+  { name = "Moan",           soundName = "SEX_GENERIC_FEM",            soundRef = "S_F_Y_HOOKER_03_BLACK_FULL_01" },
+  { name = "Roast",          soundName = "GAME_HECKLE",                soundRef = "A_F_M_SALTON_01_WHITE_FULL_01" },
+  { name = "Threaten",       soundName = "CHALLENGE_THREATEN",         soundRef = "S_F_Y_HOOKER_03_BLACK_FULL_01" },
+}
+gta_vehicles_T      = {
+  "Airbus", "Airtug", "akula", "akuma", "aleutian", "alkonost", "alpha", "alphaz1",
+  "AMBULANCE", "annihilator", "annihilator2", "apc", "ardent", "armytanker", "armytrailer", "armytrailer2", "asbo",
+  "asea", "asea2", "asterope", "asterope2", "astron", "autarch", "avarus", "avenger", "avenger2", "avenger3", "avenger4",
+  "avisa", "bagger", "baletrailer", "Baller", "baller2", "baller3", "baller4", "baller5", "baller6", "baller7", "baller8",
+  "banshee", "banshee2", "BARRACKS", "BARRACKS2", "BARRACKS3", "barrage", "bati", "bati2", "Benson", "benson2", "besra",
+  "bestiagts", "bf400", "BfInjection", "Biff", "bifta", "bison", "Bison2", "Bison3", "BjXL", "blade", "blazer", "blazer2",
+  "blazer3", "blazer4", "blazer5", "BLIMP", "BLIMP2", "blimp3", "blista", "blista2", "blista3", "BMX", "boattrailer",
+  "boattrailer2", "boattrailer3", "bobcatXL", "Bodhi2", "bombushka", "boor", "boxville", "boxville2", "boxville3",
+  "boxville4", "boxville5", "boxville6", "brawler", "brickade", "brickade2", "brigham", "brioso", "brioso2", "brioso3",
+  "broadway", "bruiser", "bruiser2", "bruiser3", "brutus", "brutus2", "brutus3", "btype", "btype2", "btype3", "buccaneer",
+  "buccaneer2", "buffalo", "buffalo2", "buffalo3", "buffalo4", "buffalo5", "bulldozer", "bullet", "Burrito", "burrito2",
+  "burrito3", "Burrito4", "burrito5", "BUS", "buzzard", "Buzzard2", "cablecar", "caddy", "Caddy2", "caddy3", "calico",
+  "CAMPER", "caracara", "caracara2", "carbonizzare", "carbonrs", "Cargobob", "cargobob2", "Cargobob3", "Cargobob4",
+  "cargoplane", "cargoplane2", "casco", "cavalcade", "cavalcade2", "cavalcade3", "cerberus", "cerberus2", "cerberus3",
+  "champion", "cheburek", "cheetah", "cheetah2", "chernobog", "chimera", "chino", "chino2", "cinquemila", "cliffhanger",
+  "clique", "clique2", "club", "coach", "cog55", "cog552", "cogcabrio", "cognoscenti", "cognoscenti2", "comet2", "comet3",
+  "comet4", "comet5", "comet6", "comet7", "conada", "conada2", "contender", "coquette", "coquette2", "coquette3",
+  "coquette4", "corsita", "coureur", "cruiser", "CRUSADER", "cuban800", "cutter", "cyclone", "cypher", "daemon",
+  "daemon2", "deathbike", "deathbike2", "deathbike3", "defiler", "deity", "deluxo", "deveste", "deviant", "diablous",
+  "diablous2", "dilettante", "dilettante2", "Dinghy", "dinghy2", "dinghy3", "dinghy4", "dinghy5", "dloader",
+  "docktrailer", "docktug", "dodo", "Dominator", "dominator2", "dominator3", "dominator4", "dominator5", "dominator6",
+  "dominator7", "dominator8", "dominator9", "dorado", "double", "drafter", "draugur", "drifteuros", "driftfr36",
+  "driftfuto", "driftjester", "driftremus", "drifttampa", "driftyosemite", "driftzr350", "dubsta", "dubsta2", "dubsta3",
+  "dukes", "dukes2", "dukes3", "dump", "dune", "dune2", "dune3", "dune4", "dune5", "duster", "Dynasty", "elegy", "elegy2",
+  "ellie", "emerus", "emperor", "Emperor2", "emperor3", "enduro", "entity2", "entity3", "entityxf", "esskey", "eudora",
+  "Euros", "everon", "everon2", "exemplar", "f620", "faction", "faction2", "faction3", "fagaloa", "faggio", "faggio2",
+  "faggio3", "FBI", "FBI2", "fcr", "fcr2", "felon", "felon2", "feltzer2", "feltzer3", "firetruk", "fixter", "flashgt",
+  "FLATBED", "fmj", "FORKLIFT", "formula", "formula2", "fq2", "fr36", "freecrawler", "freight", "freight2", "freightcar",
+  "freightcar2", "freightcont1", "freightcont2", "freightgrain", "Frogger", "frogger2", "fugitive", "furia", "furoregt",
+  "fusilade", "futo", "futo2", "gargoyle", "Gauntlet", "gauntlet2", "gauntlet3", "gauntlet4", "gauntlet5", "gauntlet6",
+  "gb200", "gburrito", "gburrito2", "glendale", "glendale2", "gp1", "graintrailer", "GRANGER", "granger2", "greenwood",
+  "gresley", "growler", "gt500", "guardian", "habanero", "hakuchou", "hakuchou2", "halftrack", "handler", "Hauler",
+  "Hauler2", "havok", "hellion", "hermes", "hexer", "hotknife", "hotring", "howard", "hunter", "huntley", "hustler",
+  "hydra", "imorgon", "impaler", "impaler2", "impaler3", "impaler4", "impaler5", "impaler6", "imperator", "imperator2",
+  "imperator3", "inductor", "inductor2", "infernus", "infernus2", "ingot", "innovation", "insurgent", "insurgent2",
+  "insurgent3", "intruder", "issi2", "issi3", "issi4", "issi5", "issi6", "issi7", "issi8", "italigtb", "italigtb2",
+  "italigto", "italirsx", "iwagen", "jackal", "jb700", "jb7002", "jester", "jester2", "jester3", "jester4", "jet",
+  "jetmax", "journey", "journey2", "jubilee", "jugular", "kalahari", "kamacho", "kanjo", "kanjosj", "khamelion",
+  "khanjali", "komoda", "kosatka", "krieger", "kuruma", "kuruma2", "l35", "landstalker", "landstalker2", "Lazer", "le7b",
+  "lectro", "lguard", "limo2", "lm87", "locust", "longfin", "lurcher", "luxor", "luxor2", "lynx", "mamba", "mammatus",
+  "manana", "manana2", "manchez", "manchez2", "manchez3", "marquis", "marshall", "massacro", "massacro2", "maverick",
+  "menacer", "MESA", "mesa2", "MESA3", "metrotrain", "michelli", "microlight", "Miljet", "minitank", "minivan",
+  "minivan2", "Mixer", "Mixer2", "mogul", "molotok", "monroe", "monster", "monster3", "monster4", "monster5",
+  "monstrociti", "moonbeam", "moonbeam2", "Mower", "Mule", "Mule2", "Mule3", "mule4", "mule5", "nebula", "nemesis", "neo",
+  "neon", "nero", "nero2", "nightblade", "nightshade", "nightshark", "nimbus", "ninef", "ninef2", "nokota", "Novak",
+  "omnis", "omnisegt", "openwheel1", "openwheel2", "oppressor", "oppressor2", "oracle", "oracle2", "osiris", "outlaw",
+  "Packer", "panthere", "panto", "paradise", "paragon", "paragon2", "pariah", "patriot", "patriot2", "patriot3",
+  "patrolboat", "pbus", "pbus2", "pcj", "penetrator", "penumbra", "penumbra2", "peyote", "peyote2", "peyote3",
+  "pfister811", "Phantom", "phantom2", "phantom3", "Phantom4", "Phoenix", "picador", "pigalle", "polgauntlet", "police",
+  "police2", "police3", "police4", "police5", "policeb", "policeold1", "policeold2", "policet", "polmav", "pony", "pony2",
+  "postlude", "Pounder", "pounder2", "powersurge", "prairie", "pRanger", "Predator", "premier", "previon", "primo",
+  "primo2", "proptrailer", "prototipo", "pyro", "r300", "radi", "raiden", "raiju", "raketrailer", "rallytruck",
+  "RancherXL", "rancherxl2", "RapidGT", "RapidGT2", "rapidgt3", "raptor", "ratbike", "ratel", "ratloader", "ratloader2",
+  "rcbandito", "reaper", "Rebel", "rebel2", "rebla", "reever", "regina", "remus", "Rentalbus", "retinue", "retinue2",
+  "revolter", "rhapsody", "rhinehart", "RHINO", "riata", "RIOT", "riot2", "Ripley", "rocoto", "rogue", "romero",
+  "rrocket", "rt3000", "Rubble", "ruffian", "ruiner", "ruiner2", "ruiner3", "ruiner4", "rumpo", "rumpo2", "rumpo3",
+  "ruston", "s80", "sabregt", "sabregt2", "Sadler", "sadler2", "Sanchez", "sanchez2", "sanctus", "sandking", "sandking2",
+  "savage", "savestra", "sc1", "scarab", "scarab2", "scarab3", "schafter2", "schafter3", "schafter4", "schafter5",
+  "schafter6", "schlagen", "schwarzer", "scorcher", "scramjet", "scrap", "seabreeze", "seashark", "seashark2",
+  "seashark3", "seasparrow", "seasparrow2", "seasparrow3", "Seminole", "seminole2", "sentinel", "sentinel2", "sentinel3",
+  "sentinel4", "serrano", "SEVEN70", "Shamal", "sheava", "SHERIFF", "sheriff2", "shinobi", "shotaro", "skylift",
+  "slamtruck", "slamvan", "slamvan2", "slamvan3", "slamvan4", "slamvan5", "slamvan6", "sm722", "sovereign", "SPECTER",
+  "SPECTER2", "speeder", "speeder2", "speedo", "speedo2", "speedo4", "speedo5", "squaddie", "squalo", "stafford",
+  "stalion", "stalion2", "stanier", "starling", "stinger", "stingergt", "stingertt", "stockade", "stockade3", "stratum",
+  "streamer216", "streiter", "stretch", "strikeforce", "stromberg", "Stryder", "Stunt", "submersible", "submersible2",
+  "Sugoi", "sultan", "sultan2", "sultan3", "sultanrs", "Suntrap", "superd", "supervolito", "supervolito2", "Surano",
+  "SURFER", "Surfer2", "surfer3", "surge", "swift", "swift2", "swinger", "t20", "Taco", "tahoma", "tailgater",
+  "tailgater2", "taipan", "tampa", "tampa2", "tampa3", "tanker", "tanker2", "tankercar", "taxi", "technical",
+  "technical2", "technical3", "tempesta", "tenf", "tenf2", "terbyte", "terminus", "tezeract", "thrax", "thrust",
+  "thruster", "tigon", "TipTruck", "TipTruck2", "titan", "toreador", "torero", "torero2", "tornado", "tornado2",
+  "tornado3", "tornado4", "tornado5", "tornado6", "toro", "toro2", "toros", "TOURBUS", "TOWTRUCK", "Towtruck2",
+  "towtruck3", "towtruck4", "tr2", "tr3", "tr4", "TRACTOR", "tractor2", "tractor3", "trailerlarge", "trailerlogs",
+  "trailers", "trailers2", "trailers3", "trailers4", "trailers5", "trailersmall", "trailersmall2", "Trash", "trash2",
+  "trflat", "tribike", "tribike2", "tribike3", "trophytruck", "trophytruck2", "tropic", "tropic2", "tropos", "tug",
+  "tula", "tulip", "tulip2", "turismo2", "turismo3", "turismor", "tvtrailer", "tvtrailer2", "tyrant", "tyrus",
+  "utillitruck", "utillitruck2", "Utillitruck3", "vacca", "Vader", "vagner", "vagrant", "valkyrie", "valkyrie2", "vamos",
+  "vectre", "velum", "velum2", "verlierer2", "verus", "vestra", "vetir", "veto", "veto2", "vigero", "vigero2", "vigero3",
+  "vigilante", "vindicator", "virgo", "virgo2", "virgo3", "virtue", "viseris", "visione", "vivanite", "volatol",
+  "volatus", "voltic", "voltic2", "voodoo", "voodoo2", "vortex", "vstr", "warrener", "warrener2", "washington",
+  "wastelander", "weevil", "weevil2", "windsor", "windsor2", "winky", "wolfsbane", "xa21", "xls", "xls2", "yosemite",
+  "yosemite2", "yosemite3", "youga", "youga2", "youga3", "youga4", "z190", "zeno", "zentorno", "zhaba", "zion", "zion2",
+  "zion3", "zombiea", "zombieb", "zorrusso", "zr350", "zr380", "zr3802", "zr3803", "Ztype", 
+}
+
+---@param musicSwitch string
+---@param station? string
+function play_music(musicSwitch, station)
+  script.run_in_fiber(function(mp)
+    if musicSwitch == "start" then
+      local myPos       = self.get_pos()
+      local bone_idx    = PED.GET_PED_BONE_INDEX(self.get_ped(), 12844)
+      local pbus_model  = 345756458
+      local dummy_model = 0xE75B4B1C
+      if Game.requestModel(pbus_model) then
+        pBus = VEHICLE.CREATE_VEHICLE(pbus_model, myPos.x, myPos.y, (myPos.z - 10), 0, true, false, false)
+        ENTITY.SET_ENTITY_ALPHA(pBus, 0.0, false)
+        ENTITY.FREEZE_ENTITY_POSITION(pBus, true)
+        ENTITY.SET_ENTITY_COLLISION(pBus, false, 0)
+      end
+      mp:sleep(500)
+      if ENTITY.DOES_ENTITY_EXIST(pBus) then
+        if Game.requestModel(dummy_model) then
+          dummyDriver = PED.CREATE_PED("PED_TYPE_CIVMALE", dummy_model, myPos.x, myPos.y, (myPos.z + 40), 0, true, false)
+          if ENTITY.DOES_ENTITY_EXIST(dummyDriver) then
+            ENTITY.SET_ENTITY_ALPHA(dummyDriver, 0.0, false)
+            PED.SET_PED_INTO_VEHICLE(dummyDriver, pBus, -1)
+            PED.SET_PED_CONFIG_FLAG(dummyDriver, 402, true)
+            PED.SET_PED_CONFIG_FLAG(dummyDriver, 398, true)
+            PED.SET_PED_CONFIG_FLAG(dummyDriver, 167, true)
+            PED.SET_PED_CONFIG_FLAG(dummyDriver, 251, true)
+            PED.SET_PED_CONFIG_FLAG(dummyDriver, 255, true)
+            PED.SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(dummyDriver, true)
+            AUDIO.FORCE_USE_AUDIO_GAME_OBJECT(pBus, vehicles.get_vehicle_display_name(2765724541))
+            VEHICLE.SET_VEHICLE_ENGINE_ON(pBus, true, false, false)
+            AUDIO.SET_VEHICLE_RADIO_LOUD(pBus, true)
+            mp:sleep(500)
+            AUDIO.SET_VEH_RADIO_STATION(pBus, station)
+            -- ENTITY.SET_ENTITY_AS_NO_LONGER_NEEDED(dummyDriver)
+            -- ENTITY.SET_ENTITY_AS_NO_LONGER_NEEDED(pBus)
+            mp:sleep(500)
+            ENTITY.ATTACH_ENTITY_TO_ENTITY(pBus, self.get_ped(), bone_idx, 0.0, -1.0, -1.3, 0.0, 0.0, 0.0, false, true,
+            false, true, 1, false, 1)
+          else
+            gui.show_error("Samurais Scripts", "Failed to start music!")
+            log.debug('Failed to create ped')
+            return
+          end
+        end
+      else
+        gui.show_error("Samurais Scripts", "Failed to start music!")
+        log.debug('Failed to create vehicle')
+        return
+      end
+    elseif musicSwitch == "stop" then
+      if ENTITY.DOES_ENTITY_EXIST(dummyDriver) then
+        ENTITY.SET_ENTITY_AS_MISSION_ENTITY(dummyDriver, true, true)
+        mp:sleep(200)
+        ENTITY.DELETE_ENTITY(dummyDriver)
+        dummyDriver = 0
+      end
+      if ENTITY.DOES_ENTITY_EXIST(pBus) then
+        ENTITY.SET_ENTITY_AS_MISSION_ENTITY(pBus, true, true)
+        mp:sleep(200)
+        ENTITY.DELETE_ENTITY(pBus)
+        pBus = 0
+      end
+    else
+      log.error('invalid argument ' .. tostring(musicSwitch))
+    end
+  end)
+end
+
 
 --[[
     *self*
 ]]
 self_tab = Samurais_scripts:add_tab(translateLabel("Self"))
-Regen             = lua_cfg.read("Regen")
-objectiveTP       = lua_cfg.read("objectiveTP")
-phoneAnim         = lua_cfg.read("phoneAnim")
-sprintInside      = lua_cfg.read("sprintInside")
-lockPick          = lua_cfg.read("lockPick")
-replaceSneakAnim  = lua_cfg.read("replaceSneakAnim")
-disableActionMode = lua_cfg.read("disableActionMode")
-rod               = lua_cfg.read("rod")
-clumsy            = lua_cfg.read("clumsy")
-isCrouched        = false
-objectives_T      = { 0, 1, 2, 143, 144, 145, 146, 280, 502, 503, 504, 505, 506, 507, 508, 509, 510, 511, 535, 536, 537, 538, 539, 540, 541, 542 }
-
 self_tab:add_imgui(function()
   Regen, RegenUsed = ImGui.Checkbox(translateLabel("Auto-Heal"), Regen, true)
   UI.helpMarker(false, translateLabel("autoheal_tooltip"))
@@ -107,6 +436,13 @@ self_tab:add_imgui(function()
   UI.helpMarker(false, translateLabel("Crouch_tooltip"))
   if rsanimUsed then
     lua_cfg.save("replaceSneakAnim", replaceSneakAnim)
+    UI.widgetSound("Nav2")
+  end 
+
+  replacePointAct, rpaUsed = ImGui.Checkbox(translateLabel("rpaCB"), replacePointAct, true)
+  UI.helpMarker(false, translateLabel("rpa_tooltip"))
+  if rpaUsed then
+    lua_cfg.save("replacePointAct", replacePointAct)
     UI.widgetSound("Nav2")
   end
 
@@ -147,7 +483,7 @@ self_tab:add_imgui(function()
     lua_cfg.save("clumsy", clumsy)
     UI.widgetSound("Nav2")
   end
-  UI.helpMarker(false, "Makes You Ragdoll When You Collide With Any Object.\n(Doesn't work with Ragdoll On Demand)")
+  UI.helpMarker(false, translateLabel("clumsy_tt"))
 
   rod, rodUsed = ImGui.Checkbox("Ragdoll On Demand", rod, true)
   if rodUsed then
@@ -156,38 +492,11 @@ self_tab:add_imgui(function()
     lua_cfg.save("clumsy", false)
     UI.widgetSound("Nav2")
   end
-  UI.helpMarker(false,
-    "Press [X] On Keyboard or [LT] On Controller To Instantly Ragdoll. The Longer You Hold The Button, The Longer You Stay On The Ground.\n(Doesn't work with Clumsy)")
+  UI.helpMarker(false, translateLabel("rod_tt"))
 end)
 
+
 Actions = self_tab:add_tab("Actions")
-npc_blips           = {}
-spawned_npcs        = {}
-plyrProps           = {}
-npcProps            = {}
-selfPTFX            = {}
-npcPTFX             = {}
-manualFlags         = lua_cfg.read("manualFlags")
-controllable        = lua_cfg.read("controllable")
-looped              = lua_cfg.read("looped")
-upperbody           = lua_cfg.read("upperbody")
-freeze              = lua_cfg.read("freeze")
-disableProps        = lua_cfg.read("disableProps")
-npc_godMode         = lua_cfg.read("npc_godMode")
-usePlayKey          = lua_cfg.read("usePlayKey")
-is_playing_anim     = false
-is_playing_scenario = false
-tab1Sound           = true
-tab2Sound           = true
-tab3Sound           = true
-anim_index          = 0
-scenario_index      = 0
-npc_index           = 0
-actions_switch      = 0
-actions_search      = ""
-currentMvmt         = ""
-currentStrf         = ""
-currentWmvmt        = ""
 
 local function updatefilteredAnims()
   filteredAnims = {}
@@ -288,6 +597,7 @@ local function setdrunk()
         currentStrf  = "move_strafe@first_person@drunk"
     end)
 end
+
 local function sethoe()
   script.run_in_fiber(function()
       while not STREAMING.HAS_CLIP_SET_LOADED("move_f@maneater") do
@@ -356,6 +666,16 @@ local function setballistic()
       currentWmvmt = ""
   end)
 end
+
+function onAnimInterrupt()
+  script.run_in_fiber(function()
+    if Game.requestAnimDict(curr_playing_anim.curr_dict) then
+      TASK.CLEAR_PED_TASKS_IMMEDIATELY(self.get_ped())
+      TASK.TASK_PLAY_ANIM(self.get_ped(), curr_playing_anim.curr_dict, curr_playing_anim.curr_anim, 4.0, -4.0, -1, curr_playing_anim.curr_flag, 1.0, false, false, false)
+    end
+  end)
+end
+
 Actions:add_imgui(function()
   ImGui.PushItemWidth(270)
   actions_search, used = ImGui.InputTextWithHint("##searchBar", translateLabel("search_hint"), actions_search, 32)
@@ -377,13 +697,13 @@ Actions:add_imgui(function()
     displayFilteredAnims()
     ImGui.PopItemWidth()
     info = filteredAnims[anim_index + 1]
-    ImGui.Separator(); manualFlags, used = ImGui.Checkbox(translateLabel("edit_flags"), manualFlags, true)
+    ImGui.Separator(); manualFlags, used = ImGui.Checkbox("Edit Flags", manualFlags, true)
     if used then
       lua_cfg.save("manualFlags", manualFlags)
       UI.widgetSound("Nav2")
     end
     UI.helpMarker(false, translateLabel("flags_tt"))
-    ImGui.SameLine(); disableProps, used = ImGui.Checkbox(translateLabel("Disable Props"), disableProps, true)
+    ImGui.SameLine(); disableProps, used = ImGui.Checkbox("Disable Props", disableProps, true)
     if used then
       lua_cfg.save("disableProps", disableProps)
       UI.widgetSound("Nav2")
@@ -419,38 +739,63 @@ Actions:add_imgui(function()
       UI.helpMarker(false, translateLabel("Freeze_tt"))
     end
     if ImGui.Button(translateLabel("generic_play_btn") .. "##anim") then
-      UI.widgetSound("Select")
-      local coords     = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
-      local heading    = ENTITY.GET_ENTITY_HEADING(self.get_ped())
-      local forwardX   = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
-      local forwardY   = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
-      local boneIndex  = PED.GET_PED_BONE_INDEX(self.get_ped(), info.boneID)
-      local bonecoords = PED.GET_PED_BONE_COORDS(self.get_ped(), info.boneID)
-      if manualFlags then
-        setmanualflag()
+      if not ped_grabbed then
+        UI.widgetSound("Select")
+        local coords     = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
+        local heading    = ENTITY.GET_ENTITY_HEADING(self.get_ped())
+        local forwardX   = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
+        local forwardY   = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
+        local boneIndex  = PED.GET_PED_BONE_INDEX(self.get_ped(), info.boneID)
+        local bonecoords = PED.GET_PED_BONE_COORDS(self.get_ped(), info.boneID)
+        if manualFlags then
+          setmanualflag()
+        else
+          flag = info.flag
+        end
+        curr_playing_anim = {curr_dict = info.dict, curr_anim = info.anim, curr_flag = flag, curr_name = info.name}
+        if lua_Fn.str_contains(curr_playing_anim.curr_name, "DJ") then
+          if not is_playing_radio and not anim_music then
+            play_music("start", "RADIO_22_DLC_BATTLE_MIX1_RADIO")
+            anim_music = true
+          end
+        else
+          if anim_music then
+            play_music("stop")
+            anim_music = false
+          end
+        end
+        playSelected(self.get_ped(), selfprop1, selfprop2, selfloopedFX, selfSexPed, boneIndex, coords, heading, forwardX,
+          forwardY, bonecoords, "self", plyrProps, selfPTFX)
+        is_playing_anim = true
       else
-        flag = info.flag
+        UI.widgetSound("Error")
+        gui.show_error("Samurais Scripts", translateLabel("You can not play animations while grabbing an NPC."))
       end
-      playSelected(self.get_ped(), selfprop1, selfprop2, selfloopedFX, selfSexPed, boneIndex, coords, heading, forwardX,
-        forwardY, bonecoords, "self", plyrProps, selfPTFX)
-      is_playing_anim = true
     end
     ImGui.SameLine(); ImGui.Dummy(10, 1); ImGui.SameLine()
     if ImGui.Button(translateLabel("generic_stop_btn") .. "##anim") then
-      UI.widgetSound("Cancel")
-      if PED.IS_PED_IN_ANY_VEHICLE(self.get_ped(), false) then
-        cleanup()
-        local mySeat Game.getPedVehicleSeat(self.get_ped())
-        PED.SET_PED_INTO_VEHICLE(self.get_ped(), self.get_veh(), mySeat)
+      if is_playing_anim then
+        UI.widgetSound("Cancel")
+        if PED.IS_PED_IN_ANY_VEHICLE(self.get_ped(), false) then
+          cleanup()
+          local mySeat Game.getPedVehicleSeat(self.get_ped())
+          PED.SET_PED_INTO_VEHICLE(self.get_ped(), self.get_veh(), mySeat)
+        else
+          cleanup()
+          local current_coords = self.get_pos()
+          ENTITY.SET_ENTITY_COORDS_NO_OFFSET(self.get_ped(), current_coords.x, current_coords.y, current_coords.z, true,
+            false, false)
+        end
+        if anim_music then
+          play_music("stop")
+          anim_music = false
+        end
+        is_playing_anim = false
       else
-        cleanup()
-        local current_coords = self.get_pos()
-        ENTITY.SET_ENTITY_COORDS_NO_OFFSET(self.get_ped(), current_coords.x, current_coords.y, current_coords.z, true,
-          false, false)
+        UI.widgetSound("Error")
       end
-      is_playing_anim = false
     end
-    UI.toolTip(false, "TIP: You can also stop animations by pressing [G] on keyboard or [DPAD LEFT] on controller.")
+    UI.toolTip(false, translateLabel("stopAnims_tt"))
     ImGui.SameLine()
     local errCol = {}
     local errSound = false
@@ -461,15 +806,15 @@ Actions:add_imgui(function()
       errCol = { 225, 0, 0, 0.5 }
       errSound = true
     end
-    if UI.coloredButton("Remove Attachments", {104, 247, 114}, {104, 247, 114}, errCol, 0.6) then
+    if UI.coloredButton(translateLabel("Remove Attachments"), {104, 247, 114}, {104, 247, 114}, errCol, 0.6) then
       if not errSound then
         UI.widgetSound("Cancel")
       else
         UI.widgetSound("Error")
       end
-      local all_objects = entities.get_all_objects_as_handles()
-      for _, v in ipairs(all_objects) do
-        script.run_in_fiber(function()
+      script.run_in_fiber(function()
+        local all_objects = entities.get_all_objects_as_handles()
+        for _, v in ipairs(all_objects) do
           local modelHash      = ENTITY.GET_ENTITY_MODEL(v)
           local attachedObject = ENTITY.GET_ENTITY_OF_TYPE_ATTACHED_TO_ENTITY(self.get_ped(), modelHash)
           if ENTITY.DOES_ENTITY_EXIST(attachedObject) then
@@ -477,11 +822,9 @@ Actions:add_imgui(function()
             ENTITY.SET_ENTITY_AS_NO_LONGER_NEEDED(attachedObject)
             TASK.CLEAR_PED_TASKS(self.get_ped())
           end
-        end)
-      end
-      local all_peds = entities.get_all_peds_as_handles()
-      for _, p in ipairs(all_peds) do
-        script.run_in_fiber(function()
+        end
+        local all_peds = entities.get_all_peds_as_handles()
+        for _, p in ipairs(all_peds) do
           local pedHash     = ENTITY.GET_ENTITY_MODEL(p)
           local attachedPed = ENTITY.GET_ENTITY_OF_TYPE_ATTACHED_TO_ENTITY(self.get_ped(), pedHash)
           if ENTITY.DOES_ENTITY_EXIST(attachedPed) then
@@ -490,21 +833,39 @@ Actions:add_imgui(function()
             TASK.CLEAR_PED_TASKS(attachedPed)
             ENTITY.SET_ENTITY_AS_NO_LONGER_NEEDED(attachedPed)
           end
-        end)
-      end
-      is_playing_anim = false
-      if plyrProps[1] ~= nil then
-        for k, _ in ipairs(plyrProps) do
-          plyrProps[k] = nil
         end
-      else
-        gui.show_error("Samurais Scripts", "There are no objects or peds attached.")
-      end
+        is_playing_anim = false
+        if is_playing_scenario then
+          if ENTITY.DOES_ENTITY_EXIST(bbq) then
+            ENTITY.DELETE_ENTITY(bbq)
+          end
+          is_playing_scenario = false
+        end
+        if ped_grabbed then
+          ENTITY.FREEZE_ENTITY_POSITION(attached_ped, false)
+          TASK.TASK_SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(attached_ped, false)
+          PED.SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(attached_ped, false)
+          PED.SET_PED_TO_RAGDOLL(attached_ped, 1500, 0, 0, false)
+          TASK.CLEAR_PED_TASKS(self.get_ped())
+          PED.SET_PED_CAN_SWITCH_WEAPON(self.get_ped(), true)
+        end
+        if plyrProps[1] ~= nil then
+          for k, _ in ipairs(plyrProps) do
+            plyrProps[k] = nil
+          end
+        else
+          if not ped_grabbed then
+            gui.show_error("Samurais Scripts", "There are no objects or peds attached.")
+          else
+            ped_grabbed = false
+          end
+        end
+      end)
     end
-    UI.toolTip(false, "Detaches all props.")
+    UI.toolTip(false, translateLabel("RemoveAttachments_tt"))
     ImGui.Separator()
     ImGui.Spacing()
-    ImGui.Text("Movement Options:")
+    ImGui.Text(translateLabel("Movement Options:"))
     ImGui.Spacing()
     local isChanged = false
     actions_switch, isChanged = ImGui.RadioButton("Normal", actions_switch, 0)
@@ -549,7 +910,7 @@ Actions:add_imgui(function()
       UI.widgetSound("Nav")
     end
     ImGui.Separator()
-    ImGui.Text("Play Animations On NPCs:")
+    ImGui.Text(translateLabel("Play Animations On NPCs:"))
     ImGui.PushItemWidth(220)
     displayNpcs()
     ImGui.PopItemWidth()
@@ -562,8 +923,8 @@ Actions:add_imgui(function()
       lua_cfg.save("npc_godMode", npc_godMode)
       UI.widgetSound("Nav")
     end
-    UI.toolTip(false, "Spawn NPCs in God Mode.")
-    if ImGui.Button("Spawn") then
+    UI.toolTip(false, translateLabel("Spawn NPCs in God Mode."))
+    if ImGui.Button(translateLabel("Spawn") .. "##anim_npc") then
       UI.widgetSound("Select")
       script.run_in_fiber(function()
         local npcData     = filteredNpcs[npc_index + 1]
@@ -625,7 +986,7 @@ Actions:add_imgui(function()
       end)
     end
     ImGui.SameLine()
-    if ImGui.Button("Delete") then
+    if ImGui.Button(translateLabel("generic_delete") .. "##anim_npc") then
       UI.widgetSound("Delete")
       cleanupNPC()
       script.run_in_fiber(function()
@@ -639,7 +1000,7 @@ Actions:add_imgui(function()
       end)
     end
     ImGui.SameLine()
-    if ImGui.Button("Play On NPC") then
+    if ImGui.Button(translateLabel("generic_play_btn") .. "##npc_anim") then
       if spawned_npcs[1] ~= nil then
         UI.widgetSound("Select")
         for _, v in ipairs(spawned_npcs) do
@@ -665,7 +1026,7 @@ Actions:add_imgui(function()
       end
     end
     ImGui.SameLine()
-    if ImGui.Button("Stop NPC") then
+    if ImGui.Button(translateLabel("generic_stop_btn") .. "##npc_anim") then
       UI.widgetSound("Cancel")
       cleanupNPC()
       for _, v in ipairs(spawned_npcs) do
@@ -679,14 +1040,14 @@ Actions:add_imgui(function()
       end
     end
     usePlayKey, upkUsed = ImGui.Checkbox("Enable Animation Hotkeys", usePlayKey, true)
-    UI.toolTip(false, "Use experimental hotkeys to play animations. These hotkeys may interfere with gameplay, hence why there is an option to disable them.\10\10Current Setup:\10-[PAGE UP]: Scroll up the list.\10-[PAGE DOWN]: Scroll down the list.\10-[DEL]: Play.\10-[G]: Stop.")
+    UI.toolTip(false, translateLabel("animKeys_tt"))
     if upkUsed then
       lua_cfg.save("usePlayKey", usePlayKey)
       UI.widgetSound("Nav2")
     end
     ImGui.EndTabItem()
   end
-  if ImGui.BeginTabItem("Scenarios") then
+  if ImGui.BeginTabItem(translateLabel("scenarios")) then
     if tab2Sound then
       UI.widgetSound("Nav2")
       tab2Sound = false
@@ -698,45 +1059,49 @@ Actions:add_imgui(function()
     ImGui.PopItemWidth()
     ImGui.Separator()
     if ImGui.Button(translateLabel("generic_play_btn") .. "##scenarios") then
-      UI.widgetSound("Select")
-      if is_playing_anim then
-        cleanup()
-      end
-      local data = filteredScenarios[scenario_index + 1]
-      local coords = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
-      local heading = ENTITY.GET_ENTITY_HEADING(self.get_ped())
-      local forwardX = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
-      local forwardY = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
-      if data.name == "Cook On BBQ" then
-        script.run_in_fiber(function()
-          while not STREAMING.HAS_MODEL_LOADED(286252949) do
-            STREAMING.REQUEST_MODEL(286252949)
-            coroutine.yield()
-          end
-          bbq = OBJECT.CREATE_OBJECT(286252949, coords.x + (forwardX), coords.y + (forwardY), coords.z, true, true, false)
-          ENTITY.SET_ENTITY_HEADING(bbq, heading)
-          OBJECT.PLACE_OBJECT_ON_GROUND_PROPERLY(bbq)
-          TASK.CLEAR_PED_TASKS_IMMEDIATELY(self.get_ped())
-          TASK.TASK_START_SCENARIO_IN_PLACE(self.get_ped(), data.scenario, -1, true)
-          is_playing_scenario = true
-        end)
+      if not ped_grabbed then
+        UI.widgetSound("Select")
+        if is_playing_anim then
+          cleanup()
+        end
+        local data = filteredScenarios[scenario_index + 1]
+        local coords = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
+        local heading = ENTITY.GET_ENTITY_HEADING(self.get_ped())
+        local forwardX = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
+        local forwardY = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
+        if data.name == "Cook On BBQ" then
+          script.run_in_fiber(function()
+            while not STREAMING.HAS_MODEL_LOADED(286252949) do
+              STREAMING.REQUEST_MODEL(286252949)
+              coroutine.yield()
+            end
+            bbq = OBJECT.CREATE_OBJECT(286252949, coords.x + (forwardX), coords.y + (forwardY), coords.z, true, true, false)
+            ENTITY.SET_ENTITY_HEADING(bbq, heading)
+            OBJECT.PLACE_OBJECT_ON_GROUND_PROPERLY(bbq)
+            TASK.CLEAR_PED_TASKS_IMMEDIATELY(self.get_ped())
+            TASK.TASK_START_SCENARIO_IN_PLACE(self.get_ped(), data.scenario, -1, true)
+            is_playing_scenario = true
+          end)
+        else
+          script.run_in_fiber(function()
+            TASK.CLEAR_PED_TASKS_IMMEDIATELY(self.get_ped())
+            TASK.TASK_START_SCENARIO_IN_PLACE(self.get_ped(), data.scenario, -1, true)
+            is_playing_scenario = true
+            if ENTITY.DOES_ENTITY_EXIST(bbq) then
+              ENTITY.DELETE_ENTITY(bbq)
+            end
+          end)
+        end
       else
-        script.run_in_fiber(function()
-          TASK.CLEAR_PED_TASKS_IMMEDIATELY(self.get_ped())
-          TASK.TASK_START_SCENARIO_IN_PLACE(self.get_ped(), data.scenario, -1, true)
-          is_playing_scenario = true
-          if ENTITY.DOES_ENTITY_EXIST(bbq) then
-            ENTITY.DELETE_ENTITY(bbq)
-          end
-        end)
+        gui.show_error("Samurais Scripts", translateLabel("You can not play scenarios while grabbing an NPC."))
       end
     end
     ImGui.SameLine(); ImGui.Dummy(60, 1); ImGui.SameLine()
     if ImGui.Button(translateLabel("generic_stop_btn") .. "##scenarios") then
-      UI.widgetSound("Cancel")
       if is_playing_scenario then
+        UI.widgetSound("Cancel")
         script.run_in_fiber(function(script)
-          Game.busySpinnerOn("Stopping scenario...", 3)
+          Game.busySpinnerOn(translateLabel("scenarios_spinner"), 3)
           TASK.CLEAR_PED_TASKS(self.get_ped())
           is_playing_scenario = false
           script:sleep(1000)
@@ -745,19 +1110,21 @@ Actions:add_imgui(function()
             ENTITY.DELETE_ENTITY(bbq)
           end
         end)
+      else
+        UI.widgetSound("Error")
       end
     end
-    UI.toolTip(false, "TIP: You can also stop scenarios by pressing [G] on keyboard or [DPAD LEFT] on controller.")
+    UI.toolTip(false, translateLabel("stopScenarios_tt"))
     ImGui.Separator()
-    ImGui.Text("Play Scenarios On NPCs:")
+    ImGui.Text(translateLabel("Play Scenarios On NPCs:"))
     ImGui.PushItemWidth(220)
     displayNpcs()
     ImGui.PopItemWidth()
     ImGui.SameLine()
     npc_godMode, used = ImGui.Checkbox("Invincible", npc_godMode, true)
-    UI.toolTip(false, "Spawn NPCs in God Mode.")
+    UI.toolTip(false, translateLabel("Spawn NPCs in God Mode."))
     local npcData = filteredNpcs[npc_index + 1]
-    if ImGui.Button("Spawn") then
+    if ImGui.Button(translateLabel("Spawn") .. "##scenario_npc") then
       UI.widgetSound("Select")
       script.run_in_fiber(function()
         local pedCoords = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
@@ -834,7 +1201,7 @@ Actions:add_imgui(function()
       end)
     end
     ImGui.SameLine()
-    if ImGui.Button("Play On NPC") then
+    if ImGui.Button(translateLabel("generic_play_btn") .. "##npc_scenarios") then
       if spawned_npcs[1] ~= nil then
         UI.widgetSound("Select")
         if is_playing_anim then
@@ -873,15 +1240,14 @@ Actions:add_imgui(function()
         end
       else
         UI.widgetSound("Error")
-        gui.show_error("Samurais Scripts", "Spawn an NPC first!")
       end
     end
     ImGui.SameLine()
-    if ImGui.Button("Stop NPC") then
+    if ImGui.Button(translateLabel("generic_stop_btn") .. "##npc_scenarios") then
       if is_playing_scenario then
         UI.widgetSound("Cancel")
         script.run_in_fiber(function(script)
-          Game.busySpinnerOn("Stopping scenario...", 3)
+          Game.busySpinnerOn(translateLabel("scenarios_spinner"), 3)
           for _, v in ipairs(spawned_npcs) do
             TASK.CLEAR_PED_TASKS(v)
           end
@@ -899,26 +1265,10 @@ Actions:add_imgui(function()
 end)
 
 
-
-
 --[[
     *weapon*
 ]]
-weapon_tab   = Samurais_scripts:add_tab(translateLabel("weaponTab"))
-Triggerbot   = lua_cfg.read("Triggerbot")
-aimEnemy     = lua_cfg.read("aimEnemy")
-autoKill     = lua_cfg.read("autoKill")
-runaway      = lua_cfg.read("runaway")
-laserSight   = lua_cfg.read("laserSight")
-laser_switch = lua_cfg.read("laser_switch")
-laser_choice = lua_cfg.read("laser_choice")
-aimBool      = false
-HashGrabber  = false
-drew_laser   = false
-Entity       = 0
-laserPtfx_T  = {}
-weapbones_T  = {"WAPLasr", "WAPLasr_2", "WAPFlshLasr", "WAPFlshLasr_2", "WAPFlsh", "WAPFlsh_2", "gun_barrels", "gun_muzzle"}
-
+weapon_tab = Samurais_scripts:add_tab(translateLabel("weaponTab"))
 weapon_tab:add_imgui(function()
   HashGrabber, HgUsed = ImGui.Checkbox(translateLabel("hashgrabberCB"), HashGrabber, true)
   UI.helpMarker(false,
@@ -979,32 +1329,8 @@ weapon_tab:add_imgui(function()
   end
 end)
 
-sound_player   = self_tab:add_tab(translateLabel "soundplayer")
-sound_index1   = 0
-sound_index2   = 0
-sound_switch   = 0
-sound_btn_off  = false
-selected_sound = {}
-male_sounds_T  = {
-  { name = "Charge",            soundName = "GENERIC_WAR_CRY",          soundRef = "S_M_Y_BLACKOPS_01_BLACK_MINI_01" },
-  { name = "Creep",             soundName = "SHOUT_PERV_AT_WOMAN_PERV", soundRef = "A_M_Y_MEXTHUG_01_LATINO_FULL_01" },
-  { name = "Franklin Laughing", soundName = "LAUGH",                    soundRef = "WAVELOAD_PAIN_FRANKLIN" },
-  { name = "How are you?",      soundName = "GENERIC_HOWS_IT_GOING",    soundRef = "S_M_M_PILOT_01_WHITE_FULL_01" },
-  { name = "Insult",            soundName = "GENERIC_INSULT_HIGH",      soundRef = "S_M_Y_SHERIFF_01_WHITE_FULL_01" },
-  { name = "Insult 02",         soundName = "GENERIC_FUCK_YOU",         soundRef = "FRANKLIN_DRUNK" },
-  { name = "Threaten",          soundName = "CHALLENGE_THREATEN",       soundRef = "S_M_Y_BLACKOPS_01_BLACK_MINI_01" },
-  { name = "You Look Stupid!",  soundName = "FRIEND_LOOKS_STUPID",      soundRef = "FRANKLIN_DRUNK" },
-}
-female_sounds_T = {
-  { name = "Blowjob",      soundName = "SEX_ORAL",              soundRef = "S_F_Y_HOOKER_03_BLACK_FULL_01" },
-  { name = "Hooker Offer", soundName = "HOOKER_OFFER_SERVICE",  soundRef = "S_F_Y_HOOKER_03_BLACK_FULL_01" },
-  { name = "How are you?", soundName = "GENERIC_HOWS_IT_GOING", soundRef = "S_F_Y_HOOKER_03_BLACK_FULL_01" },
-  { name = "Insult",       soundName = "GENERIC_INSULT_HIGH",   soundRef = "S_F_Y_HOOKER_03_BLACK_FULL_01" },
-  { name = "Moan",         soundName = "SEX_GENERIC_FEM",       soundRef = "S_F_Y_HOOKER_03_BLACK_FULL_01" },
-  { name = "Threaten",     soundName = "CHALLENGE_THREATEN",    soundRef = "S_F_Y_HOOKER_03_BLACK_FULL_01" },
-}
-
-local function displayMaleSounds()
+sound_player = self_tab:add_tab(translateLabel "soundplayer")
+function displayMaleSounds()
   filteredMaleSounds = {}
   for _, v in ipairs(male_sounds_T) do
     table.insert(filteredMaleSounds, v.name)
@@ -1012,7 +1338,7 @@ local function displayMaleSounds()
   sound_index1, used = ImGui.Combo("##maleSounds", sound_index1, filteredMaleSounds, #male_sounds_T)
 end
 
-local function displayFemaleSounds()
+function displayFemaleSounds()
   filteredFemaleSounds = {}
   for _, v in ipairs(female_sounds_T) do
     table.insert(filteredFemaleSounds, v.name)
@@ -1020,33 +1346,43 @@ local function displayFemaleSounds()
   sound_index2, used = ImGui.Combo("##femaleSounds", sound_index2, filteredFemaleSounds, #female_sounds_T)
 end
 
+function displayRadioStations()
+  filteredRadios = {}
+  for _, v in ipairs(radio_stations) do
+    table.insert(filteredRadios, v.name)
+  end
+  radio_index, used = ImGui.Combo("##radioStations", radio_index, filteredRadios, #radio_stations)
+end
+
 sound_player:add_imgui(function()
-  sound_switch, isChanged = ImGui.RadioButton(translateLabel("malesounds"), sound_switch, 0); ImGui.SameLine()
+ ImGui.Spacing(); ImGui.Text("- Human Sounds -"); ImGui.Spacing()
+  ImGui.Dummy(20, 1); ImGui.SameLine(); sound_switch, isChanged = ImGui.RadioButton(translateLabel("malesounds"), sound_switch, 0); ImGui.SameLine()
   if isChanged then
     UI.widgetSound("Nav")
   end
-  sound_switch, isChanged = ImGui.RadioButton(translateLabel("femalesounds"), sound_switch, 1)
+  ImGui.Dummy(20, 1); ImGui.SameLine(); sound_switch, isChanged = ImGui.RadioButton(translateLabel("femalesounds"), sound_switch, 1)
   if isChanged then
     UI.widgetSound("Nav")
   end
   ImGui.Spacing()
   if sound_switch == 0 then
+    ImGui.PushItemWidth(280)
     displayMaleSounds()
+    ImGui.PopItemWidth()
     selected_sound = male_sounds_T[sound_index1 + 1]
   else
+    ImGui.PushItemWidth(280)
     displayFemaleSounds()
+    ImGui.PopItemWidth()
     selected_sound = female_sounds_T[sound_index2 + 1]
   end
   ImGui.SameLine(); ImGui.Spacing(); ImGui.SameLine()
   if sound_btn_off then
     ImGui.BeginDisabled()
-    ImGui.PushItemWidth(120)
     ImGui.Button(" " .. loading_label .. " ", 60, 30)
-    ImGui.PopItemWidth()
     ImGui.EndDisabled()
   else
     if ImGui.Button(" " .. translateLabel("generic_play_btn") .. " ##sound") then
-      -- UI.widgetSound("Select")
       script.run_in_fiber(function(playsnd)
         local myCoords = Game.getCoords(self.get_ped(), true)
         AUDIO.PLAY_AMBIENT_SPEECH_FROM_POSITION_NATIVE(selected_sound.soundName, selected_sound.soundRef, myCoords.x,
@@ -1059,6 +1395,51 @@ sound_player:add_imgui(function()
       end)
     end
   end
+
+  ImGui.Dummy(1, 10); ImGui.Text("- Radio Stations -")
+  UI.helpMarker(false, translateLabel("radioStations_tt"))
+  ImGui.Spacing()
+  ImGui.PushItemWidth(280)
+  displayRadioStations()
+  ImGui.PopItemWidth()
+  selected_radio = radio_stations[radio_index + 1]
+  if not radio_btn_off then
+    ImGui.SameLine(); ImGui.Spacing(); ImGui.SameLine()
+    if not is_playing_radio then
+      if ImGui.Button(" " .. translateLabel("generic_play_btn") .. " ##radio") then
+        script.run_in_fiber(function(rad)
+          if not is_playing_anim then
+            play_music("start", selected_radio.station)
+            is_playing_radio   = true
+            radio_btn_off      = true
+            start_loading_anim = true
+            rad:sleep(3000)
+            radio_btn_off      = false
+            start_loading_anim = false
+          else
+            gui.show_error("Samurais Scripts", "This option is disabled while playing animations to prevent bugs.")
+          end
+        end)
+      end
+    else
+      if ImGui.Button(" " .. translateLabel("generic_stop_btn") .. " ##radio") then
+        script.run_in_fiber(function(rad)
+          play_music("stop")
+          is_playing_radio   = false
+          radio_btn_off      = true
+          start_loading_anim = true
+          rad:sleep(1500)
+          radio_btn_off      = false
+          start_loading_anim = false
+        end)
+      end
+    end
+  else
+    ImGui.SameLine(); ImGui.Spacing(); ImGui.SameLine()
+    ImGui.BeginDisabled()
+    ImGui.Button(" " .. loading_label .. " ", 60, 30)
+    ImGui.EndDisabled()
+  end
 end)
 
 
@@ -1066,159 +1447,9 @@ end)
     *vehicle*
 ]]
 vehicle_tab = Samurais_scripts:add_tab(translateLabel("vehicleTab"))
+
 local popsnd, sndRef
 local flame_size
-driftMode          = lua_cfg.read("driftMode")
-DriftIntensity     = lua_cfg.read("DriftIntensity")
-DriftTires         = lua_cfg.read("DriftTires")
-speedBoost         = lua_cfg.read("speedBoost")
-nosvfx             = lua_cfg.read("nosvfx")
-hornLight          = lua_cfg.read("hornLight")
-nosPurge           = lua_cfg.read("nosPurge")
-lightSpeed         = lua_cfg.read("lightSpeed")
-loud_radio         = lua_cfg.read("loud_radio")
-launchCtrl         = lua_cfg.read("launchCtrl")
-popsNbangs         = lua_cfg.read("popsNbangs")
-louderPops         = lua_cfg.read("louderPops")
-limitVehOptions    = lua_cfg.read("limitVehOptions")
-autobrklight       = lua_cfg.read("autobrklight")
-rgbLights          = lua_cfg.read("rgbLights")
-holdF              = lua_cfg.read("holdF")
-noJacking          = lua_cfg.read("noJacking")
-insta180           = lua_cfg.read("insta180")
-is_car             = false
-is_quad            = false
-is_boat            = false
-is_bike            = false
-validModel         = false
-has_xenon          = false
-tire_smoke         = false
-purge_started      = false
-nos_started        = false
-twostep_started    = false
-is_typing          = false
-open_sounds_window = false
-started_lct        = false
-launch_active      = false
-started_popSound   = false
-started_popSound2  = false
-customSmokeCol     = false
-timerA             = 0
-timerB             = 0
-lastVeh            = 0
-defaultXenon       = 0
-vehSound_index     = 0
-driftSmokeIndex    = 0
-selected_smoke_col = 0
-tdBtn              = 21
-search_term        = ""
-smokeHex           = ""
-smokePtfx_t        = {}
-nosptfx_t          = {}
-purgePtfx_t        = {}
-lctPtfx_t          = {}
-popSounds_t        = {}
-popsPtfx_t         = {}
-driftSmoke         = {r = 255, g = 255, b = 255}
-driftSmokeColors   = {"White", "Black", "Red", "Green", "Blue", "Yellow", "Orange", "Pink", "Purple"}
-gta_vehicles_T     = { "Airbus", "Airtug", "akula", "akuma", "aleutian", "alkonost", "alpha", "alphaz1",
-  "AMBULANCE", "annihilator", "annihilator2", "apc", "ardent", "armytanker", "armytrailer", "armytrailer2", "asbo",
-  "asea", "asea2", "asterope", "asterope2", "astron", "autarch", "avarus", "avenger", "avenger2", "avenger3", "avenger4",
-  "avisa", "bagger", "baletrailer", "Baller", "baller2", "baller3", "baller4", "baller5", "baller6", "baller7", "baller8",
-  "banshee", "banshee2", "BARRACKS", "BARRACKS2", "BARRACKS3", "barrage", "bati", "bati2", "Benson", "benson2", "besra",
-  "bestiagts", "bf400", "BfInjection", "Biff", "bifta", "bison", "Bison2", "Bison3", "BjXL", "blade", "blazer", "blazer2",
-  "blazer3", "blazer4", "blazer5", "BLIMP", "BLIMP2", "blimp3", "blista", "blista2", "blista3", "BMX", "boattrailer",
-  "boattrailer2", "boattrailer3", "bobcatXL", "Bodhi2", "bombushka", "boor", "boxville", "boxville2", "boxville3",
-  "boxville4", "boxville5", "boxville6", "brawler", "brickade", "brickade2", "brigham", "brioso", "brioso2", "brioso3",
-  "broadway", "bruiser", "bruiser2", "bruiser3", "brutus", "brutus2", "brutus3", "btype", "btype2", "btype3", "buccaneer",
-  "buccaneer2", "buffalo", "buffalo2", "buffalo3", "buffalo4", "buffalo5", "bulldozer", "bullet", "Burrito", "burrito2",
-  "burrito3", "Burrito4", "burrito5", "BUS", "buzzard", "Buzzard2", "cablecar", "caddy", "Caddy2", "caddy3", "calico",
-  "CAMPER", "caracara", "caracara2", "carbonizzare", "carbonrs", "Cargobob", "cargobob2", "Cargobob3", "Cargobob4",
-  "cargoplane", "cargoplane2", "casco", "cavalcade", "cavalcade2", "cavalcade3", "cerberus", "cerberus2", "cerberus3",
-  "champion", "cheburek", "cheetah", "cheetah2", "chernobog", "chimera", "chino", "chino2", "cinquemila", "cliffhanger",
-  "clique", "clique2", "club", "coach", "cog55", "cog552", "cogcabrio", "cognoscenti", "cognoscenti2", "comet2", "comet3",
-  "comet4", "comet5", "comet6", "comet7", "conada", "conada2", "contender", "coquette", "coquette2", "coquette3",
-  "coquette4", "corsita", "coureur", "cruiser", "CRUSADER", "cuban800", "cutter", "cyclone", "cypher", "daemon",
-  "daemon2", "deathbike", "deathbike2", "deathbike3", "defiler", "deity", "deluxo", "deveste", "deviant", "diablous",
-  "diablous2", "dilettante", "dilettante2", "Dinghy", "dinghy2", "dinghy3", "dinghy4", "dinghy5", "dloader",
-  "docktrailer", "docktug", "dodo", "Dominator", "dominator2", "dominator3", "dominator4", "dominator5", "dominator6",
-  "dominator7", "dominator8", "dominator9", "dorado", "double", "drafter", "draugur", "drifteuros", "driftfr36",
-  "driftfuto", "driftjester", "driftremus", "drifttampa", "driftyosemite", "driftzr350", "dubsta", "dubsta2", "dubsta3",
-  "dukes", "dukes2", "dukes3", "dump", "dune", "dune2", "dune3", "dune4", "dune5", "duster", "Dynasty", "elegy", "elegy2",
-  "ellie", "emerus", "emperor", "Emperor2", "emperor3", "enduro", "entity2", "entity3", "entityxf", "esskey", "eudora",
-  "Euros", "everon", "everon2", "exemplar", "f620", "faction", "faction2", "faction3", "fagaloa", "faggio", "faggio2",
-  "faggio3", "FBI", "FBI2", "fcr", "fcr2", "felon", "felon2", "feltzer2", "feltzer3", "firetruk", "fixter", "flashgt",
-  "FLATBED", "fmj", "FORKLIFT", "formula", "formula2", "fq2", "fr36", "freecrawler", "freight", "freight2", "freightcar",
-  "freightcar2", "freightcont1", "freightcont2", "freightgrain", "Frogger", "frogger2", "fugitive", "furia", "furoregt",
-  "fusilade", "futo", "futo2", "gargoyle", "Gauntlet", "gauntlet2", "gauntlet3", "gauntlet4", "gauntlet5", "gauntlet6",
-  "gb200", "gburrito", "gburrito2", "glendale", "glendale2", "gp1", "graintrailer", "GRANGER", "granger2", "greenwood",
-  "gresley", "growler", "gt500", "guardian", "habanero", "hakuchou", "hakuchou2", "halftrack", "handler", "Hauler",
-  "Hauler2", "havok", "hellion", "hermes", "hexer", "hotknife", "hotring", "howard", "hunter", "huntley", "hustler",
-  "hydra", "imorgon", "impaler", "impaler2", "impaler3", "impaler4", "impaler5", "impaler6", "imperator", "imperator2",
-  "imperator3", "inductor", "inductor2", "infernus", "infernus2", "ingot", "innovation", "insurgent", "insurgent2",
-  "insurgent3", "intruder", "issi2", "issi3", "issi4", "issi5", "issi6", "issi7", "issi8", "italigtb", "italigtb2",
-  "italigto", "italirsx", "iwagen", "jackal", "jb700", "jb7002", "jester", "jester2", "jester3", "jester4", "jet",
-  "jetmax", "journey", "journey2", "jubilee", "jugular", "kalahari", "kamacho", "kanjo", "kanjosj", "khamelion",
-  "khanjali", "komoda", "kosatka", "krieger", "kuruma", "kuruma2", "l35", "landstalker", "landstalker2", "Lazer", "le7b",
-  "lectro", "lguard", "limo2", "lm87", "locust", "longfin", "lurcher", "luxor", "luxor2", "lynx", "mamba", "mammatus",
-  "manana", "manana2", "manchez", "manchez2", "manchez3", "marquis", "marshall", "massacro", "massacro2", "maverick",
-  "menacer", "MESA", "mesa2", "MESA3", "metrotrain", "michelli", "microlight", "Miljet", "minitank", "minivan",
-  "minivan2", "Mixer", "Mixer2", "mogul", "molotok", "monroe", "monster", "monster3", "monster4", "monster5",
-  "monstrociti", "moonbeam", "moonbeam2", "Mower", "Mule", "Mule2", "Mule3", "mule4", "mule5", "nebula", "nemesis", "neo",
-  "neon", "nero", "nero2", "nightblade", "nightshade", "nightshark", "nimbus", "ninef", "ninef2", "nokota", "Novak",
-  "omnis", "omnisegt", "openwheel1", "openwheel2", "oppressor", "oppressor2", "oracle", "oracle2", "osiris", "outlaw",
-  "Packer", "panthere", "panto", "paradise", "paragon", "paragon2", "pariah", "patriot", "patriot2", "patriot3",
-  "patrolboat", "pbus", "pbus2", "pcj", "penetrator", "penumbra", "penumbra2", "peyote", "peyote2", "peyote3",
-  "pfister811", "Phantom", "phantom2", "phantom3", "Phantom4", "Phoenix", "picador", "pigalle", "polgauntlet", "police",
-  "police2", "police3", "police4", "police5", "policeb", "policeold1", "policeold2", "policet", "polmav", "pony", "pony2",
-  "postlude", "Pounder", "pounder2", "powersurge", "prairie", "pRanger", "Predator", "premier", "previon", "primo",
-  "primo2", "proptrailer", "prototipo", "pyro", "r300", "radi", "raiden", "raiju", "raketrailer", "rallytruck",
-  "RancherXL", "rancherxl2", "RapidGT", "RapidGT2", "rapidgt3", "raptor", "ratbike", "ratel", "ratloader", "ratloader2",
-  "rcbandito", "reaper", "Rebel", "rebel2", "rebla", "reever", "regina", "remus", "Rentalbus", "retinue", "retinue2",
-  "revolter", "rhapsody", "rhinehart", "RHINO", "riata", "RIOT", "riot2", "Ripley", "rocoto", "rogue", "romero",
-  "rrocket", "rt3000", "Rubble", "ruffian", "ruiner", "ruiner2", "ruiner3", "ruiner4", "rumpo", "rumpo2", "rumpo3",
-  "ruston", "s80", "sabregt", "sabregt2", "Sadler", "sadler2", "Sanchez", "sanchez2", "sanctus", "sandking", "sandking2",
-  "savage", "savestra", "sc1", "scarab", "scarab2", "scarab3", "schafter2", "schafter3", "schafter4", "schafter5",
-  "schafter6", "schlagen", "schwarzer", "scorcher", "scramjet", "scrap", "seabreeze", "seashark", "seashark2",
-  "seashark3", "seasparrow", "seasparrow2", "seasparrow3", "Seminole", "seminole2", "sentinel", "sentinel2", "sentinel3",
-  "sentinel4", "serrano", "SEVEN70", "Shamal", "sheava", "SHERIFF", "sheriff2", "shinobi", "shotaro", "skylift",
-  "slamtruck", "slamvan", "slamvan2", "slamvan3", "slamvan4", "slamvan5", "slamvan6", "sm722", "sovereign", "SPECTER",
-  "SPECTER2", "speeder", "speeder2", "speedo", "speedo2", "speedo4", "speedo5", "squaddie", "squalo", "stafford",
-  "stalion", "stalion2", "stanier", "starling", "stinger", "stingergt", "stingertt", "stockade", "stockade3", "stratum",
-  "streamer216", "streiter", "stretch", "strikeforce", "stromberg", "Stryder", "Stunt", "submersible", "submersible2",
-  "Sugoi", "sultan", "sultan2", "sultan3", "sultanrs", "Suntrap", "superd", "supervolito", "supervolito2", "Surano",
-  "SURFER", "Surfer2", "surfer3", "surge", "swift", "swift2", "swinger", "t20", "Taco", "tahoma", "tailgater",
-  "tailgater2", "taipan", "tampa", "tampa2", "tampa3", "tanker", "tanker2", "tankercar", "taxi", "technical",
-  "technical2", "technical3", "tempesta", "tenf", "tenf2", "terbyte", "terminus", "tezeract", "thrax", "thrust",
-  "thruster", "tigon", "TipTruck", "TipTruck2", "titan", "toreador", "torero", "torero2", "tornado", "tornado2",
-  "tornado3", "tornado4", "tornado5", "tornado6", "toro", "toro2", "toros", "TOURBUS", "TOWTRUCK", "Towtruck2",
-  "towtruck3", "towtruck4", "tr2", "tr3", "tr4", "TRACTOR", "tractor2", "tractor3", "trailerlarge", "trailerlogs",
-  "trailers", "trailers2", "trailers3", "trailers4", "trailers5", "trailersmall", "trailersmall2", "Trash", "trash2",
-  "trflat", "tribike", "tribike2", "tribike3", "trophytruck", "trophytruck2", "tropic", "tropic2", "tropos", "tug",
-  "tula", "tulip", "tulip2", "turismo2", "turismo3", "turismor", "tvtrailer", "tvtrailer2", "tyrant", "tyrus",
-  "utillitruck", "utillitruck2", "Utillitruck3", "vacca", "Vader", "vagner", "vagrant", "valkyrie", "valkyrie2", "vamos",
-  "vectre", "velum", "velum2", "verlierer2", "verus", "vestra", "vetir", "veto", "veto2", "vigero", "vigero2", "vigero3",
-  "vigilante", "vindicator", "virgo", "virgo2", "virgo3", "virtue", "viseris", "visione", "vivanite", "volatol",
-  "volatus", "voltic", "voltic2", "voodoo", "voodoo2", "vortex", "vstr", "warrener", "warrener2", "washington",
-  "wastelander", "weevil", "weevil2", "windsor", "windsor2", "winky", "wolfsbane", "xa21", "xls", "xls2", "yosemite",
-  "yosemite2", "yosemite3", "youga", "youga2", "youga3", "youga4", "z190", "zeno", "zentorno", "zhaba", "zion", "zion2",
-  "zion3", "zombiea", "zombieb", "zorrusso", "zr350", "zr380", "zr3802", "zr3803", "Ztype", }
-
-local vehOffsets = {
-  fc   = 0x001C,
-  ft   = 0x0014,
-  rc   = 0x0020,
-  rt   = 0x0018,
-  cg   = 0x0882,
-  ng   = 0x0880,
-  tg   = 0x0886,
-  vm   = 0x000C,
-  dfm  = 0x0014,
-  accm = 0x004C,
-  cofm = 0x0020,
-  bf   = 0x006C,
-}
-
 local function filterVehNames()
   filteredNames = {}
   for _, veh in ipairs(gta_vehicles_T) do
@@ -1296,47 +1527,55 @@ vehicle_tab:add_imgui(function()
         lua_cfg.save("driftMode", false)
       end
       if driftMode or DriftTires then
-        ImGui.Spacing(); ImGui.Text(translateLabel("driftSmokeCol"))
-        if not customSmokeCol then
-          driftSmokeIndex, dsiUsed = ImGui.Combo("##tireSmoke", driftSmokeIndex, driftSmokeColors, #driftSmokeColors); ImGui.SameLine()
-          if dsiUsed then
-            selected_smoke_col = driftSmokeColors[driftSmokeIndex + 1]
-            local r, g, b = UI.getColor(string.lower(selected_smoke_col))
-            r, g, b = lua_Fn.round((r * 255), 2), lua_Fn.round((g * 255), 2), lua_Fn.round((b * 255), 2)
-            driftSmoke.r, driftSmoke.g, driftSmoke.b = r, g, b
-          end
-        else
-          smokeHex, smokeHexEntered = ImGui.InputTextWithHint("##customHex", "HEX", smokeHex, 8, ImGuiInputTextFlags.EnterReturnsTrue | ImGuiInputTextFlags.CharsNoBlank); ImGui.SameLine()
-          if ImGui.IsItemActive() then
-            is_typing = true
+        DriftSmoke, dsmkUsed = ImGui.Checkbox("Drift Smoke", DriftSmoke, true)
+        UI.toolTip(false, translateLabel("DriftSmoke_tt"))
+        if dsmkUsed then
+          UI.widgetSound("Nav2")
+          lua_cfg.save("DriftSmoke", DriftSmoke)
+        end
+        if DriftSmoke then
+          ImGui.Spacing(); ImGui.Text(translateLabel("driftSmokeCol"))
+          if not customSmokeCol then
+            driftSmokeIndex, dsiUsed = ImGui.Combo("##tireSmoke", driftSmokeIndex, driftSmokeColors, #driftSmokeColors); ImGui.SameLine()
+            if dsiUsed then
+              selected_smoke_col = driftSmokeColors[driftSmokeIndex + 1]
+              local r, g, b = UI.getColor(string.lower(selected_smoke_col))
+              r, g, b = lua_Fn.round((r * 255), 2), lua_Fn.round((g * 255), 2), lua_Fn.round((b * 255), 2)
+              driftSmoke_T.r, driftSmoke_T.g, driftSmoke_T.b = r, g, b
+            end
           else
-            is_typing = false
-          end
-          UI.toolTip(false, translateLabel("hex_tt"))
-          if smokeHexEntered then
-            if smokeHex ~= nil then
-              if not smokeHex:find("^#") then
-                smokeHex = "#" .. smokeHex
-              end
-              if smokeHex:len() > 1 then
-                if smokeHex:len() ~= 4 and smokeHex:len() ~= 7 then
-                  UI.widgetSound("Error")
-                  gui.show_warning("Samurais Scripts", "'" .. smokeHex .. "' is not a valid HEX color code.\10Please enter either a short or a long HEX string.")
-                else
-                  UI.widgetSound("Select")
-                  gui.show_success("Samurais Scripts", "Drift smoke color changed")
+            smokeHex, smokeHexEntered = ImGui.InputTextWithHint("##customHex", "HEX", smokeHex, 8, ImGuiInputTextFlags.EnterReturnsTrue | ImGuiInputTextFlags.CharsNoBlank); ImGui.SameLine()
+            if ImGui.IsItemActive() then
+              is_typing = true
+            else
+              is_typing = false
+            end
+            UI.toolTip(false, translateLabel("hex_tt"))
+            if smokeHexEntered then
+              if smokeHex ~= nil then
+                if not smokeHex:find("^#") then
+                  smokeHex = "#" .. smokeHex
                 end
-              else
-                UI.widgetSound("Error")
-                gui.show_warning("Samurais Scripts", "Please enter a valid HEX color code.")
+                if smokeHex:len() > 1 then
+                  if smokeHex:len() ~= 4 and smokeHex:len() ~= 7 then
+                    UI.widgetSound("Error")
+                    gui.show_warning("Samurais Scripts", "'" .. smokeHex .. "' is not a valid HEX color code.\10Please enter either a short or a long HEX string.")
+                  else
+                    UI.widgetSound("Select")
+                    gui.show_success("Samurais Scripts", "Drift smoke color changed")
+                  end
+                else
+                  UI.widgetSound("Error")
+                  gui.show_warning("Samurais Scripts", "Please enter a valid HEX color code.")
+                end
+                driftSmoke_T.r, driftSmoke_T.g, driftSmoke_T.b = lua_Fn.hexToRGB(smokeHex)
               end
-              driftSmoke.r, driftSmoke.g, driftSmoke.b = lua_Fn.hexToRGB(smokeHex)
             end
           end
-        end
-        customSmokeCol, cscUsed = ImGui.Checkbox(translateLabel("customLangTxt"), customSmokeCol, true)
-        if cscUsed then
-          UI.widgetSound("Nav2")
+          customSmokeCol, cscUsed = ImGui.Checkbox(translateLabel("customLangTxt"), customSmokeCol, true)
+          if cscUsed then
+            UI.widgetSound("Nav2")
+          end
         end
       end
     else
@@ -1486,7 +1725,7 @@ vehicle_tab:add_imgui(function()
         open_sounds_window = true
       else
         open_sounds_window = false
-        gui.show_error("Tokyo Drift", translateLabel("engineSoundErr"))
+        gui.show_error("Samurais Scripts", translateLabel("engineSoundErr"))
       end
     end
     if open_sounds_window then
@@ -1551,9 +1790,9 @@ end)
 
 flatbed = vehicle_tab:add_tab("Flatbed")
 attached_vehicle = 0
-xAxis            = 0.0
-yAxis            = 0.0
-zAxis            = 0.0
+tow_xAxis        = 0.0
+tow_yAxis        = 0.0
+tow_zAxis        = 0.0
 modelOverride    = false
 flatbed:add_imgui(function()
   local vehicleHandles = entities.get_all_vehicles_as_handles()
@@ -1664,20 +1903,20 @@ flatbed:add_imgui(function()
                 yAxis = -2.0
               end
               ENTITY.SET_ENTITY_HEADING(closestVehicleModel, flatbedHeading)
-              ENTITY.ATTACH_ENTITY_TO_ENTITY(closestVehicle, current_vehicle, flatbedBone, xAxis, yAxis, zAxis, 0.0, 0.0,
+              ENTITY.ATTACH_ENTITY_TO_ENTITY(closestVehicle, current_vehicle, flatbedBone, tow_xAxis, tow_yAxis, tow_zAxis, 0.0, 0.0,
                 0.0, true, true, false, false, 1, true, 1)
               attached_vehicle = closestVehicle
               ENTITY.SET_ENTITY_CANT_CAUSE_COLLISION_DAMAGED_ENTITY(attached_vehicle, current_vehicle)
             else
-              gui.show_error("Flatbed Script", translateLabel("failed_veh_ctrl"))
+              gui.show_error("Samurais Scripts", translateLabel("failed_veh_ctrl"))
             end
           end)
         end
         if closestVehicle ~= nil and closestVehicleModel ~= flatbedModel and not towable then
-          gui.show_message("Flatbed Script", translateLabel("fltbd_carsOnlyTxt"))
+          gui.show_message("Samurais Scripts", translateLabel("fltbd_carsOnlyTxt"))
         end
         if closestVehicle ~= nil and closestVehicleModel == flatbedModel then
-          gui.show_message("Flatbed Script", translateLabel("fltbd_nootherfltbdTxt"))
+          gui.show_message("Samurais Scripts", translateLabel("fltbd_nootherfltbdTxt"))
         end
       end
     else
@@ -1713,33 +1952,33 @@ flatbed:add_imgui(function()
       ImGui.ArrowButton("##Up", 2)
       if ImGui.IsItemActive() then
         zAxis = zAxis + 0.01
-        ENTITY.ATTACH_ENTITY_TO_ENTITY(attached_vehicle, current_vehicle, flatbedBone, xAxis, yAxis, zAxis, 0.0, 0.0, 0.0,
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(attached_vehicle, current_vehicle, flatbedBone, tow_xAxis, tow_yAxis, tow_zAxis, 0.0, 0.0, 0.0,
           true, true, false, false, 1, true, 1)
       end
       ImGui.Dummy(60, 1); ImGui.SameLine()
       ImGui.ArrowButton("##Left", 0)
       if ImGui.IsItemActive() then
         yAxis = yAxis + 0.01
-        ENTITY.ATTACH_ENTITY_TO_ENTITY(attached_vehicle, current_vehicle, flatbedBone, xAxis, yAxis, zAxis, 0.0, 0.0, 0.0,
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(attached_vehicle, current_vehicle, flatbedBone, tow_xAxis, tow_yAxis, tow_zAxis, 0.0, 0.0, 0.0,
           true, true, false, false, 1, true, 1)
       end
       ImGui.SameLine(); ImGui.Dummy(23, 1); ImGui.SameLine()
       ImGui.ArrowButton("##Right", 1)
       if ImGui.IsItemActive() then
         yAxis = yAxis - 0.01
-        ENTITY.ATTACH_ENTITY_TO_ENTITY(attached_vehicle, current_vehicle, flatbedBone, xAxis, yAxis, zAxis, 0.0, 0.0, 0.0,
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(attached_vehicle, current_vehicle, flatbedBone, tow_xAxis, tow_yAxis, tow_zAxis, 0.0, 0.0, 0.0,
           true, true, false, false, 1, true, 1)
       end
       ImGui.Dummy(100, 1); ImGui.SameLine()
       ImGui.ArrowButton("##Down", 3)
       if ImGui.IsItemActive() then
         zAxis = zAxis - 0.01
-        ENTITY.ATTACH_ENTITY_TO_ENTITY(attached_vehicle, current_vehicle, flatbedBone, xAxis, yAxis, zAxis, 0.0, 0.0, 0.0,
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(attached_vehicle, current_vehicle, flatbedBone, tow_xAxis, tow_yAxis, tow_zAxis, 0.0, 0.0, 0.0,
           true, true, false, false, 1, true, 1)
       end
     end
   else
-    ImGui.Text(translateLabel("getinsidefltbd"))
+    UI.wrappedText(translateLabel("getinsidefltbd"), 20)
     if ImGui.Button(translateLabel("spawnfltbd")) then
       script.run_in_fiber(function(script)
         if not PED.IS_PED_SITTING_IN_ANY_VEHICLE(self.get_ped()) then
@@ -1759,10 +1998,10 @@ flatbed:add_imgui(function()
             PED.SET_PED_INTO_VEHICLE(self.get_ped(), fltbd, -1)
             ENTITY.SET_ENTITY_AS_NO_LONGER_NEEDED(fltbd)
           else
-            gui.show_error("Flatbed Script", translateLabel("noSpawnInside"))
+            gui.show_error("Samurais Scripts", translateLabel("noSpawnInside"))
           end
         else
-          gui.show_error("Flatbed Script", translateLabel("Exit your current vehicle first."))
+          gui.show_error("Samurais Scripts", translateLabel("Exit your current vehicle first."))
         end
       end)
     end
@@ -1854,17 +2093,6 @@ end)
     *world*
 ]]
 world_tab = Samurais_scripts:add_tab(translateLabel("worldTab"))
-local pedGrabber         = false
-local ped_grabbed        = false
-local carpool            = false
-local show_npc_veh_ctrls = false
-local stop_searching     = false
-local hijack_started     = false
-local grp_anim_index     = 0
-local attached_ped       = 0
-local thisVeh            = 0
-local pedthrowF          = 10
-
 local function playHandsUp()
   script.run_in_fiber(function()
     if Game.requestAnimDict("mp_missheist_countrybank@lift_hands") then
@@ -1879,6 +2107,25 @@ local function attachPed(ped)
   script.run_in_fiber(function()
     if not ped_grabbed and not PED.IS_PED_A_PLAYER(ped) then
       if entities.take_control_of(ped, 300) then
+        if is_handsUp then
+          TASK.CLEAR_PED_TASKS(self.get_ped())
+          is_handsUp = false
+        end
+        if is_playing_anim then
+          if anim_music then
+            play_music("stop")
+            anim_music = false
+          end
+          cleanup()
+          is_playing_anim = false
+        end
+        if is_playing_scenario then
+          TASK.CLEAR_PED_TASKS(self.get_ped())
+          if ENTITY.DOES_ENTITY_EXIST(bbq) then
+            ENTITY.DELETE_ENTITY(bbq)
+          end
+          is_playing_scenario = false
+        end
         TASK.TASK_SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped, true)
         PED.SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped, true)
         TASK.CLEAR_PED_TASKS_IMMEDIATELY(ped)
@@ -1911,7 +2158,7 @@ world_tab:add_imgui(function()
 
   if pedGrabber then
     ImGui.Text(translateLabel("Throw Force"))
-    ImGui.PushItemWidth(160)
+    ImGui.PushItemWidth(220)
     pedthrowF, ptfUsed = ImGui.SliderInt("##throw_force", pedthrowF, 10, 100, "%d", 0)
     ImGui.PopItemWidth()
     if ptfUsed then
@@ -1969,18 +2216,15 @@ world_tab:add_imgui(function()
     end
   end
 
-   expFeature, used = ImGui.Checkbox("Hijack Nearby NPCs", expFeature, true)
+   animateNPCs, used = ImGui.Checkbox("Animate Nearby NPCs", animateNPCs, true)
     if used then
       UI.widgetSound("Nav")
     end
     UI.helpMarker(false, "Make all nearby NPCs do one of the actions listed down below. This has no relation to the animations list and only works with NPCs that are on foot.")
-    if expFeature then
+    if animateNPCs then
       ImGui.PushItemWidth(220)
       displayHijackAnims()
       ImGui.PopItemWidth()
-      if ImGui.IsItemHovered() and ImGui.IsItemClicked(0) then
-        widgetSound("Nav2")
-      end
       local hijackData = hijackOptions[grp_anim_index + 1]
       ImGui.SameLine()
       if not hijack_started then
@@ -2032,7 +2276,6 @@ local forwardY               = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
 local objects_search         = ""
 local propName               = ""
 local invalidType            = ""
-local showCustomProps        = true
 local edit_mode              = false
 local activeX                = false
 local activeY                = false
@@ -2817,6 +3060,7 @@ settings_tab:add_imgui(function()
       sprintInside      = false
       lockpick          = false
       replaceSneakAnim  = false
+      replacePointAct   = false
       disableSound      = false
       disableActionMode = false
       rod               = false
@@ -2829,6 +3073,7 @@ settings_tab:add_imgui(function()
       disableUiSounds   = false
       driftMode         = false
       DriftTires        = false
+      DriftSmoke        = false
       speedBoost        = false
       nosvfx            = false
       hornLight         = false
@@ -2876,6 +3121,8 @@ local function SS_handle_events()
   if attached_ped ~= nil and attached_ped ~= 0 then
     ENTITY.DETACH_ENTITY(attached_ped, true, true)
     ENTITY.FREEZE_ENTITY_POSITION(attached_ped, false)
+    TASK.TASK_SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(attached_ped, false)
+    PED.SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(attached_ped, false)
     TASK.CLEAR_PED_TASKS_IMMEDIATELY(self.get_ped())
   end
 
@@ -2918,7 +3165,99 @@ local function SS_handle_events()
       ENTITY.DETACH_ENTITY(v, true, true)
     end
   end
+
+  if currentMvmt ~= "" then
+    PED.RESET_PED_MOVEMENT_CLIPSET(self.get_ped(), 0.0)
+  end
+
+  if currentWmvmt ~= "" then
+   PED.RESET_PED_WEAPON_MOVEMENT_CLIPSET(self.get_ped())
+  end
+
+  if currentStrf ~= "" then
+   PED.RESET_PED_STRAFE_CLIPSET(self.get_ped())
+  end
+
+  if clumsy then
+    PED.SET_PED_RAGDOLL_ON_COLLISION(self.get_ped(), false)
+  end
+  WEAPON.SET_WEAPON_ANIMATION_OVERRIDE(self.get_ped(), 3839837909)
+
+  if is_playing_anim then
+    if anim_music then
+      if ENTITY.DOES_ENTITY_EXIST(pBus) then
+        ENTITY.DELETE_ENTITY(pBus)
+      end
+      if ENTITY.DOES_ENTITY_EXIST(dummyDriver) then
+        ENTITY.DELETE_ENTITY(dummyDriver)
+      end
+    end
+    TASK.CLEAR_PED_TASKS(self.get_ped())
+    if selfPTFX[1] ~= nil then
+      for _, v in ipairs(selfPTFX) do
+        GRAPHICS.STOP_PARTICLE_FX_LOOPED(v)
+      end
+    end
+    local current_coords = self.get_pos()
+    if PED.IS_PED_IN_ANY_VEHICLE(self.get_ped(), false) then
+      local veh    = PED.GET_VEHICLE_PED_IS_USING(self.get_ped())
+      local mySeat = Game.getPedVehicleSeat(self.get_ped())
+      PED.SET_PED_INTO_VEHICLE(self.get_ped(), veh, mySeat)
+    else
+      ENTITY.SET_ENTITY_COORDS_NO_OFFSET(self.get_ped(), current_coords.x, current_coords.y, current_coords.z, true, false, false)
+    end
+    if plyrProps[1] ~= nil then
+      for _, v in ipairs(plyrProps) do
+        if ENTITY.DOES_ENTITY_EXIST(v) then
+          ENTITY.SET_ENTITY_AS_MISSION_ENTITY(v)
+          ENTITY.DELETE_ENTITY(v)
+        end
+      end
+    end
+  end
+
+  if spawned_npcs[1] ~= nil then
+    for _, v in ipairs(spawned_npcs) do
+      if ENTITY.DOES_ENTITY_EXIST(v) then
+        ENTITY.DELETE_ENTITY(v)
+      end
+    end
+  end
+
+  if is_playing_scenario then
+    TASK.CLEAR_PED_TASKS_IMMEDIATELY(self.get_ped())
+    if ENTITY.DOES_ENTITY_EXIST(bbq) then
+      ENTITY.DELETE_ENTITY(bbq)
+    end
+  end
+
+  if is_playing_radio then
+    if ENTITY.DOES_ENTITY_EXIST(pBus) then
+      ENTITY.SET_ENTITY_AS_MISSION_ENTITY(pBus)
+      ENTITY.DELETE_ENTITY(pBus)
+    end
+    if ENTITY.DOES_ENTITY_EXIST(dummyDriver) then
+      ENTITY.DELETE_ENTITY(dummyDriver)
+    end
+  end
+
+  if is_handsUp then
+    TASK.CLEAR_PED_TASKS(self.get_ped())
+  end
+
+  if isCrouched then
+    PED.RESET_PED_MOVEMENT_CLIPSET(self.get_ped(), 0)
+  end
 end
+
+local function var_reset()
+  isCrouched = false; is_handsUp = false; anim_music = false; is_playing_radio = false; npc_blips = {}; spawned_npcs = {}; plyrProps = {}; npcProps = {}; selfPTFX = {}; npcPTFX = {}; curr_playing_anim = {}; is_playing_anim = false; is_playing_scenario = false; tab1Sound = true; tab2Sound = true; tab3Sound = true; actions_switch = 0; actions_search =
+  ""; currentMvmt = ""; currentStrf = ""; currentWmvmt = ""; aimBool = false; HashGrabber = false; drew_laser = false; Entity = 0; laserPtfx_T = {}; sound_btn_off = false; tire_smoke = false; purge_started = false; nos_started = false; twostep_started = false; open_sounds_window = false; started_lct = false; launch_active = false; started_popSound = false; started_popSound2 = false; timerA = 0; timerB = 0; lastVeh = 0; defaultXenon = 0; vehSound_index = 0; smokePtfx_t = {}; nosptfx_t = {}; purgePtfx_t = {}; lctPtfx_t = {}; popSounds_t = {}; popsPtfx_t = {}; attached_vehicle = 0; tow_xAxis = 0.0; tow_yAxis = 0.0; tow_zAxis = 0.0; pedGrabber = false; ped_grabbed = false; carpool = false; show_npc_veh_ctrls = false; stop_searching = false; hijack_started = false; grp_anim_index = 0; attached_ped = 0; thisVeh = 0; pedthrowF = 10; propName =
+  ""; invalidType = ""; preview = false; previewLoop = false; activeX = false; activeY = false; activeZ = false; rotX = false; rotY = false; rotZ = false; attached = false; attachToSelf = false; attachToVeh = false; previewStarted = false; isChanged = false; prop = 0; propHash = 0; os_switch = 0; prop_index = 0; objects_index = 0; spawned_index = 0; selectedObject = 0; selected_bone = 0; previewEntity = 0; currentObjectPreview = 0; attached_index = 0; zOffset = 0; spawned_props = {}; spawnedNames = {}; filteredSpawnNames = {}; selfAttachments = {}; selfAttachNames = {}; vehAttachments = {}; vehAttachNames = {}; filteredVehAttachNames = {}; filteredAttachNames = {};
+end
+
+
+
 
 --[[
     looped scripts
@@ -2966,6 +3305,10 @@ script.register_looped("GameInput", function()
 
   if replaceSneakAnim then
     PAD.DISABLE_CONTROL_ACTION(0, 36, 1)
+  end
+
+  if replacePointAct or is_playing_anim or is_playing_scenario or ped_grabbed then
+    PAD.DISABLE_CONTROL_ACTION(0, 29, 1)
   end
 
   if PED.IS_PED_SITTING_IN_ANY_VEHICLE(self.get_ped()) then
@@ -3055,9 +3398,13 @@ end)
 script.register_looped("self features", function(script)
   -- Crouch instead of sneak
   if Game.Self.isOnFoot() and not Game.Self.isInWater() then
-    if replaceSneakAnim then
+    if replaceSneakAnim and not ped_grabbed and not is_playing_anim and not is_playing_scenario then
       if not isCrouched and PAD.IS_DISABLED_CONTROL_PRESSED(0, 36) then
         script:sleep(200)
+        if is_handsUp then
+          is_handsUp = false
+          TASK.CLEAR_PED_TASKS(self.get_ped())
+        end
         while not STREAMING.HAS_CLIP_SET_LOADED("move_ped_crouched") and not STREAMING.HAS_CLIP_SET_LOADED("move_aim_strafe_crouch_2h") do
           STREAMING.REQUEST_CLIP_SET("move_ped_crouched")
           STREAMING.REQUEST_CLIP_SET("move_aim_strafe_crouch_2h")
@@ -3077,10 +3424,43 @@ script.register_looped("self features", function(script)
     end
   end
 
+  -- Replace Point Action
+  if Game.Self.isOnFoot() then
+    if replacePointAct and not ped_grabbed and not is_playing_anim and not is_playing_scenario and not is_typing then
+      if not is_handsUp and PAD.IS_DISABLED_CONTROL_PRESSED(0, 29) then
+        script:sleep(200)
+        if isCrouched then
+          isCrouched = false
+          PED.RESET_PED_MOVEMENT_CLIPSET(self.get_ped(), 0)
+        end
+        playHandsUp()
+        is_handsUp = true
+      end
+    end
+    if is_handsUp and PAD.IS_DISABLED_CONTROL_PRESSED(0, 29) then
+      script:sleep(200)
+      TASK.CLEAR_PED_TASKS(self.get_ped())
+      script:sleep(500)
+      is_handsUp = false
+    end
+    if is_handsUp then
+      if WEAPON.IS_PED_ARMED(self.get_ped(), 7) then
+        if PAD.IS_CONTROL_PRESSED(0, 24) then
+          TASK.CLEAR_PED_TASKS(self.get_ped())
+          is_handsUp = false
+        end
+      end
+      if PLAYER.IS_PLAYER_FREE_AIMING(self.get_id()) then
+        TASK.CLEAR_PED_TASKS(self.get_ped())
+        is_handsUp = false
+      end
+    end
+  end
+
   -- Online Phone Animations
   if NETWORK.NETWORK_IS_SESSION_ACTIVE() then
     if phoneAnim and not ENTITY.IS_ENTITY_DEAD(self.get_ped()) then
-      if not is_playing_anim and not is_playing_scenario and PED.COUNT_PEDS_IN_COMBAT_WITH_TARGET(self.get_ped()) == 0 then
+      if not is_playing_anim and not is_playing_scenario and not ped_grabbed and not is_handsUp and PED.COUNT_PEDS_IN_COMBAT_WITH_TARGET(self.get_ped()) == 0 then
         if PED.GET_PED_CONFIG_FLAG(self.get_ped(), 242, 1) then
           PED.SET_PED_CONFIG_FLAG(self.get_ped(), 242, false)
         end
@@ -3156,9 +3536,21 @@ script.register_looped("Ragdoll Loop", function(rgdl)
       return
     end
     PED.SET_PED_RAGDOLL_ON_COLLISION(self.get_ped(), true)
+    if isCrouched then
+      isCrouched = false
+    end
+    if is_handsUp then
+      is_handsUp = false
+    end
   elseif rod then
     if PAD.IS_CONTROL_PRESSED(0, 252) then
       PED.SET_PED_TO_RAGDOLL(self.get_ped(), 1500, 0, 0, false)
+      if isCrouched then
+        isCrouched = false
+      end
+      if is_handsUp then
+        is_handsUp = false
+      end
     end
   end
   if PED.IS_PED_RAGDOLL(self.get_ped()) then
@@ -3183,12 +3575,94 @@ script.register_looped("Sound Effects", function(animSfx)
       end
   end
 end)
+-- Actions
+script.register_looped("anim_interrupt_event", function (aiev)
+  if is_playing_anim then
+    if Game.Self.isAlive() then
+      aiev:sleep(1000)
+      if is_playing_anim and not ENTITY.IS_ENTITY_PLAYING_ANIM(self.get_ped(), curr_playing_anim.curr_dict, curr_playing_anim.curr_anim, 3) then
+        if PED.IS_PED_RAGDOLL(self.get_ped()) then
+          repeat
+            aiev:sleep(500)
+          until not PED.IS_PED_RAGDOLL(self.get_ped())
+          if Game.Self.isAlive() and not PAD.IS_CONTROL_PRESSED(0, 47) then -- we're alive and we didn't manually stop it
+            onAnimInterrupt()
+          end
+        elseif PED.IS_PED_FALLING(self.get_ped()) then
+          repeat
+            aiev:sleep(500)
+          until not PED.IS_PED_FALLING(self.get_ped())
+          if Game.Self.isAlive() and not PAD.IS_CONTROL_PRESSED(0, 47) then -- we're alive and we didn't manually stop it
+            onAnimInterrupt()
+          end
+        else
+          aiev:sleep(100)
+          if Game.Self.isAlive() and not PAD.IS_CONTROL_PRESSED(0, 47) then -- we're alive and we didn't manually stop it
+            onAnimInterrupt()
+          end
+        end
+      end
+    else
+      if plyrProps[1] ~= nil then
+        for _, p in ipairs(plyrProps) do
+          if ENTITY.DOES_ENTITY_EXIST(p) then
+            ENTITY.DELETE_ENTITY(p)
+          end
+        end
+      end
+      is_playing_anim = false
+    end
+  else
+    aiev:sleep()
+  end
+
+  if is_playing_scenario then
+    if not Game.Self.isAlive() then
+      if bbq ~= nil and ENTITY.DOES_ENTITY_EXIST(bbq) then
+        ENTITY.DELETE_ENTITY(bbq)
+      end
+      is_playing_scenario = false
+    end
+  end
+end)
+
+script.register_looped("on_game_mode_switch", function(ogms)
+  if Game.isOnline() then
+    if NETWORK.NETWORK_IS_IN_SESSION() then
+      repeat
+        ogms:sleep(1000)
+      until not NETWORK.NETWORK_IS_IN_SESSION()
+      if is_playing_anim or is_playing_scenario or ped_grabbed then
+        TASK.CLEAR_PED_TASKS_IMMEDIATELY(self.get_ped())
+      end
+      if is_playing_radio or anim_music then
+        play_music("stop")
+      end
+      var_reset()
+    end
+  else
+    repeat
+      ogms:sleep(1000)
+    until NETWORK.NETWORK_IS_SESSION_STARTED()
+    if is_playing_anim or is_playing_scenario or ped_grabbed then
+      TASK.CLEAR_PED_TASKS_IMMEDIATELY(self.get_ped())
+    end
+    if is_playing_radio or anim_music then
+      play_music("stop")
+    end
+    var_reset()
+  end
+end)
 script.register_looped("animation hotkey", function(script)
   script:yield()
   if is_playing_anim then
     if PAD.IS_CONTROL_PRESSED(0, 47) then
       cleanup()
       cleanupNPC()
+      if anim_music then
+        play_music("stop")
+        anim_music = false
+      end
       if PED.IS_PED_IN_ANY_VEHICLE(self.get_ped(), false) then
         local veh = PED.GET_VEHICLE_PED_IS_IN(self.get_ped(), false)
         local maxVehSeats = VEHICLE.GET_VEHICLE_MODEL_NUMBER_OF_SEATS(ENTITY.GET_ENTITY_MODEL(veh))
@@ -3231,7 +3705,10 @@ script.register_looped("animation hotkey", function(script)
       end
     end
   end
-  if usePlayKey and info ~= nil then
+  if usePlayKey then
+    if filteredAnims == nil then
+      updatefilteredAnims()
+    end
     if PAD.IS_CONTROL_PRESSED(0, 317) then
       anim_index = anim_index + 1
       info = filteredAnims[anim_index + 1]
@@ -3255,28 +3732,42 @@ script.register_looped("animation hotkey", function(script)
       script:sleep(400)
     end
     if PAD.IS_CONTROL_PRESSED(0, 256) then
-      if not is_playing_anim then
-        if info ~= nil then
-          local mycoords     = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
-          local myheading    = ENTITY.GET_ENTITY_HEADING(self.get_ped())
-          local myforwardX   = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
-          local myforwardY   = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
-          local myboneIndex  = PED.GET_PED_BONE_INDEX(self.get_ped(), info.boneID)
-          local mybonecoords = PED.GET_PED_BONE_COORDS(self.get_ped(), info.boneID)
-          if manualFlags then
-            setmanualflag()
-          else
-            flag = info.flag
+      if not ped_grabbed then
+        if not is_playing_anim then
+          if info ~= nil then
+            local mycoords     = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
+            local myheading    = ENTITY.GET_ENTITY_HEADING(self.get_ped())
+            local myforwardX   = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
+            local myforwardY   = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
+            local myboneIndex  = PED.GET_PED_BONE_INDEX(self.get_ped(), info.boneID)
+            local mybonecoords = PED.GET_PED_BONE_COORDS(self.get_ped(), info.boneID)
+            if manualFlags then
+              setmanualflag()
+            else
+              flag = info.flag
+            end
+            playSelected(self.get_ped(), selfprop1, selfprop2, selfloopedFX, selfSexPed, myboneIndex, mycoords, myheading,
+              myforwardX, myforwardY, mybonecoords, "self", plyrProps, selfPTFX)
+              curr_playing_anim = {curr_dict = info.dict, curr_anim = info.anim, curr_flag = flag, curr_name = info.name}
+              is_playing_anim = true
+              if lua_Fn.str_contains(curr_playing_anim.curr_name, "DJ") then
+                if not is_playing_radio then
+                  play_music("start", "RADIO_22_DLC_BATTLE_MIX1_RADIO")
+                  anim_music = true
+                end
+              end
+            script:sleep(200)
           end
-          playSelected(self.get_ped(), selfprop1, selfprop2, selfloopedFX, selfSexPed, myboneIndex, mycoords, myheading,
-            myforwardX, myforwardY, mybonecoords, "self", plyrProps, selfPTFX)
-          script:sleep(200)
+        else
+          PAD.SET_CONTROL_SHAKE(0, 500, 250)
+          gui.show_warning("Samurais Scripts",
+            "Press " .. stopButton .. " to stop the current animation before playing the next one.")
+          script:sleep(800)
         end
       else
-        PAD.SET_CONTROL_SHAKE(0, 500, 250)
-        gui.show_warning("Samurais Scripts",
-          "Press " .. stopButton .. " to stop the current animation before playing the next one.")
-        script:sleep(800)
+        gui.show_error("Samurais Scripts",
+            "You can not play animations while grabbing an NPC.")
+          script:sleep(800)
       end
     end
   end
@@ -3410,7 +3901,6 @@ script.register_looped("enemies-flee", function(ef)
     if (PED.COUNT_PEDS_IN_COMBAT_WITH_TARGET_WITHIN_RADIUS(self.get_ped(), myCoords.x, myCoords.y, myCoords.z, 100)) > 0 then
       for _, p in pairs(gta_peds) do
         if PED.IS_PED_HUMAN(p) and PED.IS_PED_IN_COMBAT(p, self.get_ped()) and not PED.IS_PED_A_PLAYER(p) then
-          log.info(tostring(p))
           TASK.CLEAR_PED_SECONDARY_TASK(p)
           TASK.CLEAR_PED_TASKS(p)
           PED.SET_PED_KEEP_TASK(p, false)
@@ -3421,8 +3911,7 @@ script.register_looped("enemies-flee", function(ef)
             TASK.TASK_VEHICLE_TEMP_ACTION(p, PED.GET_VEHICLE_PED_IS_USING(p), 1, 2000)
             TASK.TASK_LEAVE_ANY_VEHICLE(p, 0, 4160)
           end
-          TASK.CLEAR_PED_TASKS_IMMEDIATELY(p)
-          TASK.TASK_SMART_FLEE_PED(p, self.get_ped(), 250, -1, false, false)
+          TASK.TASK_SMART_FLEE_PED(p, self.get_ped(), 250, 5000, false, false)
         end
       end
     end
@@ -3557,10 +4046,6 @@ script.register_looped("TDFT", function(script)
           VEHICLE.SET_VEHICLE_FULLBEAM(current_vehicle, false)
           VEHICLE.SET_VEHICLE_LIGHTS(current_vehicle, 0)
         end
-      else
-        if PAD.IS_CONTROL_JUST_RELEASED(0, 86) then
-          gui.show_warning("Tokyo Drift", "Your headlights are broken!")
-        end
       end
     end
     if holdF then
@@ -3600,34 +4085,36 @@ end)
 
 script.register_looped("tire smoke", function(smkptfx)
   if driftMode or DriftTires then
-    if is_car and PAD.IS_CONTROL_PRESSED(0, tdBtn) and VEHICLE.GET_VEHICLE_CURRENT_DRIVE_GEAR_(current_vehicle) > 0 and ENTITY.GET_ENTITY_SPEED(current_vehicle) > 10 then -- no smoke on low speed drifts
-      local dict = "scr_ba_bb"
-      local wheels = { "wheel_lr", "wheel_rr" }
-      if VEHICLE.IS_VEHICLE_ON_ALL_WHEELS(current_vehicle) and not VEHICLE.IS_VEHICLE_STOPPED(current_vehicle) then
-        if Game.requestNamedPtfxAsset(dict) then
-          for _, boneName in ipairs(wheels) do
-            local r_wheels = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(current_vehicle, boneName)
-            GRAPHICS.USE_PARTICLE_FX_ASSET(dict)
-            smokePtfx = GRAPHICS.START_NETWORKED_PARTICLE_FX_LOOPED_ON_ENTITY_BONE("scr_ba_bb_plane_smoke_trail",
-              current_vehicle,
-              -0.4, 0.0, 0.0, 0.0, 0.0, 0.0, r_wheels, 0.3, false, false, false, 0, 0, 0)
-            GRAPHICS.SET_PARTICLE_FX_LOOPED_COLOUR(smokePtfx, driftSmoke.r, driftSmoke.g, driftSmoke.b, 0)
-            table.insert(smokePtfx_t, smokePtfx)
-            GRAPHICS.STOP_PARTICLE_FX_LOOPED(smoke)
-            tire_smoke = true
-          end
-          if tire_smoke then
-            repeat
-              smkptfx:sleep(50)
-            until
-              PAD.IS_CONTROL_RELEASED(0, tdBtn) or PAD.IS_CONTROL_RELEASED(0, 71)
-            for _, smoke in ipairs(smokePtfx_t) do
-              if GRAPHICS.DOES_PARTICLE_FX_LOOPED_EXIST(smoke) then
-                GRAPHICS.STOP_PARTICLE_FX_LOOPED(smoke)
-                GRAPHICS.REMOVE_PARTICLE_FX(smoke)
-              end
+    if DriftSmoke and Game.Self.isDriving() then
+      if is_car and PAD.IS_CONTROL_PRESSED(0, tdBtn) and PAD.IS_CONTROL_PRESSED(0, 71) and VEHICLE.GET_VEHICLE_CURRENT_DRIVE_GEAR_(current_vehicle) > 0 and ENTITY.GET_ENTITY_SPEED(current_vehicle) > 6 then
+        local dict = "scr_ba_bb"
+        local wheels = { "wheel_lr", "wheel_rr" }
+        if VEHICLE.IS_VEHICLE_ON_ALL_WHEELS(current_vehicle) and not VEHICLE.IS_VEHICLE_STOPPED(current_vehicle) then
+          if Game.requestNamedPtfxAsset(dict) then
+            for _, boneName in ipairs(wheels) do
+              local r_wheels = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(current_vehicle, boneName)
+              GRAPHICS.USE_PARTICLE_FX_ASSET(dict)
+              smokePtfx = GRAPHICS.START_NETWORKED_PARTICLE_FX_LOOPED_ON_ENTITY_BONE("scr_ba_bb_plane_smoke_trail",
+                current_vehicle,
+                -0.4, 0.0, 0.0, 0.0, 0.0, 0.0, r_wheels, 0.3, false, false, false, 0, 0, 0)
+              GRAPHICS.SET_PARTICLE_FX_LOOPED_COLOUR(smokePtfx, driftSmoke_T.r, driftSmoke_T.g, driftSmoke_T.b, 0)
+              table.insert(smokePtfx_t, smokePtfx)
+              GRAPHICS.STOP_PARTICLE_FX_LOOPED(smoke)
+              tire_smoke = true
             end
-            tire_smoke = false
+            if tire_smoke then
+              repeat
+                smkptfx:sleep(50)
+              until
+                PAD.IS_CONTROL_RELEASED(0, tdBtn) or PAD.IS_CONTROL_RELEASED(0, 71)
+              for _, smoke in ipairs(smokePtfx_t) do
+                if GRAPHICS.DOES_PARTICLE_FX_LOOPED_EXIST(smoke) then
+                  GRAPHICS.STOP_PARTICLE_FX_LOOPED(smoke)
+                  GRAPHICS.REMOVE_PARTICLE_FX(smoke)
+                end
+              end
+              tire_smoke = false
+            end
           end
         end
       end
@@ -3655,8 +4142,8 @@ script.register_looped("LCTRL", function(lct)
           started_lct = true
           ENTITY.FREEZE_ENTITY_POSITION(current_vehicle, true)
           timerA = timerA + 1
-          if timerA >= 150 then
-            gui.show_success("TokyoDrift", "Launch Control Activated!")
+          if timerA >= 100 then
+            gui.show_success("Samurais Scripts", "Launch Control Activated!")
             AUDIO.PLAY_SOUND_FRONTEND(-1, notif_sound, notif_ref, true)
             repeat
               lct:sleep(100)
@@ -4393,16 +4880,16 @@ script.register_looped("flatbed script", function(script)
         attached_vehicle = closestVehicle
         script:sleep(200)
       else
-        gui.show_error("Flatbed Script", translateLabel("failed_veh_ctrl"))
+        gui.show_error("Samurais Scripts", translateLabel("failed_veh_ctrl"))
       end
     end
     if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) and closestVehicle ~= nil and not towable then
-      gui.show_message("Flatbed Script", translateLabel("fltbd_carsOnlyTxt"))
+      gui.show_message("Samurais Scripts", translateLabel("fltbd_carsOnlyTxt"))
       script:sleep(400)
     end
     if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) and closestVehicleModel == flatbedModel then
       script:sleep(400)
-      gui.show_message("Flatbed Script", translateLabel("fltbd_nootherfltbdTxt"))
+      gui.show_message("Samurais Scripts", translateLabel("fltbd_nootherfltbdTxt"))
     end
   elseif is_in_flatbed and attached_vehicle ~= 0 then
     if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) then

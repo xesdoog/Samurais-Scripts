@@ -139,7 +139,9 @@ lua_Fn = {
   ---@param str string
   ---@return string
   stringToHex = function(str)
-    return (str:gsub(".", function(char) return string.format("%02x", char:byte()) end))
+    return (str:gsub(".", function(char) 
+      return string.format("%02x", char:byte()) 
+    end))
   end,
 
   ---Iterates over a table and returns the value from each key.
