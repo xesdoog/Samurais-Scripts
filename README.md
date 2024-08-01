@@ -48,6 +48,6 @@ A base for a Lua script centered around roleplaying and having fun in a game ful
 | [rxi](https://github.com/rxi)                 | [json.lua](https://github.com/rxi/json.lua)                 |
 | [Harmless](https://github.com/harmless05)     | Config system & Shift-Drift                                 |
 | [NiiV3AU](https://github.com/NiiV3AU)         | German translations                                         |
-| [xiaoxiao](https://github.com/xiaoxiao921)    | Wrote YimMenu's Lua API                                     |
+| [xiaoxiao](https://github.com/xiaoxiao921)    | YimMenu's Lua API                                           |
 | [YimMenu](https://github.com/YimMenu/YimMenu) | I was never fond of any other project. It's just beautiful! |
 | [lua-users.org](http://lua-users.org/)        | [LuaXml](http://lua-users.org/wiki/LuaXml)                  |
