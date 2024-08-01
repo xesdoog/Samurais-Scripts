@@ -39,7 +39,7 @@ A base for a Lua script centered around roleplaying and having fun in a game ful
 ## TODO:
 
 - [x] Merge YimActions. ✔️ Done.
-- [ ] Add new features.
+- [ ] Add new features. ⚙️ In-progress...
 
 ## Credits
 
