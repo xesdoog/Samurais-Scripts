@@ -6,7 +6,7 @@ require('lib/Translations')
 require("data/objects")
 require("data/actions")
 
-SCRIPT_VERSION  = '0.4-a' -- 0.4 alpha
+SCRIPT_VERSION  = '0.5-a' -- 0.5 alpha
 TARGET_BUILD    = '3274'  -- Only YimResupplier needs a version check.
 TARGET_VERSION  = '1.69'
 CURRENT_BUILD   = Game.GetBuildNumber()
@@ -17,6 +17,7 @@ Samurais_scripts = gui.get_tab("Samurai's Scripts")
 local loading_label = ""
 local start_loading_anim = false
 default_config   = {
+  shortcut_anim     = {},
   Regen             = false,
   objectiveTP       = false,
   disableTooltips   = false,
@@ -91,6 +92,7 @@ freeze              = lua_cfg.read("freeze")
 disableProps        = lua_cfg.read("disableProps")
 npc_godMode         = lua_cfg.read("npc_godMode")
 usePlayKey          = lua_cfg.read("usePlayKey")
+shortcut_anim       = lua_cfg.read("shortcut_anim")
 Triggerbot          = lua_cfg.read("Triggerbot")
 aimEnemy            = lua_cfg.read("aimEnemy")
 autoKill            = lua_cfg.read("autoKill")
@@ -121,6 +123,7 @@ tab1Sound           = true
 tab2Sound           = true
 tab3Sound           = true
 is_playing_anim     = false
+is_shortcut_anim    = false
 anim_music          = false
 is_playing_scenario = false
 is_playing_radio    = false
@@ -153,6 +156,7 @@ show_npc_veh_ctrls  = false
 stop_searching      = false
 hijack_started      = false
 sound_btn_off       = false
+flag                = 0
 grp_anim_index      = 0
 attached_ped        = 0
 thisVeh             = 0
@@ -170,12 +174,17 @@ driftSmokeIndex     = 0
 selected_smoke_col  = 0
 pBus                = 0
 dummyDriver         = 0
+dummyCopCar         = 0
 sound_index1        = 0
 sound_index2        = 0
 sound_switch        = 0
 radio_index         = 0
 pedthrowF           = 10
 tdBtn               = 21
+previous_anim       = 316
+next_anim           = 317
+play_anim           = 256
+stop_anim           = 47
 actions_search      = ""
 currentMvmt         = ""
 currentStrf         = ""
@@ -198,7 +207,9 @@ selfPTFX            = {}
 npcPTFX             = {}
 curr_playing_anim   = {}
 laserPtfx_T         = {}
+chosen_anim         = {}
 driftSmoke_T        = {r = 255, g = 255, b = 255}
+reserved_keys_T     = {10, 11, 21, 23, 24, 29, 30, 34, 36, 47, 57, 69, 71, 72, 75, 112, 121, 140, 142, 178, 207, 208, 257, 263, play_anim, stop_anim, previous_anim, next_anim}
 weapbones_T         = {"WAPLasr", "WAPLasr_2", "WAPFlshLasr", "WAPFlshLasr_2", "WAPFlsh", "WAPFlsh_2", "gun_barrels", "gun_muzzle"}
 driftSmokeColors    = {"White", "Black", "Red", "Green", "Blue", "Yellow", "Orange", "Pink", "Purple"}
 objectives_T        = { 0, 1, 2, 143, 144, 145, 146, 280, 502, 503, 504, 505, 506, 507, 508, 509, 510, 511, 535, 536, 537, 538, 539, 540, 541, 542 }
@@ -358,6 +369,8 @@ function play_music(musicSwitch, station)
         ENTITY.SET_ENTITY_ALPHA(pBus, 0.0, false)
         ENTITY.FREEZE_ENTITY_POSITION(pBus, true)
         ENTITY.SET_ENTITY_COLLISION(pBus, false, 0)
+        ENTITY.SET_ENTITY_INVINCIBLE(pBus, true)
+        VEHICLE.SET_VEHICLE_ALLOW_HOMING_MISSLE_LOCKON(pBus, false, 0)
       end
       mp:sleep(500)
       if ENTITY.DOES_ENTITY_EXIST(pBus) then
@@ -375,10 +388,9 @@ function play_music(musicSwitch, station)
             AUDIO.FORCE_USE_AUDIO_GAME_OBJECT(pBus, vehicles.get_vehicle_display_name(2765724541))
             VEHICLE.SET_VEHICLE_ENGINE_ON(pBus, true, false, false)
             AUDIO.SET_VEHICLE_RADIO_LOUD(pBus, true)
+            VEHICLE.SET_VEHICLE_LIGHTS(pBus, 1)
             mp:sleep(500)
             AUDIO.SET_VEH_RADIO_STATION(pBus, station)
-            -- ENTITY.SET_ENTITY_AS_NO_LONGER_NEEDED(dummyDriver)
-            -- ENTITY.SET_ENTITY_AS_NO_LONGER_NEEDED(pBus)
             mp:sleep(500)
             ENTITY.ATTACH_ENTITY_TO_ENTITY(pBus, self.get_ped(), bone_idx, 0.0, -1.0, -1.3, 0.0, 0.0, 0.0, false, true,
             false, true, 1, false, 1)
@@ -408,6 +420,47 @@ function play_music(musicSwitch, station)
       end
     else
       log.error('invalid argument ' .. tostring(musicSwitch))
+    end
+  end)
+end
+
+function dummyCop()
+  script.run_in_fiber(function(dcop)
+    if current_vehicle ~= 0 then
+      local polhash, veh_bone
+      if is_car then
+        polhash, veh_bone = 0xD1E0B7D7, "seat_dside_f"
+      elseif is_bike then
+        polhash, veh_bone = 0xFDEFAEC3, "chassis_dummy"
+      end
+      if Game.requestModel(polhash) then
+        dummyCopCar = VEHICLE.CREATE_VEHICLE(polhash, 0.0, 0.0, 0.0, 0, true, false, false)
+        ENTITY.SET_ENTITY_COLLISION(dummyCopCar, false, 0)
+        VEHICLE.SET_VEHICLE_ALLOW_HOMING_MISSLE_LOCKON(dummyCopCar, false, 0)
+        VEHICLE.SET_VEHICLE_UNDRIVEABLE(dummyCopCar, true)
+        ENTITY.SET_ENTITY_ALPHA(dummyCopCar, 49.0, false)
+        ENTITY.SET_ENTITY_INVINCIBLE(dummyCopCar, true)
+      end
+      if ENTITY.DOES_ENTITY_EXIST(dummyCopCar) then
+        local boneidx1 = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(dummyCopCar, veh_bone)
+        local boneidx2 = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(self.get_veh(), veh_bone)
+        VEHICLE.SET_VEHICLE_LIGHTS(dummyCopCar, 1)
+        ENTITY.SET_ENTITY_HEADING(dummyCopCar, ENTITY.GET_ENTITY_HEADING(self.get_veh()))
+        ENTITY.ATTACH_ENTITY_BONE_TO_ENTITY_BONE(dummyCopCar, self.get_veh(), boneidx1, boneidx2, false, true)
+        dcop:sleep(500)
+        VEHICLE.SET_VEHICLE_SIREN(dummyCopCar, true)
+        VEHICLE.SET_VEHICLE_HAS_MUTED_SIRENS(dummyCopCar, false)
+        AUDIO.TRIGGER_SIREN_AUDIO(dummyCopCar)
+        VEHICLE.SET_VEHICLE_ACT_AS_IF_HAS_SIREN_ON(self.get_veh(), true)
+        VEHICLE.SET_VEHICLE_CAUSES_SWERVING(self.get_veh(), true)
+        VEHICLE.SET_VEHICLE_INDICATOR_LIGHTS(self.get_veh(), 0, true)
+        VEHICLE.SET_VEHICLE_INDICATOR_LIGHTS(self.get_veh(), 1, true)
+      else
+        log.debug('Failed to create police vehicle')
+        return
+      end
+    else
+      log.debug('Player is on foot.')
     end
   end)
 end
@@ -477,22 +530,36 @@ self_tab:add_imgui(function()
   end
 
   clumsy, clumsyUsed = ImGui.Checkbox("Clumsy", clumsy, true)
+  UI.helpMarker(false, translateLabel("clumsy_tt"))
   if clumsyUsed then
     rod = false
     lua_cfg.save("rod", false)
     lua_cfg.save("clumsy", clumsy)
     UI.widgetSound("Nav2")
   end
-  UI.helpMarker(false, translateLabel("clumsy_tt"))
+  if clumsy and clumsyUsed then
+    script.run_in_fiber(function()
+      if not PED.CAN_PED_RAGDOLL(self.get_ped()) then
+        gui.show_warning("Samurais Scripts", "This option will not work if you're blocking ragdoll. Please make sure 'No Ragdoll' option is disabled in YimMennu.")
+      end
+    end)
+  end
 
   rod, rodUsed = ImGui.Checkbox("Ragdoll On Demand", rod, true)
+  UI.helpMarker(false, translateLabel("rod_tt"))
   if rodUsed then
     clumsy = false
     lua_cfg.save("rod", rod)
     lua_cfg.save("clumsy", false)
     UI.widgetSound("Nav2")
   end
-  UI.helpMarker(false, translateLabel("rod_tt"))
+  if rod and rodUsed then
+    script.run_in_fiber(function()
+      if not PED.CAN_PED_RAGDOLL(self.get_ped()) then
+        gui.show_warning("Samurais Scripts", "This option will not work if you're blocking ragdoll. Please make sure 'No Ragdoll' option is disabled in YimMennu.")
+      end
+    end)
+  end
 end)
 
 
@@ -772,7 +839,7 @@ Actions:add_imgui(function()
         gui.show_error("Samurais Scripts", translateLabel("You can not play animations while grabbing an NPC."))
       end
     end
-    ImGui.SameLine(); ImGui.Dummy(10, 1); ImGui.SameLine()
+    ImGui.SameLine()
     if ImGui.Button(translateLabel("generic_stop_btn") .. "##anim") then
       if is_playing_anim then
         UI.widgetSound("Cancel")
@@ -813,7 +880,9 @@ Actions:add_imgui(function()
         UI.widgetSound("Error")
       end
       script.run_in_fiber(function()
-        local all_objects = entities.get_all_objects_as_handles()
+        if all_objects == nil then
+          all_objects = entities.get_all_objects_as_handles()
+        end
         for _, v in ipairs(all_objects) do
           local modelHash      = ENTITY.GET_ENTITY_MODEL(v)
           local attachedObject = ENTITY.GET_ENTITY_OF_TYPE_ATTACHED_TO_ENTITY(self.get_ped(), modelHash)
@@ -823,7 +892,9 @@ Actions:add_imgui(function()
             TASK.CLEAR_PED_TASKS(self.get_ped())
           end
         end
-        local all_peds = entities.get_all_peds_as_handles()
+        if all_peds == nil then
+          all_peds = entities.get_all_peds_as_handles()
+        end
         for _, p in ipairs(all_peds) do
           local pedHash     = ENTITY.GET_ENTITY_MODEL(p)
           local attachedPed = ENTITY.GET_ENTITY_OF_TYPE_ATTACHED_TO_ENTITY(self.get_ped(), pedHash)
@@ -850,8 +921,8 @@ Actions:add_imgui(function()
           PED.SET_PED_CAN_SWITCH_WEAPON(self.get_ped(), true)
         end
         if plyrProps[1] ~= nil then
-          for k, _ in ipairs(plyrProps) do
-            plyrProps[k] = nil
+          for _, v in ipairs(plyrProps) do
+            table.remove(v)
           end
         else
           if not ped_grabbed then
@@ -863,10 +934,91 @@ Actions:add_imgui(function()
       end)
     end
     UI.toolTip(false, translateLabel("RemoveAttachments_tt"))
-    ImGui.Separator()
-    ImGui.Spacing()
-    ImGui.Text(translateLabel("Movement Options:"))
-    ImGui.Spacing()
+    if LANG == 'en-US' then
+      ImGui.SameLine()
+    end
+    if info ~= nil then
+      if shortcut_anim.name ~= info.name then
+        if ImGui.Button(translateLabel("animShortcut_btn")) then
+          chosen_anim = info
+          UI.widgetSound("Select2")
+          ImGui.OpenPopup("Set Shortcut")
+        end
+        UI.toolTip(false, translateLabel("animShortcut_tt"))
+        ImGui.SetNextWindowPos(760, 400, ImGuiCond.Appearing)
+        ImGui.SetNextWindowBgAlpha(0.9)
+        if ImGui.BeginPopupModal("Set Shortcut", true, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar) then
+          if btn_name == nil then
+            script.run_in_fiber(function()
+              for i = 1, 360 do
+                if PAD.IS_CONTROL_JUST_PRESSED(0, i) then
+                  btn, btn_name = UI.getKeyPressed()
+                  break
+                end
+              end
+            end)
+          end
+          UI.coloredText("Selected Animation:  ", "green", 0.9, 20); ImGui.SameLine(); ImGui.Text("« " .. chosen_anim.name .. " »")
+          ImGui.Dummy(1, 10)
+          if btn_name == nil then
+            start_loading_anim = true
+            UI.coloredText(translateLabel("input_waiting") .. loading_label, "#FFFFFF", 0.75, 20)
+          else
+            start_loading_anim = false
+            for _, key in pairs(reserved_keys_T) do
+              if btn == key then
+                _reserved = true
+                break
+              else
+                _reserved = false
+              end
+            end
+            if not _reserved then
+              ImGui.Text("Shortcut Button: "); ImGui.SameLine(); ImGui.Text(btn_name)
+            else
+              UI.coloredText(translateLabel("reserved_button"), "red", 0.86, 20)
+            end
+            ImGui.SameLine(); ImGui.Dummy(5, 1); ImGui.SameLine()
+            if UI.coloredButton(" " .. translateLabel("generic_clear_btn") .. " ##Shortcut", "#FFDB58", "#FFFAA0", "#FFFFF0", 0.7) then
+              UI.widgetSound("Error")
+              btn, btn_name = nil, nil
+            end
+          end
+          ImGui.Dummy(1, 10)
+          if not _reserved and btn ~= nil then
+            if ImGui.Button(translateLabel("generic_confirm_btn") .. "##shotcut") then
+              UI.widgetSound("Select")
+              if manualFlags then
+                setmanualflag()
+              else
+                flag = chosen_anim.flag
+              end
+              shortcut_anim     = chosen_anim
+              shortcut_anim.btn = btn
+              lua_cfg.save("shortcut_anim", shortcut_anim)
+              gui.show_success("Samurais Scripts", translateLabel("shortcut_success_1/2") .. btn_name .. translateLabel("shortcut_success_2/2"))
+              ImGui.CloseCurrentPopup()
+            end
+            ImGui.SameLine(); ImGui.Spacing(); ImGui.SameLine()
+          end
+          if ImGui.Button(translateLabel("generic_cancel_btn") .. "##shotcut") then
+            UI.widgetSound("Cancel")
+            btn, btn_name = nil, nil
+            ImGui.CloseCurrentPopup()
+          end
+          ImGui.End()
+        end
+      else
+        if ImGui.Button(translateLabel("removeShortcut_btn")) then
+          UI.widgetSound("Delete")
+          shortcut_anim = {}
+          lua_cfg.save("shortcut_anim", {})
+          gui.show_success("Samurais Scripts", "Animation shortcut has been reset. Please reload the script!")
+        end
+        UI.toolTip(false, translateLabel("removeShortcut_tt"))
+      end
+    end
+    ImGui.Separator(); ImGui.Spacing(); ImGui.Text(translateLabel("Movement Options:")); ImGui.Spacing()
     local isChanged = false
     actions_switch, isChanged = ImGui.RadioButton("Normal", actions_switch, 0)
     if isChanged then
@@ -1783,6 +1935,41 @@ vehicle_tab:add_imgui(function()
         VEHICLE.SET_VEHICLE_ENGINE_HEALTH(current_vehicle, engine_hp)
       end)
     end
+
+    if dummyCopCar == 0 then
+      if VEHICLE.GET_VEHICLE_CLASS(current_vehicle) ~= 18 then
+        if ImGui.Button("Equip Fake Siren") then
+          if is_car or is_bike and not PED.IS_PED_IN_FLYING_VEHICLE(self.get_ped()) then
+            UI.widgetSound("Select")
+            dummyCop()
+          else
+            UI.widgetSound("Error")
+            gui.show_error("Samurais Scripts", "This feature is only available for cars and bikes.")
+          end
+        end
+      else
+        ImGui.BeginDisabled()
+        ImGui.Button("Equip Fake Siren")
+        ImGui.EndDisabled()
+        UI.toolTip(false, "Your vehicle has a real siren. You don't need a fake one.")
+      end
+    else
+      if ImGui.Button("Remove Fake Siren") then
+        UI.widgetSound("Cancel")
+        script.run_in_fiber(function(deletecop)
+          VEHICLE.SET_VEHICLE_ACT_AS_IF_HAS_SIREN_ON(self.get_veh(), false)
+          VEHICLE.SET_VEHICLE_CAUSES_SWERVING(self.get_veh(), false)
+          VEHICLE.SET_VEHICLE_INDICATOR_LIGHTS(self.get_veh(), 0, false)
+          VEHICLE.SET_VEHICLE_INDICATOR_LIGHTS(self.get_veh(), 1, false)
+          if ENTITY.DOES_ENTITY_EXIST(dummyCopCar) then
+            ENTITY.SET_ENTITY_AS_MISSION_ENTITY(dummyCopCar)
+            deletecop:sleep(200)
+            ENTITY.DELETE_ENTITY(dummyCopCar)
+          end
+          dummyCopCar = 0
+        end)
+      end
+    end
   else
     ImGui.Text(translateLabel("getinveh"))
   end
@@ -1881,26 +2068,26 @@ flatbed:add_imgui(function()
               vehBone = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(closestVehicle, "chassis_dummy")
               local vehicleClass = VEHICLE.GET_VEHICLE_CLASS(closestVehicle)
               if vehicleClass == 1 then
-                zAxis = 0.9
-                yAxis = -2.3
+                tow_zAxis = 0.9
+                tow_yAxis = -2.3
               elseif vehicleClass == 2 then
-                zAxis = 0.993
-                yAxis = -2.17046
+                tow_zAxis = 0.993
+                tow_yAxis = -2.17046
               elseif vehicleClass == 6 then
-                zAxis = 1.00069420
-                yAxis = -2.17046
+                tow_zAxis = 1.00069420
+                tow_yAxis = -2.17046
               elseif vehicleClass == 7 then
-                zAxis = 1.009
-                yAxis = -2.17036
+                tow_zAxis = 1.009
+                tow_yAxis = -2.17036
               elseif vehicleClass == 15 then
-                zAxis = 1.3
-                yAxis = -2.21069
+                tow_zAxis = 1.3
+                tow_yAxis = -2.21069
               elseif vehicleClass == 16 then
-                zAxis = 1.5
-                yAxis = -2.21069
+                tow_zAxis = 1.5
+                tow_yAxis = -2.21069
               else
-                zAxis = 1.1
-                yAxis = -2.0
+                tow_zAxis = 1.1
+                tow_yAxis = -2.0
               end
               ENTITY.SET_ENTITY_HEADING(closestVehicleModel, flatbedHeading)
               ENTITY.ATTACH_ENTITY_TO_ENTITY(closestVehicle, current_vehicle, flatbedBone, tow_xAxis, tow_yAxis, tow_zAxis, 0.0, 0.0,
@@ -1951,28 +2138,28 @@ flatbed:add_imgui(function()
       ImGui.Dummy(100, 1); ImGui.SameLine()
       ImGui.ArrowButton("##Up", 2)
       if ImGui.IsItemActive() then
-        zAxis = zAxis + 0.01
+        tow_zAxis = tow_zAxis + 0.01
         ENTITY.ATTACH_ENTITY_TO_ENTITY(attached_vehicle, current_vehicle, flatbedBone, tow_xAxis, tow_yAxis, tow_zAxis, 0.0, 0.0, 0.0,
           true, true, false, false, 1, true, 1)
       end
       ImGui.Dummy(60, 1); ImGui.SameLine()
       ImGui.ArrowButton("##Left", 0)
       if ImGui.IsItemActive() then
-        yAxis = yAxis + 0.01
+        tow_yAxis = tow_yAxis + 0.01
         ENTITY.ATTACH_ENTITY_TO_ENTITY(attached_vehicle, current_vehicle, flatbedBone, tow_xAxis, tow_yAxis, tow_zAxis, 0.0, 0.0, 0.0,
           true, true, false, false, 1, true, 1)
       end
       ImGui.SameLine(); ImGui.Dummy(23, 1); ImGui.SameLine()
       ImGui.ArrowButton("##Right", 1)
       if ImGui.IsItemActive() then
-        yAxis = yAxis - 0.01
+        tow_yAxis = tow_yAxis - 0.01
         ENTITY.ATTACH_ENTITY_TO_ENTITY(attached_vehicle, current_vehicle, flatbedBone, tow_xAxis, tow_yAxis, tow_zAxis, 0.0, 0.0, 0.0,
           true, true, false, false, 1, true, 1)
       end
       ImGui.Dummy(100, 1); ImGui.SameLine()
       ImGui.ArrowButton("##Down", 3)
       if ImGui.IsItemActive() then
-        zAxis = zAxis - 0.01
+        tow_zAxis = tow_zAxis - 0.01
         ENTITY.ATTACH_ENTITY_TO_ENTITY(attached_vehicle, current_vehicle, flatbedBone, tow_xAxis, tow_yAxis, tow_zAxis, 0.0, 0.0, 0.0,
           true, true, false, false, 1, true, 1)
       end
@@ -2731,7 +2918,7 @@ object_spawner:add_imgui(function()
       end
       if selfAttachments[1] ~= nil then
         ImGui.Text(translateLabel("attached_objects"))
-        ImGui.PushItemWidth(200)
+        ImGui.PushItemWidth(230)
         attached_index, used = ImGui.Combo("##Attached Objects", attached_index, filteredAttachNames, #selfAttachments)
         ImGui.PopItemWidth()
         selectedAttachment = selfAttachments[attached_index + 1]
@@ -2782,7 +2969,7 @@ object_spawner:add_imgui(function()
       end
       if vehAttachments[1] ~= nil then
         ImGui.Text(translateLabel("attached_objects"))
-        ImGui.PushItemWidth(200)
+        ImGui.PushItemWidth(230)
         attached_index, used = ImGui.Combo("##vehAttachedObjects", attached_index, filteredVehAttachNames,
           #vehAttachments)
         ImGui.PopItemWidth()
@@ -3009,9 +3196,25 @@ settings_tab:add_imgui(function()
     UI.widgetSound("Nav2")
   end
 
-  ImGui.Text(translateLabel("langTitle") .. " " .. current_lang)
+  if shortcut_anim.anim ~= nil then
+    if ImGui.Button(translateLabel("removeShortcut_btn2")) then
+      UI.widgetSound("Delete")
+      shortcut_anim = {}
+      lua_cfg.save("shortcut_anim", {})
+      gui.show_success("Samurais Scripts", "Animation shortcut has been successfully reset.")
+    end
+  else
+    ImGui.BeginDisabled()
+    ImGui.Button(translateLabel("removeShortcut_btn2"))
+    ImGui.EndDisabled()
+    UI.toolTip(false, translateLabel("no_shortcut_tt"))
+  end
+
+  ImGui.Dummy(1, 10); ImGui.Text(translateLabel("langTitle") .. " " .. current_lang)
   useGameLang, uglUsed = ImGui.Checkbox(translateLabel("gameLangCB"), useGameLang, true)
-  UI.toolTip(false, translateLabel("gameLang_tt"))
+  if useGameLang then
+    UI.toolTip(false, translateLabel("gameLang_tt"))
+  end
   if useGameLang then
     LANG, current_lang = Game.GetLang()
   end
@@ -3053,6 +3256,7 @@ settings_tab:add_imgui(function()
     if ImGui.Button("  " .. translateLabel("yes") .. "  ") then
       UI.widgetSound("Select2")
       lua_cfg.reset(default_config)
+      shortcut_anim     = {}
       Regen             = false
       objectiveTP       = false
       disableTooltips   = false
@@ -3298,6 +3502,12 @@ script.register_looped("GameInput", function()
     stopButton = "[DPAD LEFT]"
   end
 
+  if shortcut_anim.btn ~= nil then
+    if gui.is_open() then
+      PAD.DISABLE_CONTROL_ACTION(0, shortcut_anim.btn)
+    end
+  end
+
   if HashGrabber and WEAPON.IS_PED_ARMED(self.get_ped(), 4) then
     PAD.DISABLE_CONTROL_ACTION(0, 24, 1)
     PAD.DISABLE_CONTROL_ACTION(0, 257, 1)
@@ -3398,7 +3608,7 @@ end)
 script.register_looped("self features", function(script)
   -- Crouch instead of sneak
   if Game.Self.isOnFoot() and not Game.Self.isInWater() then
-    if replaceSneakAnim and not ped_grabbed and not is_playing_anim and not is_playing_scenario then
+    if replaceSneakAnim and not ped_grabbed and not is_playing_anim and not is_playing_scenario and not is_typing then
       if not isCrouched and PAD.IS_DISABLED_CONTROL_PRESSED(0, 36) then
         script:sleep(200)
         if is_handsUp then
@@ -3525,11 +3735,6 @@ script.register_looped("self features", function(script)
 end)
 script.register_looped("Ragdoll Loop", function(rgdl)
   rgdl:yield()
-  if PED.IS_PED_MALE(self.get_ped()) then
-    soundName = "WAVELOAD_PAIN_MALE"
-  else
-    soundName = "WAVELOAD_PAIN_FEMALE"
-  end
   if clumsy then
     if PED.IS_PED_RAGDOLL(self.get_ped()) then
       rgdl:sleep(2500)
@@ -3543,36 +3748,59 @@ script.register_looped("Ragdoll Loop", function(rgdl)
       is_handsUp = false
     end
   elseif rod then
-    if PAD.IS_CONTROL_PRESSED(0, 252) then
-      PED.SET_PED_TO_RAGDOLL(self.get_ped(), 1500, 0, 0, false)
-      if isCrouched then
-        isCrouched = false
+    if PED.CAN_PED_RAGDOLL(self.get_ped()) then
+      if PAD.IS_CONTROL_PRESSED(0, 252) then
+        PED.SET_PED_TO_RAGDOLL(self.get_ped(), 1500, 0, 0, false)
+        if isCrouched then
+          isCrouched = false
+        end
+        if is_handsUp then
+          is_handsUp = false
+        end
       end
-      if is_handsUp then
-        is_handsUp = false
+    else
+      if Game.Self.isOnFoot() and PAD.IS_CONTROL_JUST_PRESSED(0, 252) then
+        gui.show_error("Samurais Scripts", "Unable to ragdoll you.\nPlease make sure 'No Ragdoll' option\nis disabled in YimMenu.")
+      rgdl:sleep(200)
       end
     end
   end
   if PED.IS_PED_RAGDOLL(self.get_ped()) then
-    rgdl:sleep(500)
-    local myPos = ENTITY.GET_ENTITY_COORDS(self.get_ped(), true)
-    AUDIO.PLAY_AMBIENT_SPEECH_FROM_POSITION_NATIVE("SCREAM_PANIC_SHORT", soundName, myPos.x, myPos.y, myPos.z,
-      "SPEECH_PARAMS_FORCE_SHOUTED", 0)
-    repeat
-      rgdl:sleep(100)
-    until
-      PED.IS_PED_RAGDOLL(self.get_ped()) == false
+    if NETWORK.NETWORK_IS_SESSION_ACTIVE() then
+      if PED.IS_PED_MALE(self.get_ped()) then
+        soundName = "WAVELOAD_PAIN_MALE"
+      else
+        soundName = "WAVELOAD_PAIN_FEMALE"
+      end
+      rgdl:sleep(500)
+      local myPos = ENTITY.GET_ENTITY_COORDS(self.get_ped(), true)
+      AUDIO.PLAY_AMBIENT_SPEECH_FROM_POSITION_NATIVE("SCREAM_PANIC_SHORT", soundName, myPos.x, myPos.y, myPos.z,
+        "SPEECH_PARAMS_FORCE_SHOUTED", 0)
+      repeat
+        rgdl:sleep(100)
+      until
+        PED.IS_PED_RAGDOLL(self.get_ped()) == false
+    end
   end
 end)
 script.register_looped("Sound Effects", function(animSfx)
   animSfx:yield()
-  if is_playing_anim then
+  if not is_shortcut_anim then
+    if is_playing_anim then
       local info = filteredAnims[anim_index + 1]
       if info.sfx ~= nil then
-          local soundCoords = ENTITY.GET_ENTITY_COORDS(self.get_ped(), true)
-          AUDIO.PLAY_AMBIENT_SPEECH_FROM_POSITION_NATIVE(info.sfx, info.sfxName, soundCoords.x, soundCoords.y, soundCoords.z, info.sfxFlg, 0)
-          animSfx:sleep(10000)
+        local soundCoords = self.get_pos()
+        AUDIO.PLAY_AMBIENT_SPEECH_FROM_POSITION_NATIVE(info.sfx, info.sfxName, soundCoords.x, soundCoords.y, soundCoords.z, info.sfxFlg, 0)
+        animSfx:sleep(10000)
       end
+    end
+  end
+  if is_shortcut_anim then
+    if shortcut_anim.sfx ~= nil then
+      local soundCoords = self.get_pos()
+      AUDIO.PLAY_AMBIENT_SPEECH_FROM_POSITION_NATIVE(info.sfx, info.sfxName, soundCoords.x, soundCoords.y, soundCoords.z, info.sfxFlg, 0)
+      animSfx:sleep(10000)
+    end
   end
 end)
 -- Actions
@@ -3658,51 +3886,32 @@ script.register_looped("animation hotkey", function(script)
   if is_playing_anim then
     if PAD.IS_CONTROL_PRESSED(0, 47) then
       cleanup()
-      cleanupNPC()
       if anim_music then
         play_music("stop")
         anim_music = false
       end
       if PED.IS_PED_IN_ANY_VEHICLE(self.get_ped(), false) then
         local veh = PED.GET_VEHICLE_PED_IS_IN(self.get_ped(), false)
-        local maxVehSeats = VEHICLE.GET_VEHICLE_MODEL_NUMBER_OF_SEATS(ENTITY.GET_ENTITY_MODEL(veh))
-        local mySeat
-        local npcSeat
-        is_playing_anim = false
-        for i = -1, maxVehSeats do
-          if not VEHICLE.IS_VEHICLE_SEAT_FREE(veh, i, true) then
-            local sittingPed = VEHICLE.GET_PED_IN_VEHICLE_SEAT(veh, i, true)
-            if sittingPed == self.get_ped() then
-              mySeat = i
-            end
-          end
-          PED.SET_PED_INTO_VEHICLE(self.get_ped(), veh, mySeat)
-        end
+        local mySeat = Game.getPedVehicleSeat(self.get_ped())
+        local npcSeat = Game.getPedVehicleSeat(self.get_ped())
+        PED.SET_PED_INTO_VEHICLE(self.get_ped(), veh, mySeat)
         if spawned_npcs[1] ~= nil then
-          for _, v in ipairs(spawned_npcs) do
-            if PED.IS_PED_IN_ANY_VEHICLE(v, false) then
-              for i = 0, maxVehSeats do
-                if not VEHICLE.IS_VEHICLE_SEAT_FREE(veh, i, true) then
-                  local sittingPed = VEHICLE.GET_PED_IN_VEHICLE_SEAT(veh, i, true)
-                  if sittingPed == v then
-                    npcSeat = i
-                  end
-                end
-                PED.SET_PED_INTO_VEHICLE(v, veh, npcSeat)
-              end
-            else
-              local current_NPCcoords = ENTITY.GET_ENTITY_COORDS(v)
-              ENTITY.SET_ENTITY_COORDS_NO_OFFSET(v, current_NPCcoords.x, current_NPCcoords.y, current_NPCcoords.z, true,
-                false, false)
-            end
+          cleanupNPC()
+          if PED.IS_PED_IN_ANY_VEHICLE(v, false) then
+            PED.SET_PED_INTO_VEHICLE(v, veh, npcSeat)
+          else
+            local current_NPCcoords = ENTITY.GET_ENTITY_COORDS(v)
+            ENTITY.SET_ENTITY_COORDS_NO_OFFSET(v, current_NPCcoords.x, current_NPCcoords.y, current_NPCcoords.z, true,
+              false, false)
           end
         end
       else
         local current_coords = ENTITY.GET_ENTITY_COORDS(self.get_ped())
         ENTITY.SET_ENTITY_COORDS_NO_OFFSET(self.get_ped(), current_coords.x, current_coords.y, current_coords.z, true,
           false, false)
-        is_playing_anim = false
       end
+      is_playing_anim = false
+      is_shortcut_anim = false
     end
   end
   if usePlayKey then
@@ -3799,6 +4008,55 @@ script.register_looped("animation hotkey", function(script)
     end
   end
 end)
+
+-- Animation Shotrcut
+script.register_looped("anim shortcut", function(animsc)
+  if shortcut_anim.anim ~= nil then
+    if PAD.IS_CONTROL_JUST_PRESSED(0, shortcut_anim.btn) and not is_typing then
+      is_shortcut_anim = true
+      info = shortcut_anim
+      local mycoords     = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
+      local myheading    = ENTITY.GET_ENTITY_HEADING(self.get_ped())
+      local myforwardX   = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
+      local myforwardY   = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
+      local myboneIndex  = PED.GET_PED_BONE_INDEX(self.get_ped(), info.boneID)
+      local mybonecoords = PED.GET_PED_BONE_COORDS(self.get_ped(), info.boneID)
+      if is_playing_anim or is_playing_scenario then
+        cleanup()
+        if ENTITY.DOES_ENTITY_EXIST(bbq) then
+          ENTITY.DELETE_ENTITY(bbq)
+        end
+        is_playing_anim     = false
+        is_playing_scenario = false
+        animsc:sleep(500)
+      end
+      if is_handsUp then
+        TASK.CLEAR_PED_TASKS(self.get_ped())
+        is_handsUp = false
+        animsc:sleep(100)
+      end
+      if isCrouched then
+        PED.RESET_PED_MOVEMENT_CLIPSET(self.get_ped(), 0)
+        isCrouched = false
+        animsc:sleep(100)
+      end
+      if Game.requestAnimDict(shortcut_anim.dict) then
+        playSelected(self.get_ped(), selfprop1, selfprop2, selfloopedFX, selfSexPed, myboneIndex, mycoords, myheading,
+          myforwardX, myforwardY, mybonecoords, "self", plyrProps, selfPTFX)
+        curr_playing_anim = {curr_dict = shortcut_anim.dict, curr_anim = shortcut_anim.anim, curr_flag = shortcut_anim.flag}
+        if lua_Fn.str_contains(shortcut_anim.name, "DJ") then
+          if not is_playing_radio then
+            play_music("start", "RADIO_22_DLC_BATTLE_MIX1_RADIO")
+            anim_music = true
+          end
+        end
+        animsc:sleep(200)
+        is_playing_anim  = true
+      end
+    end
+  end
+end)
+
 -- Action Mode
 script.register_looped("action mode", function(amode)
   if disableActionMode then
@@ -3904,6 +4162,13 @@ script.register_looped("enemies-flee", function(ef)
           TASK.CLEAR_PED_SECONDARY_TASK(p)
           TASK.CLEAR_PED_TASKS(p)
           PED.SET_PED_KEEP_TASK(p, false)
+          PED.SET_PED_COMBAT_ATTRIBUTES(p, 5, false)
+          PED.SET_PED_COMBAT_ATTRIBUTES(p, 13, false)
+          PED.SET_PED_COMBAT_ATTRIBUTES(p, 31, false)
+          PED.SET_PED_COMBAT_ATTRIBUTES(p, 50, false)
+          PED.SET_PED_COMBAT_ATTRIBUTES(p, 58, false)
+          PED.SET_PED_COMBAT_ATTRIBUTES(p, 17, true)
+          PED.SET_PED_COMBAT_ATTRIBUTES(p, 77, true)
           if WEAPON.IS_PED_ARMED(p, 7) then
             WEAPON.SET_PED_DROPS_WEAPON(p)
           end
@@ -3976,7 +4241,7 @@ script.register_looped("TDFT", function(script)
     lastVeh, _, current_vehicle, _ = onVehEnter()
     is_car                         = VEHICLE.IS_THIS_MODEL_A_CAR(ENTITY.GET_ENTITY_MODEL(current_vehicle))
     is_quad                        = VEHICLE.IS_THIS_MODEL_A_QUADBIKE(ENTITY.GET_ENTITY_MODEL(current_vehicle))
-    is_bike                        = (VEHICLE.IS_THIS_MODEL_A_BIKE(ENTITY.GET_ENTITY_MODEL(current_vehicle)) and VEHICLE.GET_VEHICLE_CLASS(current_vehicle) ~= 13)
+    is_bike                        = (VEHICLE.IS_THIS_MODEL_A_BIKE(ENTITY.GET_ENTITY_MODEL(current_vehicle)) and VEHICLE.GET_VEHICLE_CLASS(current_vehicle) ~= 13 and ENTITY.GET_ENTITY_MODEL(current_vehicle) ~= 0x7B54A9D3)
     is_boat                        = VEHICLE.IS_THIS_MODEL_A_BOAT(ENTITY.GET_ENTITY_MODEL(current_vehicle)) or
         VEHICLE.IS_THIS_MODEL_A_JETSKI(ENTITY.GET_ENTITY_MODEL(current_vehicle))
     if is_car or is_quad then
@@ -4138,7 +4403,7 @@ script.register_looped("LCTRL", function(lct)
     end
     if validModel or is_bike or is_quad then
       if VEHICLE.IS_VEHICLE_STOPPED(current_vehicle) and VEHICLE.GET_IS_VEHICLE_ENGINE_RUNNING(current_vehicle) and VEHICLE.GET_VEHICLE_ENGINE_HEALTH(current_vehicle) > 300 then
-        if PAD.IS_CONTROL_PRESSED(0, 71) and PAD.IS_CONTROL_PRESSED(0, 72) then
+        if PAD.IS_CONTROL_PRESSED(0, 71) and PAD.IS_CONTROL_PRESSED(0, 72) and not PAD.IS_CONTROL_PRESSED(0, tdBtn) then
           started_lct = true
           ENTITY.FREEZE_ENTITY_POSITION(current_vehicle, true)
           timerA = timerA + 1
@@ -4288,7 +4553,7 @@ script.register_looped("2-step", function(twostep)
     end
     if validModel or is_bike or is_quad then
       if VEHICLE.IS_VEHICLE_STOPPED(current_vehicle) and VEHICLE.GET_IS_VEHICLE_ENGINE_RUNNING(current_vehicle) and VEHICLE.GET_VEHICLE_ENGINE_HEALTH(current_vehicle) >= 300 then
-        if PAD.IS_CONTROL_PRESSED(0, 71) and PAD.IS_CONTROL_PRESSED(0, 72) then
+        if PAD.IS_CONTROL_PRESSED(0, 71) and PAD.IS_CONTROL_PRESSED(0, 72) and not PAD.IS_CONTROL_PRESSED(0, tdBtn) then
           local asset   = "core"
           local counter = 0
           while not STREAMING.HAS_NAMED_PTFX_ASSET_LOADED(asset) do
@@ -4341,7 +4606,7 @@ script.register_looped("LCTRL SFX", function(tstp)
     if launchCtrl then
       if lctPtfx_t[1] ~= nil then
         local popSound
-        if VEHICLE.IS_VEHICLE_STOPPED(current_vehicle) and PAD.IS_CONTROL_PRESSED(0, 71) and PAD.IS_CONTROL_PRESSED(0, 72) then
+        if VEHICLE.IS_VEHICLE_STOPPED(current_vehicle) and PAD.IS_CONTROL_PRESSED(0, 71) and PAD.IS_CONTROL_PRESSED(0, 72) and not PAD.IS_CONTROL_PRESSED(0, tdBtn) then
           for _, p in ipairs(lctPtfx_t) do
             if GRAPHICS.DOES_PARTICLE_FX_LOOPED_EXIST(p) then
               local randStime = math.random(60, 120)
@@ -4582,10 +4847,21 @@ end)
 script.register_looped("no jacking", function(ctt)
   if noJacking then
     if not PED.GET_PED_CONFIG_FLAG(self.get_ped(), 398, 1) then
+      PED.SET_PED_CAN_BE_DRAGGED_OUT(self.get_ped(), false)
       PED.SET_PED_CONFIG_FLAG(self.get_ped(), 398, true)
     end
-    if PED.GET_PED_CONFIG_FLAG(self.get_ped(), 177, 1) then
+    if not PED.GET_PED_CONFIG_FLAG(self.get_ped(), 177, 1) then
+      PED.SET_PED_CAN_BE_DRAGGED_OUT(self.get_ped(), false)
       PED.SET_PED_CONFIG_FLAG(self.get_ped(), 177, true)
+    end
+  else
+    if PED.GET_PED_CONFIG_FLAG(self.get_ped(), 398, 1) then
+      PED.SET_PED_CAN_BE_DRAGGED_OUT(self.get_ped(), true)
+      PED.SET_PED_CONFIG_FLAG(self.get_ped(), 398, false)
+    end
+    if PED.GET_PED_CONFIG_FLAG(self.get_ped(), 177, 1) then
+      PED.SET_PED_CAN_BE_DRAGGED_OUT(self.get_ped(), true)
+      PED.SET_PED_CONFIG_FLAG(self.get_ped(), 177, false)
     end
   end
   ctt:yield()
@@ -4821,8 +5097,8 @@ script.register_looped("flatbed script", function(script)
     end
   end
   local closestVehicleModel = ENTITY.GET_ENTITY_MODEL(closestVehicle)
-  local iscar = VEHICLE.IS_THIS_MODEL_A_CAR(closestVehicleModel)
-  local isbike = VEHICLE.IS_THIS_MODEL_A_BIKE(closestVehicleModel)
+  local iscar   = VEHICLE.IS_THIS_MODEL_A_CAR(closestVehicleModel)
+  local isbike  = VEHICLE.IS_THIS_MODEL_A_BIKE(closestVehicleModel)
   local towable = false
   if modelOverride then
     towable = true
@@ -4853,29 +5129,29 @@ script.register_looped("flatbed script", function(script)
       if controlled then
         local vehicleClass = VEHICLE.GET_VEHICLE_CLASS(closestVehicle)
         if vehicleClass == 1 then
-          zAxis = 0.9
-          yAxis = -2.3
+          tow_zAxis = 0.9
+          tow_yAxis = -2.3
         elseif vehicleClass == 2 then
-          zAxis = 0.993
-          yAxis = -2.17046
+          tow_zAxis = 0.993
+          tow_yAxis = -2.17046
         elseif vehicleClass == 6 then
-          zAxis = 1.00069420
-          yAxis = -2.17046
+          tow_zAxis = 1.00069420
+          tow_yAxis = -2.17046
         elseif vehicleClass == 7 then
-          zAxis = 1.009
-          yAxis = -2.17036
+          tow_zAxis = 1.009
+          tow_yAxis = -2.17036
         elseif vehicleClass == 15 then
-          zAxis = 1.3
-          yAxis = -2.21069
+          tow_zAxis = 1.3
+          tow_yAxis = -2.21069
         elseif vehicleClass == 16 then
-          zAxis = 1.5
-          yAxis = -2.21069
+          tow_zAxis = 1.5
+          tow_yAxis = -2.21069
         else
-          zAxis = 1.1
-          yAxis = -2.0
+          tow_zAxis = 1.1
+          tow_yAxis = -2.0
         end
         ENTITY.SET_ENTITY_HEADING(closestVehicleModel, flatbedHeading)
-        ENTITY.ATTACH_ENTITY_TO_ENTITY(closestVehicle, current_vehicle, flatbedBone, 0.0, yAxis, zAxis, 0.0, 0.0, 0.0,
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(closestVehicle, current_vehicle, flatbedBone, 0.0, tow_yAxis, tow_zAxis, 0.0, 0.0, 0.0,
           false, true, true, false, 1, true, 1)
         attached_vehicle = closestVehicle
         script:sleep(200)

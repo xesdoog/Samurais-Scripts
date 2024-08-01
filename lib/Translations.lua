@@ -773,7 +773,7 @@ Labels = {
         {iso = "de-DE", text = "Bitte steigen Sie in einen Pritschenwagen.\10Sie können die Schaltfläche unten verwenden, um einen zu erzeugen"},
         {iso = "fr-FR", text = "Veuillez monter dans un camion à plate-forme.\10Vous pouvez utiliser le bouton ci-dessous pour en faire naître un."},
         {iso = "it-IT", text = "Entrare in un camion con pianale.\10Potete usare il pulsante qui sotto per generarne uno."},
-        {iso = "pt-BR", text = "Entre em um caminhão-plataforma.\nVocê pode usar o botão abaixo para gerar um."},
+        {iso = "pt-BR", text = "Entre em um caminhão-plataforma.\10Você pode usar o botão abaixo para gerar um."},
     },
 
     ["spawnfltbd"] = {
@@ -1249,19 +1249,19 @@ Labels = {
     },
 
     ["Remove Attachments"] = {
-        {iso = "en-US", text = "Remove Attachments"},
-        {iso = "de-DE", text = "Anhänge Entfernen"},
-        {iso = "fr-FR", text = "Supprimer Les Objets"},
-        {iso = "it-IT", text = "Rimuovere Gli Allegati"},
-        {iso = "pt-BR", text = "Remover Anexos"},
+        {iso = "en-US", text = "Drop Props"},
+        {iso = "de-DE", text = "Objekte Fallenlassen"},
+        {iso = "fr-FR", text = "Déposer Les Objets"},
+        {iso = "it-IT", text = "Oggetti A Caduta"},
+        {iso = "pt-BR", text = "Soltar Objetos"},
     },
 
     ["RemoveAttachments_tt"] = {
-        {iso = "en-US", text = "Detaches all props."},
-        {iso = "de-DE", text = "Löst alle Stützen."},
-        {iso = "fr-FR", text = "Détache tous les accessoires."},
-        {iso = "it-IT", text = "Stacca tutti gli oggetti di scena."},
-        {iso = "pt-BR", text = "Retira todos os adereços."},
+        {iso = "en-US", text = "Drops whatever is attached to you and stops the animation.\10This button could possibly remove attachments from other scripts or objects attached to you by other players."},
+        {iso = "de-DE", text = "Lässt alles fallen, was an dir befestigt ist, und stoppt die Animation.\10Diese Schaltfläche kann eventuell Objekte entfernen, die von anderen Skripten oder anderen Spielern an Sie gebunden wurden."},
+        {iso = "fr-FR", text = "Fait tomber ce qui est attaché à vous et arrête l'animation.\10Ce bouton peut éventuellement supprimer les objets attachés à vous par d'autres scripts ou par d'autres joueurs."},
+        {iso = "it-IT", text = "Fa cadere tutto ciò che è attaccato a voi e interrompe l'animazione.\10Questo pulsante può eliminare gli oggetti attaccati all'utente da altri script o da altri giocatori."},
+        {iso = "pt-BR", text = "Solta o que estiver preso a você e interrompe a animação.\10Esse botão pode excluir objetos presos a você por outros scripts ou por outros jogadores."},
     },
 
     ["Movement Options:"] = {
@@ -1327,6 +1327,110 @@ Labels = {
         {iso = "fr-FR", text = "Ce n'est pas la même chose que la « Radio Mobile ». Tout le monde près de vous peut entendre la musique, à condition que vous ne soyez pas à la traîne et qu'il n'y ait pas de problèmes de synchronisation radio causés par le jeu ou le menu."},
         {iso = "it-IT", text = "Non è la stessa cosa della 'Radio Mobile'. Tutti coloro che si trovano nelle vicinanze possono sentire la musica, a patto che non ci sia un rallentamento e che non ci siano problemi di sincronizzazione della radio causati dal gioco o dal menu."},
         {iso = "pt-BR", text = "Isso não é o mesmo que 'Rádio Móvel'. Todos que estiverem perto de você poderão ouvir a música, desde que você não esteja com atraso e que não haja problemas de sincronização de rádio causados pelo jogo ou pelo menu."},
+    },
+
+    ["reserved_button"] = {
+        {iso = "en-US", text = "The button you have chosen is reserved! Please choose a different one."},
+        {iso = "de-DE", text = "Die von Ihnen gewählte Schaltfläche ist reserviert! Bitte wählen Sie eine andere."},
+        {iso = "fr-FR", text = "Le bouton que vous avez choisi est réservé ! Veuillez en choisir un autre."},
+        {iso = "it-IT", text = "Il pulsante scelto è riservato! Si prega di sceglierne uno diverso."},
+        {iso = "pt-BR", text = "O botão que você escolheu está reservado! Por favor, escolha um botão diferente."},
+    },
+
+    ["animShortcut_btn"] = {
+        {iso = "en-US", text = "Create Shortcut"},
+        {iso = "de-DE", text = "Verknüpfung Erstellen"},
+        {iso = "fr-FR", text = "Créer Un Raccourci"},
+        {iso = "it-IT", text = "Creare Una Scorciatoia"},
+        {iso = "pt-BR", text = "Criar Atalho"},
+    },
+
+    ["animShortcut_tt"] = {
+        {iso = "en-US", text = "Associate a button that will play the selected animation at any time."},
+        {iso = "de-DE", text = "Weisen Sie eine Schaltfläche zu, mit der die ausgewählte Animation jederzeit abgespielt werden kann."},
+        {iso = "fr-FR", text = "Associer un bouton qui jouera l'animation sélectionnée à tout moment."},
+        {iso = "it-IT", text = "Associa un pulsante che riproduce l'animazione selezionata in qualsiasi momento."},
+        {iso = "pt-BR", text = "Associe um botão que reproduzirá a animação selecionada a qualquer momento."},
+    },
+
+    ["removeShortcut_btn"] = {
+        {iso = "en-US", text = "Remove Shortcut"},
+        {iso = "de-DE", text = "Verknüpfung Entfernen"},
+        {iso = "fr-FR", text = "Supprimer Le Raccourci"},
+        {iso = "it-IT", text = "Rimuovere La Scorciatoia"},
+        {iso = "pt-BR", text = "Remover Atalho"},
+    },
+
+    ["removeShortcut_btn2"] = {
+        {iso = "en-US", text = "Remove Animation Shortcut"},
+        {iso = "de-DE", text = "Animationskürzel Entfernen"},
+        {iso = "fr-FR", text = "Supprimer Le Raccourci D'animation"},
+        {iso = "it-IT", text = "Rimuovere La Scorciatoia Per L'animazione"},
+        {iso = "pt-BR", text = "Remover Atalho De Animação"},
+    },
+
+    ["removeShortcut_tt"] = {
+        {iso = "en-US", text = "Reset the shortcut button associated with this animation."},
+        {iso = "de-DE", text = "Zurücksetzen der mit dieser Animation verknüpften Verknüpfungstaste."},
+        {iso = "fr-FR", text = "Réinitialiser le bouton de raccourci associé à cette animation."},
+        {iso = "it-IT", text = "Ripristina il pulsante di scelta rapida associato a questa animazione."},
+        {iso = "pt-BR", text = "Redefinir o botão de atalho associado a essa animação."},
+    },
+
+    ["no_shortcut_tt"] = {
+        {iso = "en-US", text = "There is no button associated with an animation."},
+        {iso = "de-DE", text = "Es gibt keine Schaltfläche, die mit einer Animation verbunden ist."},
+        {iso = "fr-FR", text = "Il n'y a pas de bouton associé à une animation."},
+        {iso = "it-IT", text = "Non esiste un pulsante associato a un'animazione."},
+        {iso = "pt-BR", text = "Não há nenhum botão associado a uma animação."},
+    },
+
+    ["input_waiting"] = {
+        {iso = "en-US", text = "Press any key "},
+        {iso = "de-DE", text = "Beliebige Taste drücken "},
+        {iso = "fr-FR", text = "Appuyez sur une touche"},
+        {iso = "it-IT", text = "Premere un tasto qualsiasi "},
+        {iso = "pt-BR", text = "Pressione qualquer tecla "},
+    },
+
+    ["generic_confirm_btn"] = {
+        {iso = "en-US", text = "Confirm"},
+        {iso = "de-DE", text = "Bestätigen"},
+        {iso = "fr-FR", text = "Confirmer"},
+        {iso = "it-IT", text = "Confermare"},
+        {iso = "pt-BR", text = "Confirmar"},
+    },
+
+    ["generic_clear_btn"] = {
+        {iso = "en-US", text = "Clear"},
+        {iso = "de-DE", text = "Löschen"},
+        {iso = "fr-FR", text = "Effacer"},
+        {iso = "it-IT", text = "Eliminare"},
+        {iso = "pt-BR", text = "Excluir"},
+    },
+
+    ["generic_cancel_btn"] = {
+        {iso = "en-US", text = "Cancel"},
+        {iso = "de-DE", text = "Abbrechen"},
+        {iso = "fr-FR", text = "Annuler"},
+        {iso = "it-IT", text = "Annullare"},
+        {iso = "pt-BR", text = "Cancelar"},
+    },
+
+    ["shortcut_success_1/2"] = {
+        {iso = "en-US", text = "Animation shortcut has been successfully saved. You can now press "},
+        {iso = "de-DE", text = "Die Verknüpfung wurde erfolgreich gespeichert. Sie können nun "},
+        {iso = "fr-FR", text = "Le raccourci a bien été enregistré. Vous pouvez désormais utiliser "},
+        {iso = "it-IT", text = "Il collegamento è stato salvato. Ora è possibile utilizzare "},
+        {iso = "pt-BR", text = "O atalho foi salvo. Agora você pode usar o "},
+    },
+
+    ["shortcut_success_2/2"] = {
+        {iso = "en-US", text = " to play this animation at any time."},
+        {iso = "de-DE", text = " um diese Animation jederzeit abspielen zu können."},
+        {iso = "fr-FR", text = " pour jouer cette animation à tout moment."},
+        {iso = "it-IT", text = " per riprodurre questa animazione in qualsiasi momento."},
+        {iso = "pt-BR", text = " para reproduzir essa animação a qualquer momento."},
     },
 }
 

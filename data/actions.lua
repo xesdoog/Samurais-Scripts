@@ -396,8 +396,6 @@ end
 function cleanup()
   script.run_in_fiber(function(script)
     TASK.CLEAR_PED_TASKS(self.get_ped())
-    STREAMING.REMOVE_ANIM_DICT(info.dict)
-    STREAMING.REMOVE_NAMED_PTFX_ASSET(info.ptfxdict)
     if plyrProps[1] ~= nil then
       for _, v in ipairs(plyrProps) do
         if ENTITY.DOES_ENTITY_EXIST(v) then

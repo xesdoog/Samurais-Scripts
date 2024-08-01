@@ -208,21 +208,20 @@ lua_Fn = {
 
 -------------------------------------------------- ImGui Stuff ---------------------------------------------------------------
 UI = {
-
   getKeyPressed = function()
     local btn, kbm, gpad
     local controls_T = {
       { ctrl = 7,   kbm = "[L]",                          gpad = "[R3]" },
       { ctrl = 10,  kbm = "[PAGE UP]",                    gpad = "[LT]" },
       { ctrl = 11,  kbm = "[PAGE DOWN]",                  gpad = "[RT]" },
-      { ctrl = 14,  kbm = "[ARROW DOWN]",                 gpad = "[DPAD RIGHT]" },
+      { ctrl = 14,  kbm = "[SCROLL WHEEL DOWN]",          gpad = "[DPAD RIGHT]" },
       { ctrl = 15,  kbm = "[SCROLLWHEEL UP]",             gpad = "[DPAD LEFT]" },
       { ctrl = 19,  kbm = "[LEFT ALT]",                   gpad = "[DPAD DOWN]" },
       { ctrl = 20,  kbm = "[Z]",                          gpad = "[DPAD DOWN]" },
       { ctrl = 21,  kbm = "[LEFT SHIFT]",                 gpad = "[A]" },
       { ctrl = 22,  kbm = "[SPACEBAR]",                   gpad = "[X]" },
       { ctrl = 23,  kbm = "[F]",                          gpad = "[Y]" },
-      { ctrl = 27,  kbm = "[ARROW UP]",                   gpad = "[DPAD UP]" },
+      { ctrl = 27,  kbm = "[ARROW UP / MID MOUSE DOWN]",  gpad = "[DPAD UP]" },
       { ctrl = 29,  kbm = "[B]",                          gpad = "[R3]" },
       { ctrl = 30,  kbm = "[D]",                          gpad = "[LEFT STICK]" },
       { ctrl = 34,  kbm = "[A]",                          gpad = "[LEFT STICK]" },
@@ -245,10 +244,10 @@ UI = {
       { ctrl = 75,  kbm = "[F]",                          gpad = "[Y]" },
       { ctrl = 76,  kbm = "[SPACE]",                      gpad = "[RB]" },
       { ctrl = 79,  kbm = "[C]",                          gpad = "[R3]" },
-      { ctrl = 81,  kbm = "[.]",                          gpad = "(NONE)" },
-      { ctrl = 82,  kbm = "[,]",                          gpad = "(NONE)" },
-      { ctrl = 83,  kbm = "[=]",                          gpad = "(NONE)" },
-      { ctrl = 84,  kbm = "[-]",                          gpad = "(NONE)" },
+      { ctrl = 81,  kbm = "[ . ]",                        gpad = "(NONE)" },
+      { ctrl = 82,  kbm = "[ , ]",                        gpad = "(NONE)" },
+      { ctrl = 83,  kbm = "[ = ]",                        gpad = "(NONE)" },
+      { ctrl = 84,  kbm = "[ - ]",                        gpad = "(NONE)" },
       { ctrl = 84,  kbm = "[Q]",                          gpad = "[DPAD LEFT]" },
       { ctrl = 96,  kbm = "[NUMPAD+ / SCROLLWHEEL UP]",   gpad = "(NONE)" },
       { ctrl = 97,  kbm = "[NUMPAD- / SCROLLWHEEL DOWN]", gpad = "(NONE)" },
@@ -262,9 +261,13 @@ UI = {
       { ctrl = 168, kbm = "[F7]",                         gpad = "(NONE)" },
       { ctrl = 169, kbm = "[F8]",                         gpad = "(NONE)" },
       { ctrl = 170, kbm = "[F3]",                         gpad = "[B]" },
+      { ctrl = 172, kbm = "[ARROW UP]",                   gpad = "[DPAD UP]" },
+      { ctrl = 173, kbm = "[ARROW DOWN]",                 gpad = "[DPAD DOWN]" },
+      { ctrl = 174, kbm = "[ARROW LEFT]",                 gpad = "[DPAD LEFT]" },
+      { ctrl = 175, kbm = "[ARROW RIGHT]",                gpad = "[DPAD RIGHT]" },
       { ctrl = 178, kbm = "[DELETE]",                     gpad = "[Y]" },
       { ctrl = 194, kbm = "[BACKSPACE]",                  gpad = "[B]" },
-      { ctrl = 243, kbm = "[~]",                          gpad = "(NONE)" },
+      { ctrl = 243, kbm = "[ ~ ]",                        gpad = "(NONE)" },
       { ctrl = 244, kbm = "[M]",                          gpad = "[BACK]" },
       { ctrl = 249, kbm = "[N]",                          gpad = "(NONE)" },
       { ctrl = 288, kbm = "[F1]",                         gpad = "[A]" },
@@ -278,12 +281,15 @@ UI = {
       { ctrl = 344, kbm = "[F11]",                        gpad = "[DPAD RIGHT]" },
     }
     for _, v in ipairs(controls_T) do
-      if PAD.IS_CONTROL_JUST_PRESSED(0, v.ctrl) then
+      if PAD.IS_CONTROL_JUST_PRESSED(0, v.ctrl) or PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, v.ctrl) then
         btn, kbm, gpad  = v.ctrl, v.kbm, v.gpad
-        break
       end
     end
-    return btn, kbm, gpad
+    if PAD.IS_USING_KEYBOARD_AND_MOUSE() then
+      return btn, kbm
+    else
+      return btn, gpad
+    end
   end,
 
   ---@param col string | table
@@ -319,17 +325,17 @@ UI = {
     elseif type(col) == "table" then
       -- check color input values and convert them to floats between 0 and 1 which is what ImGui accepts for color values.
       if col[1] > 1 then
-        col[1] = col[1] / 255
+        col[1] = lua_Fn.round((col[1] / 255), 2)
       end
       if col[2] > 1 then
-        col[2] = col[2] / 255
+        col[2] = lua_Fn.round((col[2] / 255), 2)
       end
       if col[3] > 1 then
-        col[3] = col[3] / 255
+        col[3] = lua_Fn.round((col[3] / 255), 2)
       end
       r, g, b = col[1], col[2], col[3]
     end
-    return lua_Fn.round(r, 3), lua_Fn.round(g, 3), lua_Fn.round(b, 3), errorMsg
+    return r, g, b, errorMsg
   end,
 
   ---Creates a text wrapped around the provided size. (You can use coloredText() and set the color to white but this is simpler.)
@@ -344,7 +350,7 @@ UI = {
   ---Creates a colored ImGui text.
   ---@param text string
   ---@param color string | table
-  ---@param alpha integer
+  ---@param alpha? integer
   ---@param wrap_size number
   --[[ -- Usage:
     - text: The text to display.
@@ -385,7 +391,7 @@ UI = {
   ---@param color string | table
   ---@param hovercolor string | table
   ---@param activecolor string | table
-  ---@param alpha integer
+  ---@param alpha? integer
   ---@return boolean
   --[[ -- Usage:
     - text: The button label.
