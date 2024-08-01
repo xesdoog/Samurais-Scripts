@@ -32,6 +32,10 @@ A base for a Lua script centered around roleplaying and having fun in a game ful
 ## Contributing To The Main Script
 - If you have any feature you want to add to the script, feel free to open a PR. If the feature code is not yours, make sure you have permission from the author before contributing it.
 
+## Features
+
+- Full list of features is documented [here](FEATURES.md).
+
 ## TODO:
 
 - [x] Merge YimActions. ✔️ Done.
