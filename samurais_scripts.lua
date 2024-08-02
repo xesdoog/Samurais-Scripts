@@ -3,17 +3,18 @@
 
 require('lib/samurais_utils')
 require('lib/Translations')
-require("data/objects")
-require("data/actions")
+require('data/objects')
+require('data/actions')
+require('data/refs')
 
-SCRIPT_VERSION  = '0.5-a' -- 0.5 alpha
+SCRIPT_VERSION  = '0.6-a' -- v0.6-alpha
 TARGET_BUILD    = '3274'  -- Only YimResupplier needs a version check.
 TARGET_VERSION  = '1.69'
 CURRENT_BUILD   = Game.GetBuildNumber()
 CURRENT_VERSION = Game.GetOnlineVersion()
 
 
-Samurais_scripts = gui.get_tab("Samurai's Scripts")
+Samurais_scripts = gui.add_tab("Samurai's Scripts")
 local loading_label = ""
 local start_loading_anim = false
 default_config   = {
@@ -47,6 +48,7 @@ default_config   = {
   driftMode         = false,
   DriftTires        = false,
   DriftSmoke        = false,
+  driftMinigame     = false,
   speedBoost        = false,
   nosvfx            = false,
   hornLight         = false,
@@ -104,6 +106,7 @@ driftMode           = lua_cfg.read("driftMode")
 DriftIntensity      = lua_cfg.read("DriftIntensity")
 DriftTires          = lua_cfg.read("DriftTires")
 DriftSmoke          = lua_cfg.read("DriftSmoke")
+driftMinigame       = lua_cfg.read("driftMinigame")
 speedBoost          = lua_cfg.read("speedBoost")
 nosvfx              = lua_cfg.read("nosvfx")
 hornLight           = lua_cfg.read("hornLight")
@@ -156,6 +159,10 @@ show_npc_veh_ctrls  = false
 stop_searching      = false
 hijack_started      = false
 sound_btn_off       = false
+is_drifting         = false
+drift_crashed       = false
+missileDefence      = false
+was_missileProof    = false
 flag                = 0
 grp_anim_index      = 0
 attached_ped        = 0
@@ -179,12 +186,17 @@ sound_index1        = 0
 sound_index2        = 0
 sound_switch        = 0
 radio_index         = 0
+drift_points        = 0
+straight_counter    = 0
+drift_time          = 0
+drift_multiplier    = 1
 pedthrowF           = 10
 tdBtn               = 21
 previous_anim       = 316
 next_anim           = 317
 play_anim           = 256
 stop_anim           = 47
+drift_streak_text   = ""
 actions_search      = ""
 currentMvmt         = ""
 currentStrf         = ""
@@ -208,152 +220,6 @@ npcPTFX             = {}
 curr_playing_anim   = {}
 laserPtfx_T         = {}
 chosen_anim         = {}
-driftSmoke_T        = {r = 255, g = 255, b = 255}
-reserved_keys_T     = {10, 11, 21, 23, 24, 29, 30, 34, 36, 47, 57, 69, 71, 72, 75, 112, 121, 140, 142, 178, 207, 208, 257, 263, play_anim, stop_anim, previous_anim, next_anim}
-weapbones_T         = {"WAPLasr", "WAPLasr_2", "WAPFlshLasr", "WAPFlshLasr_2", "WAPFlsh", "WAPFlsh_2", "gun_barrels", "gun_muzzle"}
-driftSmokeColors    = {"White", "Black", "Red", "Green", "Blue", "Yellow", "Orange", "Pink", "Purple"}
-objectives_T        = { 0, 1, 2, 143, 144, 145, 146, 280, 502, 503, 504, 505, 506, 507, 508, 509, 510, 511, 535, 536, 537, 538, 539, 540, 541, 542 }
-vehOffsets          = { fc = 0x001C, ft = 0x0014, rc = 0x0020, rt = 0x0018, cg = 0x0882, ng = 0x0880, tg = 0x0886, vm = 0x000C, dfm = 0x0014, accm = 0x004C, cofm = 0x0020, bf = 0x006C, }
-radio_stations      = {
-  {station = "RADIO_11_TALK_02",               name = "Blaine County Radio"},
-  {station = "RADIO_21_DLC_XM17",              name = "Blonded Los Santos 97.8 FM"},
-  {station = "RADIO_04_PUNK",                  name = "Channel X"},
-  {station = "RADIO_08_MEXICAN",               name = "East Los FM"},
-  {station = "RADIO_14_DANCE_02",              name = "FlyLo FM"},
-  {station = "RADIO_23_DLC_XM19_RADIO",        name = "iFruit Radio"},
-  {station = "RADIO_34_DLC_HEI4_KULT",         name = "Kult FM"},
-  {station = "RADIO_01_CLASS_ROCK",            name = "Los Santos Rock Radio"},
-  {station = "RADIO_22_DLC_BATTLE_MIX1_RADIO", name = "Los Santos Underground Radio"},
-  {station = "RADIO_36_AUDIOPLAYER",           name = "Media Player"},
-  {station = "RADIO_02_POP",                   name = "Non-Stop-Pop FM"},
-  {station = "RADIO_03_HIPHOP_NEW",            name = "Radio Los Santos"},
-  {station = "RADIO_16_SILVERLAKE",            name = "Radio Mirror Park"},
-  {station = "RADIO_06_COUNTRY",               name = "Rebel Radio"},
-  {station = "RADIO_19_USER",                  name = "Self Radio"},
-  {station = "RADIO_07_DANCE_01",              name = "Soulwax FM"},
-  {station = "RADIO_17_FUNK",                  name = "Space 103.2"},
-  {station = "RADIO_27_DLC_PRHEI4",            name = "Still Slipping Los Santos"},
-  {station = "RADIO_12_REGGAE",                name = "The Blue Ark"},
-  {station = "RADIO_20_THELAB",                name = "The Lab"},
-  {station = "RADIO_15_MOTOWN",                name = "The Lowdown 9.11"},
-  {station = "RADIO_35_DLC_HEI4_MLR",          name = "The Music Locker"},
-  {station = "RADIO_18_90S_ROCK",              name = "Vinewood Boulevard Radio"},
-  {station = "RADIO_09_HIPHOP_OLD",            name = "West Coast Classics"},
-  {station = "RADIO_05_TALK_01",               name = "West Coast Talk Radio"},
-  {station = "RADIO_13_JAZZ",                  name = "Worldwide FM"},
-  }
-male_sounds_T  = {
-  { name = "Angry Chinese",     soundName = "GENERIC_INSULT_HIGH",      soundRef = "MP_M_SHOPKEEP_01_CHINESE_MINI_01" },
-  { name = "Begging Chinese",   soundName = "GUN_BEG",                  soundRef = "MP_M_SHOPKEEP_01_CHINESE_MINI_01" },
-  { name = "Call The Cops!",    soundName = "PHONE_CALL_COPS",          soundRef = "MP_M_SHOPKEEP_01_CHINESE_MINI_01" },
-  { name = "CHARGE!!",          soundName = "GENERIC_WAR_CRY",          soundRef = "S_M_Y_BLACKOPS_01_BLACK_MINI_01" },
-  { name = "Creep",             soundName = "SHOUT_PERV_AT_WOMAN_PERV", soundRef = "A_M_Y_MEXTHUG_01_LATINO_FULL_01" },
-  { name = "Clown Dying",       soundName = "CLOWN_DEATH",              soundRef = "CLOWNS" },
-  { name = "Clown Laughing",    soundName = "CLOWN_LAUGH",              soundRef = "CLOWNS" },
-  { name = "Franklin Laughing", soundName = "LAUGH",                    soundRef = "WAVELOAD_PAIN_FRANKLIN" },
-  { name = "How are you?",      soundName = "GENERIC_HOWS_IT_GOING",    soundRef = "S_M_M_PILOT_01_WHITE_FULL_01" },
-  { name = "Insult",            soundName = "GENERIC_INSULT_HIGH",      soundRef = "S_M_Y_SHERIFF_01_WHITE_FULL_01" },
-  { name = "Insult 02",         soundName = "GENERIC_FUCK_YOU",         soundRef = "FRANKLIN_DRUNK" },
-  { name = "Pain",              soundName = "ELECTROCUTION",            soundRef = "MISTERK" },
-  { name = "Pain 02",           soundName = "TOOTHPULL_PAIN",           soundRef = "MISTERK" },
-  { name = "Threaten",          soundName = "CHALLENGE_THREATEN",       soundRef = "S_M_Y_BLACKOPS_01_BLACK_MINI_01" },
-  { name = "You Look Stupid!",  soundName = "FRIEND_LOOKS_STUPID",      soundRef = "FRANKLIN_DRUNK" },
-}
-female_sounds_T = {
-  { name = "Blowjob",        soundName = "SEX_ORAL",                   soundRef = "S_F_Y_HOOKER_03_BLACK_FULL_01" },
-  { name = "Call The Cops!", soundName = "PHONE_CALL_COPS",            soundRef = "A_F_M_SALTON_01_WHITE_FULL_01" },
-  { name = "Hooker Offer",   soundName = "HOOKER_OFFER_SERVICE",       soundRef = "S_F_Y_HOOKER_03_BLACK_FULL_01" },
-  { name = "How are you?",   soundName = "GENERIC_HOWS_IT_GOING",      soundRef = "S_F_Y_HOOKER_03_BLACK_FULL_01" },
-  { name = "Insult",         soundName = "GENERIC_INSULT_HIGH",        soundRef = "S_F_Y_HOOKER_03_BLACK_FULL_01" },
-  { name = "Let's Go!",      soundName = "CHALLENGE_ACCEPTED_GENERIC", soundRef = "A_F_M_SALTON_01_WHITE_FULL_01" },
-  { name = "Moan",           soundName = "SEX_GENERIC_FEM",            soundRef = "S_F_Y_HOOKER_03_BLACK_FULL_01" },
-  { name = "Roast",          soundName = "GAME_HECKLE",                soundRef = "A_F_M_SALTON_01_WHITE_FULL_01" },
-  { name = "Threaten",       soundName = "CHALLENGE_THREATEN",         soundRef = "S_F_Y_HOOKER_03_BLACK_FULL_01" },
-}
-gta_vehicles_T      = {
-  "Airbus", "Airtug", "akula", "akuma", "aleutian", "alkonost", "alpha", "alphaz1",
-  "AMBULANCE", "annihilator", "annihilator2", "apc", "ardent", "armytanker", "armytrailer", "armytrailer2", "asbo",
-  "asea", "asea2", "asterope", "asterope2", "astron", "autarch", "avarus", "avenger", "avenger2", "avenger3", "avenger4",
-  "avisa", "bagger", "baletrailer", "Baller", "baller2", "baller3", "baller4", "baller5", "baller6", "baller7", "baller8",
-  "banshee", "banshee2", "BARRACKS", "BARRACKS2", "BARRACKS3", "barrage", "bati", "bati2", "Benson", "benson2", "besra",
-  "bestiagts", "bf400", "BfInjection", "Biff", "bifta", "bison", "Bison2", "Bison3", "BjXL", "blade", "blazer", "blazer2",
-  "blazer3", "blazer4", "blazer5", "BLIMP", "BLIMP2", "blimp3", "blista", "blista2", "blista3", "BMX", "boattrailer",
-  "boattrailer2", "boattrailer3", "bobcatXL", "Bodhi2", "bombushka", "boor", "boxville", "boxville2", "boxville3",
-  "boxville4", "boxville5", "boxville6", "brawler", "brickade", "brickade2", "brigham", "brioso", "brioso2", "brioso3",
-  "broadway", "bruiser", "bruiser2", "bruiser3", "brutus", "brutus2", "brutus3", "btype", "btype2", "btype3", "buccaneer",
-  "buccaneer2", "buffalo", "buffalo2", "buffalo3", "buffalo4", "buffalo5", "bulldozer", "bullet", "Burrito", "burrito2",
-  "burrito3", "Burrito4", "burrito5", "BUS", "buzzard", "Buzzard2", "cablecar", "caddy", "Caddy2", "caddy3", "calico",
-  "CAMPER", "caracara", "caracara2", "carbonizzare", "carbonrs", "Cargobob", "cargobob2", "Cargobob3", "Cargobob4",
-  "cargoplane", "cargoplane2", "casco", "cavalcade", "cavalcade2", "cavalcade3", "cerberus", "cerberus2", "cerberus3",
-  "champion", "cheburek", "cheetah", "cheetah2", "chernobog", "chimera", "chino", "chino2", "cinquemila", "cliffhanger",
-  "clique", "clique2", "club", "coach", "cog55", "cog552", "cogcabrio", "cognoscenti", "cognoscenti2", "comet2", "comet3",
-  "comet4", "comet5", "comet6", "comet7", "conada", "conada2", "contender", "coquette", "coquette2", "coquette3",
-  "coquette4", "corsita", "coureur", "cruiser", "CRUSADER", "cuban800", "cutter", "cyclone", "cypher", "daemon",
-  "daemon2", "deathbike", "deathbike2", "deathbike3", "defiler", "deity", "deluxo", "deveste", "deviant", "diablous",
-  "diablous2", "dilettante", "dilettante2", "Dinghy", "dinghy2", "dinghy3", "dinghy4", "dinghy5", "dloader",
-  "docktrailer", "docktug", "dodo", "Dominator", "dominator2", "dominator3", "dominator4", "dominator5", "dominator6",
-  "dominator7", "dominator8", "dominator9", "dorado", "double", "drafter", "draugur", "drifteuros", "driftfr36",
-  "driftfuto", "driftjester", "driftremus", "drifttampa", "driftyosemite", "driftzr350", "dubsta", "dubsta2", "dubsta3",
-  "dukes", "dukes2", "dukes3", "dump", "dune", "dune2", "dune3", "dune4", "dune5", "duster", "Dynasty", "elegy", "elegy2",
-  "ellie", "emerus", "emperor", "Emperor2", "emperor3", "enduro", "entity2", "entity3", "entityxf", "esskey", "eudora",
-  "Euros", "everon", "everon2", "exemplar", "f620", "faction", "faction2", "faction3", "fagaloa", "faggio", "faggio2",
-  "faggio3", "FBI", "FBI2", "fcr", "fcr2", "felon", "felon2", "feltzer2", "feltzer3", "firetruk", "fixter", "flashgt",
-  "FLATBED", "fmj", "FORKLIFT", "formula", "formula2", "fq2", "fr36", "freecrawler", "freight", "freight2", "freightcar",
-  "freightcar2", "freightcont1", "freightcont2", "freightgrain", "Frogger", "frogger2", "fugitive", "furia", "furoregt",
-  "fusilade", "futo", "futo2", "gargoyle", "Gauntlet", "gauntlet2", "gauntlet3", "gauntlet4", "gauntlet5", "gauntlet6",
-  "gb200", "gburrito", "gburrito2", "glendale", "glendale2", "gp1", "graintrailer", "GRANGER", "granger2", "greenwood",
-  "gresley", "growler", "gt500", "guardian", "habanero", "hakuchou", "hakuchou2", "halftrack", "handler", "Hauler",
-  "Hauler2", "havok", "hellion", "hermes", "hexer", "hotknife", "hotring", "howard", "hunter", "huntley", "hustler",
-  "hydra", "imorgon", "impaler", "impaler2", "impaler3", "impaler4", "impaler5", "impaler6", "imperator", "imperator2",
-  "imperator3", "inductor", "inductor2", "infernus", "infernus2", "ingot", "innovation", "insurgent", "insurgent2",
-  "insurgent3", "intruder", "issi2", "issi3", "issi4", "issi5", "issi6", "issi7", "issi8", "italigtb", "italigtb2",
-  "italigto", "italirsx", "iwagen", "jackal", "jb700", "jb7002", "jester", "jester2", "jester3", "jester4", "jet",
-  "jetmax", "journey", "journey2", "jubilee", "jugular", "kalahari", "kamacho", "kanjo", "kanjosj", "khamelion",
-  "khanjali", "komoda", "kosatka", "krieger", "kuruma", "kuruma2", "l35", "landstalker", "landstalker2", "Lazer", "le7b",
-  "lectro", "lguard", "limo2", "lm87", "locust", "longfin", "lurcher", "luxor", "luxor2", "lynx", "mamba", "mammatus",
-  "manana", "manana2", "manchez", "manchez2", "manchez3", "marquis", "marshall", "massacro", "massacro2", "maverick",
-  "menacer", "MESA", "mesa2", "MESA3", "metrotrain", "michelli", "microlight", "Miljet", "minitank", "minivan",
-  "minivan2", "Mixer", "Mixer2", "mogul", "molotok", "monroe", "monster", "monster3", "monster4", "monster5",
-  "monstrociti", "moonbeam", "moonbeam2", "Mower", "Mule", "Mule2", "Mule3", "mule4", "mule5", "nebula", "nemesis", "neo",
-  "neon", "nero", "nero2", "nightblade", "nightshade", "nightshark", "nimbus", "ninef", "ninef2", "nokota", "Novak",
-  "omnis", "omnisegt", "openwheel1", "openwheel2", "oppressor", "oppressor2", "oracle", "oracle2", "osiris", "outlaw",
-  "Packer", "panthere", "panto", "paradise", "paragon", "paragon2", "pariah", "patriot", "patriot2", "patriot3",
-  "patrolboat", "pbus", "pbus2", "pcj", "penetrator", "penumbra", "penumbra2", "peyote", "peyote2", "peyote3",
-  "pfister811", "Phantom", "phantom2", "phantom3", "Phantom4", "Phoenix", "picador", "pigalle", "polgauntlet", "police",
-  "police2", "police3", "police4", "police5", "policeb", "policeold1", "policeold2", "policet", "polmav", "pony", "pony2",
-  "postlude", "Pounder", "pounder2", "powersurge", "prairie", "pRanger", "Predator", "premier", "previon", "primo",
-  "primo2", "proptrailer", "prototipo", "pyro", "r300", "radi", "raiden", "raiju", "raketrailer", "rallytruck",
-  "RancherXL", "rancherxl2", "RapidGT", "RapidGT2", "rapidgt3", "raptor", "ratbike", "ratel", "ratloader", "ratloader2",
-  "rcbandito", "reaper", "Rebel", "rebel2", "rebla", "reever", "regina", "remus", "Rentalbus", "retinue", "retinue2",
-  "revolter", "rhapsody", "rhinehart", "RHINO", "riata", "RIOT", "riot2", "Ripley", "rocoto", "rogue", "romero",
-  "rrocket", "rt3000", "Rubble", "ruffian", "ruiner", "ruiner2", "ruiner3", "ruiner4", "rumpo", "rumpo2", "rumpo3",
-  "ruston", "s80", "sabregt", "sabregt2", "Sadler", "sadler2", "Sanchez", "sanchez2", "sanctus", "sandking", "sandking2",
-  "savage", "savestra", "sc1", "scarab", "scarab2", "scarab3", "schafter2", "schafter3", "schafter4", "schafter5",
-  "schafter6", "schlagen", "schwarzer", "scorcher", "scramjet", "scrap", "seabreeze", "seashark", "seashark2",
-  "seashark3", "seasparrow", "seasparrow2", "seasparrow3", "Seminole", "seminole2", "sentinel", "sentinel2", "sentinel3",
-  "sentinel4", "serrano", "SEVEN70", "Shamal", "sheava", "SHERIFF", "sheriff2", "shinobi", "shotaro", "skylift",
-  "slamtruck", "slamvan", "slamvan2", "slamvan3", "slamvan4", "slamvan5", "slamvan6", "sm722", "sovereign", "SPECTER",
-  "SPECTER2", "speeder", "speeder2", "speedo", "speedo2", "speedo4", "speedo5", "squaddie", "squalo", "stafford",
-  "stalion", "stalion2", "stanier", "starling", "stinger", "stingergt", "stingertt", "stockade", "stockade3", "stratum",
-  "streamer216", "streiter", "stretch", "strikeforce", "stromberg", "Stryder", "Stunt", "submersible", "submersible2",
-  "Sugoi", "sultan", "sultan2", "sultan3", "sultanrs", "Suntrap", "superd", "supervolito", "supervolito2", "Surano",
-  "SURFER", "Surfer2", "surfer3", "surge", "swift", "swift2", "swinger", "t20", "Taco", "tahoma", "tailgater",
-  "tailgater2", "taipan", "tampa", "tampa2", "tampa3", "tanker", "tanker2", "tankercar", "taxi", "technical",
-  "technical2", "technical3", "tempesta", "tenf", "tenf2", "terbyte", "terminus", "tezeract", "thrax", "thrust",
-  "thruster", "tigon", "TipTruck", "TipTruck2", "titan", "toreador", "torero", "torero2", "tornado", "tornado2",
-  "tornado3", "tornado4", "tornado5", "tornado6", "toro", "toro2", "toros", "TOURBUS", "TOWTRUCK", "Towtruck2",
-  "towtruck3", "towtruck4", "tr2", "tr3", "tr4", "TRACTOR", "tractor2", "tractor3", "trailerlarge", "trailerlogs",
-  "trailers", "trailers2", "trailers3", "trailers4", "trailers5", "trailersmall", "trailersmall2", "Trash", "trash2",
-  "trflat", "tribike", "tribike2", "tribike3", "trophytruck", "trophytruck2", "tropic", "tropic2", "tropos", "tug",
-  "tula", "tulip", "tulip2", "turismo2", "turismo3", "turismor", "tvtrailer", "tvtrailer2", "tyrant", "tyrus",
-  "utillitruck", "utillitruck2", "Utillitruck3", "vacca", "Vader", "vagner", "vagrant", "valkyrie", "valkyrie2", "vamos",
-  "vectre", "velum", "velum2", "verlierer2", "verus", "vestra", "vetir", "veto", "veto2", "vigero", "vigero2", "vigero3",
-  "vigilante", "vindicator", "virgo", "virgo2", "virgo3", "virtue", "viseris", "visione", "vivanite", "volatol",
-  "volatus", "voltic", "voltic2", "voodoo", "voodoo2", "vortex", "vstr", "warrener", "warrener2", "washington",
-  "wastelander", "weevil", "weevil2", "windsor", "windsor2", "winky", "wolfsbane", "xa21", "xls", "xls2", "yosemite",
-  "yosemite2", "yosemite3", "youga", "youga2", "youga3", "youga4", "z190", "zeno", "zentorno", "zhaba", "zion", "zion2",
-  "zion3", "zombiea", "zombieb", "zorrusso", "zr350", "zr380", "zr3802", "zr3803", "Ztype", 
-}
 
 ---@param musicSwitch string
 ---@param station? string
@@ -461,6 +327,36 @@ function dummyCop()
       end
     else
       log.debug('Player is on foot.')
+    end
+  end)
+end
+
+function showDriftCounter(text)
+  wolrdPos = self.get_pos()
+  local _, screenX, screenY = HUD.GET_HUD_SCREEN_POSITION_FROM_WORLD_POSITION(wolrdPos.x, wolrdPos.y, wolrdPos.z, screenX, screenY)
+  HUD.BEGIN_TEXT_COMMAND_DISPLAY_TEXT("TWOSTRINGS")
+  HUD.SET_TEXT_COLOUR(255, 192, 0, 200)
+  HUD.SET_TEXT_SCALE(1, 0.7)
+  HUD.SET_TEXT_OUTLINE()
+  HUD.SET_TEXT_FONT(7)
+  HUD.SET_TEXT_CENTRE(true)
+  HUD.SET_TEXT_DROP_SHADOW()
+  HUD.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(text)
+  HUD.END_TEXT_COMMAND_DISPLAY_TEXT(screenX, (screenY - 0.6), 0)
+end
+
+function bankDriftPoints_SP(points)
+  local chars_T = {
+    {hash = 225514697,  int = 0},
+    {hash = 2602752943, int = 1},
+    {hash = 2608926626, int = 2},
+  }
+  script.run_in_fiber(function()
+    for _, v in ipairs(chars_T) do
+      if ENTITY.GET_ENTITY_MODEL(self.get_ped()) == v.hash then
+        stats.set_int("SP"..tostring(v.int).."_TOTAL_CASH", stats.get_int("SP"..tostring(v.int).."_TOTAL_CASH") + points)
+        AUDIO.PLAY_SOUND_FRONTEND(-1, "LOCAL_PLYR_CASH_COUNTER_INCREASE", "DLC_HEISTS_GENERAL_FRONTEND_SOUNDS")
+      end
     end
   end)
 end
@@ -1685,6 +1581,12 @@ vehicle_tab:add_imgui(function()
           UI.widgetSound("Nav2")
           lua_cfg.save("DriftSmoke", DriftSmoke)
         end
+        ImGui.SameLine(); ImGui.Dummy(70, 1); ImGui.SameLine(); driftMinigame, drmgUsed = ImGui.Checkbox("Drift Minigame", driftMinigame, true)
+        UI.toolTip(false, "[WIP] Accumulate points for drifting around without crashing. Your points are automatically transformed into cash once you stop drifting and don't crash for 3 seconds.\n\nNOTE: The cashout feature is for Signle Player only.")
+        if drmgUsed then
+          UI.widgetSound("Nav2")
+          lua_cfg.save("driftMinigame", driftMinigame)
+        end
         if DriftSmoke then
           ImGui.Spacing(); ImGui.Text(translateLabel("driftSmokeCol"))
           if not customSmokeCol then
@@ -1740,6 +1642,19 @@ vehicle_tab:add_imgui(function()
     if lvoUsed then
       UI.widgetSound("Nav2")
       lua_cfg.save("limitVehOptions", limitVehOptions)
+    end
+
+    ImGui.SameLine(); ImGui.Dummy(7, 1); ImGui.SameLine(); missileDefence, mdefUsed = ImGui.Checkbox("Missile Defence", missileDefence, true)
+    UI.toolTip(false,
+    "Inrercepts any missiles near your vehicle including those fired by you.\nAs a security measure, this option will not be saved for the next script load. You have to manually enable it each time.\n\nWARNING: If you activate this option while in a weaponized vehicle, DO NOT FIRE YOUR MISSILES.")
+    if mdefUsed then
+      UI.widgetSound("Nav2")
+    end
+    if missileDefence and mdefUsed then
+      gui.show_warning("Samurais Scripts", "Missile Defence activated! Please do not fire any missiles from or near your vehicle, otherwise the defence will backfire on you.")
+    end
+    if not missileDefence and mdefUsed then
+      gui.show_message("Samurais Scripts", "Missile Defence deactivated.")
     end
 
     launchCtrl, lctrlUsed = ImGui.Checkbox("Launch Control", launchCtrl, true)
@@ -1947,6 +1862,7 @@ vehicle_tab:add_imgui(function()
             gui.show_error("Samurais Scripts", "This feature is only available for cars and bikes.")
           end
         end
+        UI.toolTip(false, "The siren audio only works in Online.")
       else
         ImGui.BeginDisabled()
         ImGui.Button("Equip Fake Siren")
@@ -2453,6 +2369,12 @@ world_tab:add_imgui(function()
         end
       end
     end
+
+    kamikazeDrivers, kamikazeDriversUsed = ImGui.Checkbox("Kamikaze Drivers", kamikazeDrivers, true)
+    if riotUsed then
+      UI.widgetSound("Nav2")
+    end
+    UI.helpMarker(false, translateLabel("kamikazeDrivers_tt"))
 end)
 
 object_spawner = world_tab:add_tab("Object Spawner")
@@ -3278,6 +3200,7 @@ settings_tab:add_imgui(function()
       driftMode         = false
       DriftTires        = false
       DriftSmoke        = false
+      driftMinigame     = false
       speedBoost        = false
       nosvfx            = false
       hornLight         = false
@@ -3457,7 +3380,7 @@ end
 local function var_reset()
   isCrouched = false; is_handsUp = false; anim_music = false; is_playing_radio = false; npc_blips = {}; spawned_npcs = {}; plyrProps = {}; npcProps = {}; selfPTFX = {}; npcPTFX = {}; curr_playing_anim = {}; is_playing_anim = false; is_playing_scenario = false; tab1Sound = true; tab2Sound = true; tab3Sound = true; actions_switch = 0; actions_search =
   ""; currentMvmt = ""; currentStrf = ""; currentWmvmt = ""; aimBool = false; HashGrabber = false; drew_laser = false; Entity = 0; laserPtfx_T = {}; sound_btn_off = false; tire_smoke = false; purge_started = false; nos_started = false; twostep_started = false; open_sounds_window = false; started_lct = false; launch_active = false; started_popSound = false; started_popSound2 = false; timerA = 0; timerB = 0; lastVeh = 0; defaultXenon = 0; vehSound_index = 0; smokePtfx_t = {}; nosptfx_t = {}; purgePtfx_t = {}; lctPtfx_t = {}; popSounds_t = {}; popsPtfx_t = {}; attached_vehicle = 0; tow_xAxis = 0.0; tow_yAxis = 0.0; tow_zAxis = 0.0; pedGrabber = false; ped_grabbed = false; carpool = false; show_npc_veh_ctrls = false; stop_searching = false; hijack_started = false; grp_anim_index = 0; attached_ped = 0; thisVeh = 0; pedthrowF = 10; propName =
-  ""; invalidType = ""; preview = false; previewLoop = false; activeX = false; activeY = false; activeZ = false; rotX = false; rotY = false; rotZ = false; attached = false; attachToSelf = false; attachToVeh = false; previewStarted = false; isChanged = false; prop = 0; propHash = 0; os_switch = 0; prop_index = 0; objects_index = 0; spawned_index = 0; selectedObject = 0; selected_bone = 0; previewEntity = 0; currentObjectPreview = 0; attached_index = 0; zOffset = 0; spawned_props = {}; spawnedNames = {}; filteredSpawnNames = {}; selfAttachments = {}; selfAttachNames = {}; vehAttachments = {}; vehAttachNames = {}; filteredVehAttachNames = {}; filteredAttachNames = {};
+  ""; invalidType = ""; preview = false; is_drifting = false; drift_crashed = false; previewLoop = false; activeX = false; activeY = false; activeZ = false; rotX = false; rotY = false; rotZ = false; attached = false; attachToSelf = false; attachToVeh = false; previewStarted = false; isChanged = false; prop = 0; propHash = 0; os_switch = 0; prop_index = 0; objects_index = 0; spawned_index = 0; selectedObject = 0; selected_bone = 0; previewEntity = 0; currentObjectPreview = 0; attached_index = 0; zOffset = 0; spawned_props = {}; spawnedNames = {}; filteredSpawnNames = {}; selfAttachments = {}; selfAttachNames = {}; vehAttachments = {}; vehAttachNames = {}; filteredVehAttachNames = {}; filteredAttachNames = {}; missileDefence = false;
 end
 
 
@@ -4091,7 +4014,7 @@ script.register_looped("HashGrabber", function(hg)
       local ent  = Game.getAimedEntity()
       local hash = Game.getEntityModel(ent)
       local type = Game.getEntityTypeString(ent)
-      log.debug("\n----- Info Gun -----" .. "\nHandle: " .. tostring(ent) .. "\nHash:   " .. tostring(hash) .. "\nType:   " .. tostring(type))
+      log.debug("\n----- Info Gun -----" .. "\n¤ Handle: " .. tostring(ent) .. "\n¤ Hash:   " .. tostring(hash) .. "\n¤ Type:   " .. tostring(type))
     end
   end
   hg:yield()
@@ -4184,7 +4107,7 @@ script.register_looped("enemies-flee", function(ef)
   ef:yield()
 end)
 script.register_looped("laser_render", function(lsr)
-  if laserSight and WEAPON.IS_PED_ARMED(self.get_ped(), 4) then
+  if laserSight and WEAPON.IS_PED_ARMED(self.get_ped(), 4) and Game.Self.isOnFoot() then
     local wpn_hash = WEAPON.GET_SELECTED_PED_WEAPON(self.get_ped())
     local wpn_idx  = WEAPON.GET_CURRENT_PED_WEAPON_ENTITY_INDEX(self.get_ped())
     local hr, _, _ = NETWORK.NETWORK_GET_GLOBAL_MULTIPLAYER_CLOCK()
@@ -4735,6 +4658,167 @@ script.register_looped("pops&bangs", function(pnb)
   end
 end)
 
+-- drift minigame (WIP)
+script.register_looped("straight line counter", function()
+  if driftMinigame then
+    if driftMode or DriftTires then
+      if current_vehicle ~= 0 then
+        local vehSpeedVec = ENTITY.GET_ENTITY_SPEED_VECTOR(current_vehicle, true)
+        if not VEHICLE.IS_VEHICLE_STOPPED(current_vehicle) then
+          if vehSpeedVec.x ~= 0 and vehSpeedVec.x < 2 or vehSpeedVec.x > - 2 then
+            straight_counter = straight_counter + 1
+          else
+            straight_counter = 0
+          end
+        end
+      end
+    end
+  end
+end)
+script.register_looped("drift counter", function(dcounter)
+  if driftMinigame then
+    if driftMode or DriftTires then
+      if Game.Self.isDriving() then
+        local vehSpeedVec = ENTITY.GET_ENTITY_SPEED_VECTOR(current_vehicle, true)
+        if vehSpeedVec.x ~= 0 and VEHICLE.IS_VEHICLE_ON_ALL_WHEELS(current_vehicle) then
+          if vehSpeedVec.x > 6 or vehSpeedVec.x < - 6 then
+            is_drifting = true
+            drift_streak_text = 'Drift' .. '   x' .. drift_multiplier
+            straight_counter  = 0
+            drift_points = drift_points + (1 * drift_multiplier)
+          end
+          if vehSpeedVec.x > 10 or vehSpeedVec.x < - 10 then
+            is_drifting = true
+            drift_streak_text = 'Big Angle!' .. '   x' .. drift_multiplier
+            straight_counter  = 0
+            drift_points = drift_points + (5 * drift_multiplier)
+          end
+          if vehSpeedVec.x > 16 or vehSpeedVec.x < - 16 then
+            is_drifting = true
+            drift_streak_text = 'SICK ANGLE!!!' .. '   x' .. drift_multiplier
+            straight_counter  = 0
+            drift_points = drift_points + (10 * drift_multiplier)
+          end
+        end
+        if is_drifting then
+          if not VEHICLE.IS_VEHICLE_STOPPED(current_vehicle) then
+            if vehSpeedVec.x < 2 and vehSpeedVec.x > - 2 then
+              if straight_counter > 400 then
+                if ENTITY.HAS_ENTITY_COLLIDED_WITH_ANYTHING(current_vehicle) then
+                  drift_streak_text = 'Streak lost!'
+                  drift_points      = 0
+                  drift_multiplier  = 1
+                  is_drifting       = false
+                else
+                  drift_streak_text = 'Banked Points: '
+                  if not Game.isOnline() then
+                    if drift_points > 100 then
+                      bankDriftPoints_SP(lua_Fn.round((drift_points / 10), 0))
+                    end
+                  end
+                end
+                dcounter:sleep(3000)
+                drift_points     = 0
+                drift_multiplier = 1
+                is_drifting      = false
+              end
+            end
+          end
+          if not VEHICLE.IS_VEHICLE_STOPPED(current_vehicle) then
+            if ENTITY.HAS_ENTITY_COLLIDED_WITH_ANYTHING(current_vehicle) then
+              drift_crashed     = true
+              drift_streak_text = 'Streak Lost!'
+              drift_points      = 0
+              drift_multiplier  = 1
+              dcounter:sleep(3000)
+              is_drifting = false
+            end
+          end
+        end
+      else
+        if is_drifting then
+          drift_streak_text = 'Streak Lost!'
+          drift_points      = 0
+          drift_multiplier  = 1
+          is_drifting = false
+        end
+      end
+    end
+  end
+end)
+script.register_looped("stop counter", function(stopcounter)
+  if Game.Self.isDriving() and is_drifting then
+    if VEHICLE.IS_VEHICLE_STOPPED(current_vehicle) then
+      stopcounter:sleep(3000)
+      if not drift_crashed then
+        drift_streak_text = 'Banked Points: '
+        if not Game.isOnline() then
+          if drift_points > 100 then
+            bankDriftPoints_SP(lua_Fn.round((drift_points / 10), 0))
+          end
+        end
+        drift_points = 0
+        is_drifting = false
+        stopcounter:sleep(2000)
+      end
+    end
+  end
+end)
+script.register_looped("drift time counter", function(dtcounter)
+  if Game.Self.isDriving and is_drifting then
+    if straight_counter == 0 then
+      drift_time = drift_time + 1
+      dtcounter:sleep(1000)
+    end
+  else
+    if drift_time > 0 then -- no need to keep setting it to 0
+      drift_time = 0
+    end
+  end
+end)
+script.register_looped("drift multiplier", function(dmult)
+  if Game.Self.isDriving and is_drifting then
+    if drift_time >= 10 and drift_time < 30 then
+      drift_multiplier = 1
+    elseif drift_time >= 20 and drift_time < 60 then
+      drift_multiplier = 2
+    elseif drift_time >= 60 and drift_time < 120 then
+      drift_multiplier = 5
+    elseif drift_time >= 120 then
+      drift_multiplier = 10
+    end
+  else
+    if drift_multiplier > 1 then
+      drift_multiplier = 1
+    end
+  end
+  dmult:yield()
+end)
+script.register_looped("drift points", function()
+  if Game.Self.isDriving() and is_drifting then
+    showDriftCounter(drift_streak_text .. "\n+" .. lua_Fn.separateInt(drift_points) .. " pts")
+  end
+end)
+
+-- Missile Defence
+script.register_looped("missile defence", function(md)
+  if missileDefence and lastVeh ~= 0 then
+    for _, p in ipairs(projectile_types_T) do
+      local vehPos = ENTITY.GET_ENTITY_COORDS(lastVeh, true)
+      if MISC.IS_PROJECTILE_TYPE_IN_AREA(vehPos.x + 500, vehPos.y + 500, vehPos.z + 100, vehPos.x - 500, vehPos.y - 500, vehPos.z - 100, p, false) then
+        repeat
+          md:sleep(1)
+          vehPos = ENTITY.GET_ENTITY_COORDS(lastVeh, true)
+        until MISC.IS_PROJECTILE_TYPE_IN_AREA(vehPos.x + 20, vehPos.y + 20, vehPos.z + 100, vehPos.x - 20, vehPos.y - 20, vehPos.z - 100, p, false)
+        log.info('Detected missile heading our way! Proceeding to destroy it.')
+        WEAPON.REMOVE_ALL_PROJECTILES_OF_TYPE(p, true)
+        return
+      end
+    end
+    md:yield()
+  end
+end)
+
 script.register_looped("Purge", function(nosprg)
   if Game.Self.isDriving() then
     if nosPurge and validModel or nosPurge and is_bike then
@@ -4866,6 +4950,130 @@ script.register_looped("no jacking", function(ctt)
   end
   ctt:yield()
 end)
+
+script.register_looped("flatbed script", function(script)
+  local vehicleHandles  = entities.get_all_vehicles_as_handles()
+  local current_vehicle = PED.GET_VEHICLE_PED_IS_USING(self.get_ped())
+  local vehicle_model   = ENTITY.GET_ENTITY_MODEL(current_vehicle)
+  local flatbedHeading  = ENTITY.GET_ENTITY_HEADING(current_vehicle)
+  local flatbedBone     = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(current_vehicle, "chassis")
+  local playerPosition  = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
+  local playerForwardX  = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
+  local playerForwardY  = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
+  for _, veh in ipairs(vehicleHandles) do
+    local detectPos = vec3:new(playerPosition.x - (playerForwardX * 10), playerPosition.y - (playerForwardY * 10),
+      playerPosition.z)
+    local vehPos = ENTITY.GET_ENTITY_COORDS(veh, false)
+    local vDist = SYSTEM.VDIST(detectPos.x, detectPos.y, detectPos.z, vehPos.x, vehPos.y, vehPos.z)
+    if vDist <= 5 then
+      closestVehicle = veh
+    end
+  end
+  local closestVehicleModel = ENTITY.GET_ENTITY_MODEL(closestVehicle)
+  local iscar   = VEHICLE.IS_THIS_MODEL_A_CAR(closestVehicleModel)
+  local isbike  = VEHICLE.IS_THIS_MODEL_A_BIKE(closestVehicleModel)
+  local towable = false
+  if modelOverride then
+    towable = true
+  else
+    towable = false
+  end
+  if iscar then
+    towable = true
+  end
+  if isbike then
+    towable = true
+  end
+  if closestVehicleModel == 745926877 then --Buzzard
+    towable = true
+  end
+  if closestVehicleModel == 1353720154 then
+    towable = false
+  end
+  if vehicle_model == 1353720154 then
+    is_in_flatbed = true
+  else
+    is_in_flatbed = false
+  end
+  if is_in_flatbed and attached_vehicle == 0 then
+    if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) and towable and closestVehicleModel ~= flatbedModel then
+      script:sleep(200)
+      controlled = entities.take_control_of(closestVehicle, 350)
+      if controlled then
+        local vehicleClass = VEHICLE.GET_VEHICLE_CLASS(closestVehicle)
+        if vehicleClass == 1 then
+          tow_zAxis = 0.9
+          tow_yAxis = -2.3
+        elseif vehicleClass == 2 then
+          tow_zAxis = 0.993
+          tow_yAxis = -2.17046
+        elseif vehicleClass == 6 then
+          tow_zAxis = 1.00069420
+          tow_yAxis = -2.17046
+        elseif vehicleClass == 7 then
+          tow_zAxis = 1.009
+          tow_yAxis = -2.17036
+        elseif vehicleClass == 15 then
+          tow_zAxis = 1.3
+          tow_yAxis = -2.21069
+        elseif vehicleClass == 16 then
+          tow_zAxis = 1.5
+          tow_yAxis = -2.21069
+        else
+          tow_zAxis = 1.1
+          tow_yAxis = -2.0
+        end
+        ENTITY.SET_ENTITY_HEADING(closestVehicleModel, flatbedHeading)
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(closestVehicle, current_vehicle, flatbedBone, 0.0, tow_yAxis, tow_zAxis, 0.0, 0.0, 0.0,
+          false, true, true, false, 1, true, 1)
+        attached_vehicle = closestVehicle
+        script:sleep(200)
+      else
+        gui.show_error("Samurais Scripts", translateLabel("failed_veh_ctrl"))
+      end
+    end
+    if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) and closestVehicle ~= nil and not towable then
+      gui.show_message("Samurais Scripts", translateLabel("fltbd_carsOnlyTxt"))
+      script:sleep(400)
+    end
+    if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) and closestVehicleModel == flatbedModel then
+      script:sleep(400)
+      gui.show_message("Samurais Scripts", translateLabel("fltbd_nootherfltbdTxt"))
+    end
+  elseif is_in_flatbed and attached_vehicle ~= 0 then
+    if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) then
+      script:sleep(200)
+      for _, v in ipairs(vehicleHandles) do
+        local modelHash         = ENTITY.GET_ENTITY_MODEL(v)
+        local attachedVehicle   = ENTITY.GET_ENTITY_OF_TYPE_ATTACHED_TO_ENTITY(current_vehicle, modelHash)
+        local attachedVehcoords = ENTITY.GET_ENTITY_COORDS(attached_vehicle, false)
+        controlled              = entities.take_control_of(attachedVehicle, 350)
+        if ENTITY.DOES_ENTITY_EXIST(attachedVehicle) then
+          if controlled then
+            ENTITY.DETACH_ENTITY(attachedVehicle)
+            ENTITY.SET_ENTITY_COORDS(attachedVehicle, attachedVehcoords.x - (playerForwardX * 10),
+              attachedVehcoords.y - (playerForwardY * 10), playerPosition.z, 0, 0, 0, 0)
+            VEHICLE.SET_VEHICLE_ON_GROUND_PROPERLY(attached_vehicle, 5.0)
+            attached_vehicle = 0
+          end
+        end
+      end
+    end
+  end
+end)
+script.register_looped("TowPos Marker", function()
+  if towPos then
+    if is_in_flatbed and attached_vehicle == 0 then
+      local playerPosition = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
+      local playerForwardX = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
+      local playerForwardY = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
+      local detectPos      = vec3:new(playerPosition.x - (playerForwardX * 10), playerPosition.y - (playerForwardY * 10),
+        playerPosition.z)
+      GRAPHICS.DRAW_MARKER_SPHERE(detectPos.x, detectPos.y, detectPos.z, 2.5, 180, 128, 0, 0.115)
+    end
+  end
+end)
+
 
 -- World
 script.register_looped("Ped Grabber", function(pg)
@@ -5078,127 +5286,29 @@ script.register_looped("edit mode", function()
   end
 end)
 
-script.register_looped("flatbed script", function(script)
-  local vehicleHandles  = entities.get_all_vehicles_as_handles()
-  local current_vehicle = PED.GET_VEHICLE_PED_IS_USING(self.get_ped())
-  local vehicle_model   = ENTITY.GET_ENTITY_MODEL(current_vehicle)
-  local flatbedHeading  = ENTITY.GET_ENTITY_HEADING(current_vehicle)
-  local flatbedBone     = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(current_vehicle, "chassis")
-  local playerPosition  = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
-  local playerForwardX  = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
-  local playerForwardY  = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
-  for _, veh in ipairs(vehicleHandles) do
-    local detectPos = vec3:new(playerPosition.x - (playerForwardX * 10), playerPosition.y - (playerForwardY * 10),
-      playerPosition.z)
-    local vehPos = ENTITY.GET_ENTITY_COORDS(veh, false)
-    local vDist = SYSTEM.VDIST(detectPos.x, detectPos.y, detectPos.z, vehPos.x, vehPos.y, vehPos.z)
-    if vDist <= 5 then
-      closestVehicle = veh
-    end
-  end
-  local closestVehicleModel = ENTITY.GET_ENTITY_MODEL(closestVehicle)
-  local iscar   = VEHICLE.IS_THIS_MODEL_A_CAR(closestVehicleModel)
-  local isbike  = VEHICLE.IS_THIS_MODEL_A_BIKE(closestVehicleModel)
-  local towable = false
-  if modelOverride then
-    towable = true
-  else
-    towable = false
-  end
-  if iscar then
-    towable = true
-  end
-  if isbike then
-    towable = true
-  end
-  if closestVehicleModel == 745926877 then --Buzzard
-    towable = true
-  end
-  if closestVehicleModel == 1353720154 then
-    towable = false
-  end
-  if vehicle_model == 1353720154 then
-    is_in_flatbed = true
-  else
-    is_in_flatbed = false
-  end
-  if is_in_flatbed and attached_vehicle == 0 then
-    if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) and towable and closestVehicleModel ~= flatbedModel then
-      script:sleep(200)
-      controlled = entities.take_control_of(closestVehicle, 350)
-      if controlled then
-        local vehicleClass = VEHICLE.GET_VEHICLE_CLASS(closestVehicle)
-        if vehicleClass == 1 then
-          tow_zAxis = 0.9
-          tow_yAxis = -2.3
-        elseif vehicleClass == 2 then
-          tow_zAxis = 0.993
-          tow_yAxis = -2.17046
-        elseif vehicleClass == 6 then
-          tow_zAxis = 1.00069420
-          tow_yAxis = -2.17046
-        elseif vehicleClass == 7 then
-          tow_zAxis = 1.009
-          tow_yAxis = -2.17036
-        elseif vehicleClass == 15 then
-          tow_zAxis = 1.3
-          tow_yAxis = -2.21069
-        elseif vehicleClass == 16 then
-          tow_zAxis = 1.5
-          tow_yAxis = -2.21069
-        else
-          tow_zAxis = 1.1
-          tow_yAxis = -2.0
-        end
-        ENTITY.SET_ENTITY_HEADING(closestVehicleModel, flatbedHeading)
-        ENTITY.ATTACH_ENTITY_TO_ENTITY(closestVehicle, current_vehicle, flatbedBone, 0.0, tow_yAxis, tow_zAxis, 0.0, 0.0, 0.0,
-          false, true, true, false, 1, true, 1)
-        attached_vehicle = closestVehicle
-        script:sleep(200)
-      else
-        gui.show_error("Samurais Scripts", translateLabel("failed_veh_ctrl"))
-      end
-    end
-    if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) and closestVehicle ~= nil and not towable then
-      gui.show_message("Samurais Scripts", translateLabel("fltbd_carsOnlyTxt"))
-      script:sleep(400)
-    end
-    if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) and closestVehicleModel == flatbedModel then
-      script:sleep(400)
-      gui.show_message("Samurais Scripts", translateLabel("fltbd_nootherfltbdTxt"))
-    end
-  elseif is_in_flatbed and attached_vehicle ~= 0 then
-    if PAD.IS_DISABLED_CONTROL_JUST_PRESSED(0, 73) then
-      script:sleep(200)
-      for _, v in ipairs(vehicleHandles) do
-        local modelHash         = ENTITY.GET_ENTITY_MODEL(v)
-        local attachedVehicle   = ENTITY.GET_ENTITY_OF_TYPE_ATTACHED_TO_ENTITY(current_vehicle, modelHash)
-        local attachedVehcoords = ENTITY.GET_ENTITY_COORDS(attached_vehicle, false)
-        controlled              = entities.take_control_of(attachedVehicle, 350)
-        if ENTITY.DOES_ENTITY_EXIST(attachedVehicle) then
-          if controlled then
-            ENTITY.DETACH_ENTITY(attachedVehicle)
-            ENTITY.SET_ENTITY_COORDS(attachedVehicle, attachedVehcoords.x - (playerForwardX * 10),
-              attachedVehcoords.y - (playerForwardY * 10), playerPosition.z, 0, 0, 0, 0)
-            VEHICLE.SET_VEHICLE_ON_GROUND_PROPERLY(attached_vehicle, 5.0)
-            attached_vehicle = 0
+script.register_looped("KamikazeDrivers", function (rd)
+  if kamikazeDrivers and Game.Self.isAlive() then
+    local gta_peds = entities.get_all_peds_as_handles()
+    for _, ped in pairs(gta_peds) do
+      if ped ~= self.get_ped() and not PED.IS_PED_A_PLAYER(ped) then
+        if PED.IS_PED_SITTING_IN_ANY_VEHICLE(ped) then
+          local ped_veh = PED.GET_VEHICLE_PED_IS_USING(ped)
+          if VEHICLE.GET_IS_VEHICLE_ENGINE_RUNNING(ped_veh) then
+            if VEHICLE.IS_VEHICLE_STOPPED(ped_veh) then
+              TASK.TASK_VEHICLE_TEMP_ACTION(ped, ped_veh, 23, 1000)
+            end
+            if ENTITY.GET_ENTITY_SPEED(ped_veh) > 1.8 and ENTITY.GET_ENTITY_SPEED(ped_veh) < 70 then
+              if VEHICLE.IS_VEHICLE_ON_ALL_WHEELS(ped_veh) and not ENTITY.IS_ENTITY_DEAD(ped) then
+                VEHICLE.SET_VEHICLE_BRAKE(ped_veh, false)
+                VEHICLE.SET_VEHICLE_FORWARD_SPEED(ped_veh, (ENTITY.GET_ENTITY_SPEED(ped_veh) + 0.7))
+              end
+            end
           end
         end
       end
     end
   end
-end)
-script.register_looped("TowPos Marker", function()
-  if towPos then
-    if is_in_flatbed and attached_vehicle == 0 then
-      local playerPosition = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
-      local playerForwardX = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
-      local playerForwardY = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
-      local detectPos      = vec3:new(playerPosition.x - (playerForwardX * 10), playerPosition.y - (playerForwardY * 10),
-        playerPosition.z)
-      GRAPHICS.DRAW_MARKER_SPHERE(detectPos.x, detectPos.y, detectPos.z, 2.5, 180, 128, 0, 0.115)
-    end
-  end
+  rd:yield()
 end)
 
 -- online players

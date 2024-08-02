@@ -362,11 +362,11 @@ Labels = {
     },
 
     ["lvoCB"] = {
-        {iso = "en-US", text = "Performance Cars Only"},
-        {iso = "de-DE", text = "Nur Hochleistungsautos"},
-        {iso = "fr-FR", text = "Voitures De Performance Uniquement"},
-        {iso = "it-IT", text = "Solo Auto Ad Alte Prestazioni"},
-        {iso = "pt-BR", text = "Somente Carros De Desempenho"},
+        {iso = "en-US", text = "Sports/Super Only"},
+        {iso = "de-DE", text = "Nur Sports/Super"},
+        {iso = "fr-FR", text = "Sports/Super Uniquement"},
+        {iso = "it-IT", text = "Solo Sports/Super"},
+        {iso = "pt-BR", text = "Somente Sports/Super"},
     },
 
     ["lvo_tt"] = {
@@ -1431,6 +1431,14 @@ Labels = {
         {iso = "fr-FR", text = " pour jouer cette animation à tout moment."},
         {iso = "it-IT", text = " per riprodurre questa animazione in qualsiasi momento."},
         {iso = "pt-BR", text = " para reproduzir essa animação a qualquer momento."},
+    },
+
+    ["kamikazeDrivers_tt"] = {
+        {iso = "en-US", text = "Turns all drivers near you into suicidal maniacs."},
+        {iso = "de-DE", text = "Verwandelt alle Autofahrer in Ihrer Nähe in selbstmörderische Verrückte."},
+        {iso = "fr-FR", text = "Transforme tous les conducteurs proches de vous en maniaques suicidaires."},
+        {iso = "it-IT", text = "Trasforma tutti gli automobilisti vicini in maniaci suicidi."},
+        {iso = "pt-BR", text = "Transforma todos os motoristas próximos a você em maníacos suicidas."},
     },
 }
 

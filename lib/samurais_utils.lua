@@ -72,6 +72,17 @@ lua_Fn = {
     return tonumber(string.format("%." .. (points or 0) .. "f", n))
   end,
 
+    ---Returns a string containing the input value separated by the thousands.
+  --[[ -- Example:
+
+      formatMoney(42069)
+        -> "42,069"
+  ]]
+  ---@param value number | string
+  separateInt = function(value)
+    return tostring(value):reverse():gsub("%d%d%d", "%1,"):reverse():gsub("^,", "")
+  end,
+
   ---Returns a string containing the input value separated by the thousands and prefixed by a dollar sign.
   --[[ -- Example:
 
@@ -80,7 +91,7 @@ lua_Fn = {
   ]]
   ---@param value number | string
   formatMoney = function(value)
-    return "$" .. tostring(value):reverse():gsub("%d%d%d", "%1,"):reverse():gsub("^,", "")
+    return "$" .. tostring(lua_Fn.separateInt(value))
   end,
 
   ---Must be called from inside a coroutine. Input time is in milliseconds.
