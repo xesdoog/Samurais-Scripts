@@ -7,7 +7,7 @@ require('data/objects')
 require('data/actions')
 require('data/refs')
 
-SCRIPT_VERSION  = '0.6-a' -- v0.6-alpha
+SCRIPT_VERSION  = '0.7-a' -- v0.7-alpha
 TARGET_BUILD    = '3274'  -- Only YimResupplier needs a version check.
 TARGET_VERSION  = '1.69'
 CURRENT_BUILD   = Game.GetBuildNumber()
@@ -20,7 +20,7 @@ local start_loading_anim = false
 default_config   = {
   shortcut_anim     = {},
   Regen             = false,
-  objectiveTP       = false,
+  -- objectiveTP       = false,
   disableTooltips   = false,
   phoneAnim         = false,
   disableProps      = false,
@@ -39,7 +39,7 @@ default_config   = {
   disableActionMode = false,
   disableSound      = false,
   npc_godMode       = false,
-  Triggerbot        = false,
+  -- Triggerbot        = false,
   aimEnemy          = false,
   autoKill          = false,
   runaway           = false,
@@ -65,6 +65,7 @@ default_config   = {
   holdF             = false,
   noJacking         = false,
   useGameLang       = false,
+  nosPower          = 10,
   laser_switch      = 0,
   lang_idx          = 0,
   DriftIntensity    = 0,
@@ -77,7 +78,7 @@ default_config   = {
 LANG                = lua_cfg.read("LANG")
 current_lang        = lua_cfg.read("current_lang")
 Regen               = lua_cfg.read("Regen")
-objectiveTP         = lua_cfg.read("objectiveTP")
+-- objectiveTP         = lua_cfg.read("objectiveTP")
 phoneAnim           = lua_cfg.read("phoneAnim")
 sprintInside        = lua_cfg.read("sprintInside")
 lockPick            = lua_cfg.read("lockPick")
@@ -95,7 +96,7 @@ disableProps        = lua_cfg.read("disableProps")
 npc_godMode         = lua_cfg.read("npc_godMode")
 usePlayKey          = lua_cfg.read("usePlayKey")
 shortcut_anim       = lua_cfg.read("shortcut_anim")
-Triggerbot          = lua_cfg.read("Triggerbot")
+-- Triggerbot          = lua_cfg.read("Triggerbot")
 aimEnemy            = lua_cfg.read("aimEnemy")
 autoKill            = lua_cfg.read("autoKill")
 runaway             = lua_cfg.read("runaway")
@@ -111,6 +112,7 @@ speedBoost          = lua_cfg.read("speedBoost")
 nosvfx              = lua_cfg.read("nosvfx")
 hornLight           = lua_cfg.read("hornLight")
 nosPurge            = lua_cfg.read("nosPurge")
+nosPower            = lua_cfg.read("nosPower")
 lightSpeed          = lua_cfg.read("lightSpeed")
 loud_radio          = lua_cfg.read("loud_radio")
 launchCtrl          = lua_cfg.read("launchCtrl")
@@ -160,9 +162,7 @@ stop_searching      = false
 hijack_started      = false
 sound_btn_off       = false
 is_drifting         = false
-drift_crashed       = false
 missileDefence      = false
-was_missileProof    = false
 flag                = 0
 grp_anim_index      = 0
 attached_ped        = 0
@@ -187,6 +187,7 @@ sound_index2        = 0
 sound_switch        = 0
 radio_index         = 0
 drift_points        = 0
+drift_extra_pts     = 0
 straight_counter    = 0
 drift_time          = 0
 drift_multiplier    = 1
@@ -197,6 +198,7 @@ next_anim           = 317
 play_anim           = 256
 stop_anim           = 47
 drift_streak_text   = ""
+drift_extra_text    = ""
 actions_search      = ""
 currentMvmt         = ""
 currentStrf         = ""
@@ -227,7 +229,7 @@ function play_music(musicSwitch, station)
   script.run_in_fiber(function(mp)
     if musicSwitch == "start" then
       local myPos       = self.get_pos()
-      local bone_idx    = PED.GET_PED_BONE_INDEX(self.get_ped(), 12844)
+      local bone_idx    = PED.GET_PED_BONE_INDEX(self.get_ped(), 24818)
       local pbus_model  = 345756458
       local dummy_model = 0xE75B4B1C
       if Game.requestModel(pbus_model) then
@@ -258,8 +260,8 @@ function play_music(musicSwitch, station)
             mp:sleep(500)
             AUDIO.SET_VEH_RADIO_STATION(pBus, station)
             mp:sleep(500)
-            ENTITY.ATTACH_ENTITY_TO_ENTITY(pBus, self.get_ped(), bone_idx, 0.0, -1.0, -1.3, 0.0, 0.0, 0.0, false, true,
-            false, true, 1, false, 1)
+            ENTITY.ATTACH_ENTITY_TO_ENTITY(pBus, self.get_ped(), bone_idx, -4.0, -1.3, -1.0, 0.0, 90.0, -90.0, false, true,
+            false, true, 1, true, 1)
           else
             gui.show_error("Samurais Scripts", "Failed to start music!")
             log.debug('Failed to create ped')
@@ -293,11 +295,17 @@ end
 function dummyCop()
   script.run_in_fiber(function(dcop)
     if current_vehicle ~= 0 then
-      local polhash, veh_bone
+      local polhash, veh_bone1, veh_bone2, attach_mode
       if is_car then
-        polhash, veh_bone = 0xD1E0B7D7, "seat_dside_f"
-      elseif is_bike then
-        polhash, veh_bone = 0xFDEFAEC3, "chassis_dummy"
+        if VEHICLE.DOES_VEHICLE_HAVE_ROOF(current_vehicle) and not VEHICLE.IS_VEHICLE_A_CONVERTIBLE(current_vehicle) then
+          polhash, veh_bone1, veh_bone2, attach_mode = 0xD1E0B7D7, "interiorlight", "interiorlight", 1
+        else
+          polhash, veh_bone1, veh_bone2, attach_mode = 0xD1E0B7D7, "interiorlight", "dashglow", 2
+        end
+      elseif is_bike or is_quad then
+        polhash, veh_bone1, veh_bone2, attach_mode = 0xFDEFAEC3, "chassis_dummy", "chassis_dummy", 1
+      else
+        gui.show_error("Samurais Scripts", "Can not equip a fake siren on this vehicle.")
       end
       if Game.requestModel(polhash) then
         dummyCopCar = VEHICLE.CREATE_VEHICLE(polhash, 0.0, 0.0, 0.0, 0, true, false, false)
@@ -308,11 +316,16 @@ function dummyCop()
         ENTITY.SET_ENTITY_INVINCIBLE(dummyCopCar, true)
       end
       if ENTITY.DOES_ENTITY_EXIST(dummyCopCar) then
-        local boneidx1 = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(dummyCopCar, veh_bone)
-        local boneidx2 = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(self.get_veh(), veh_bone)
+        local boneidx1 = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(dummyCopCar, veh_bone1)
+        local boneidx2 = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(self.get_veh(), veh_bone2)
         VEHICLE.SET_VEHICLE_LIGHTS(dummyCopCar, 1)
         ENTITY.SET_ENTITY_HEADING(dummyCopCar, ENTITY.GET_ENTITY_HEADING(self.get_veh()))
-        ENTITY.ATTACH_ENTITY_BONE_TO_ENTITY_BONE(dummyCopCar, self.get_veh(), boneidx1, boneidx2, false, true)
+        if attach_mode == 1 then
+          ENTITY.ATTACH_ENTITY_BONE_TO_ENTITY_BONE(dummyCopCar, self.get_veh(), boneidx1, boneidx2, false, true)
+        else
+          ENTITY.ATTACH_ENTITY_TO_ENTITY(dummyCopCar, self.get_veh(), boneidx2, 0.46, 0.4, -0.9, 0.0, 0.0, 0.0, false, true,
+            false, true, 1, true, 1)
+        end
         dcop:sleep(500)
         VEHICLE.SET_VEHICLE_SIREN(dummyCopCar, true)
         VEHICLE.SET_VEHICLE_HAS_MUTED_SIRENS(dummyCopCar, false)
@@ -345,6 +358,47 @@ function showDriftCounter(text)
   HUD.END_TEXT_COMMAND_DISPLAY_TEXT(screenX, (screenY - 0.6), 0)
 end
 
+function showDriftExtra(text)
+  wolrdPos = self.get_pos()
+  local _, screenX, screenY = HUD.GET_HUD_SCREEN_POSITION_FROM_WORLD_POSITION(wolrdPos.x, wolrdPos.y, wolrdPos.z, screenX, screenY)
+  HUD.BEGIN_TEXT_COMMAND_DISPLAY_TEXT("TWOSTRINGS")
+  HUD.SET_TEXT_COLOUR(255, 192, 0, 200)
+  HUD.SET_TEXT_SCALE(1, 0.4)
+  HUD.SET_TEXT_OUTLINE()
+  HUD.SET_TEXT_FONT(7)
+  HUD.SET_TEXT_CENTRE(true)
+  HUD.SET_TEXT_DROP_SHADOW()
+  HUD.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(text)
+  HUD.END_TEXT_COMMAND_DISPLAY_TEXT(screenX, (screenY - 0.5142), 0)
+end
+
+function checkDriftCollision()
+  local crashed     = false
+  local text        = ""
+  local entity      = ENTITY.GET_LAST_ENTITY_HIT_BY_ENTITY_(self.get_veh())
+  local entity_type = Game.getEntityTypeString(entity)
+  local player_pos  = self.get_pos()
+  if ENTITY.IS_ENTITY_A_PED(entity) then
+    text = "Hit and run"
+    crashed = false
+  elseif entity_type == "Vehicle" then
+    crashed = true
+  elseif entity_type == "Object" then
+    -- ENTITY.GET_ENTITY_MODEL(entity) ~= 3300474446 and ENTITY.GET_ENTITY_MODEL(entity) ~= 3231494328 and ENTITY.GET_ENTITY_MODEL(entity) ~= 3008087081 and ENTITY.GET_ENTITY_MODEL(entity) ~= 874602658
+    if not ENTITY.HAS_ENTITY_BEEN_DAMAGED_BY_ENTITY(self.get_veh(), entity) and ENTITY.GET_ENTITY_SPEED(self.get_veh()) > 3 then
+      text = "Wrecking ball"
+      log.info('fine')
+      log.info(tostring(ENTITY.GET_ENTITY_HEALTH(entity)))
+      crashed = false
+    else
+      crashed = true
+    end
+  elseif entity_type == "None" or entity_type == "Invalid" then
+    crashed = true
+  end
+  return crashed, text
+end
+
 function bankDriftPoints_SP(points)
   local chars_T = {
     {hash = 225514697,  int = 0},
@@ -374,12 +428,12 @@ self_tab:add_imgui(function()
     UI.widgetSound("Nav2")
   end
 
-  objectiveTP, objectiveTPUsed = ImGui.Checkbox(translateLabel("objectiveTP"), objectiveTP, true)
-  UI.helpMarker(false, translateLabel("objectiveTP_tooltip"))
-  if objectiveTPUsed then
-    lua_cfg.save("objectiveTP", objectiveTP)
-    UI.widgetSound("Nav2")
-  end
+  -- objectiveTP, objectiveTPUsed = ImGui.Checkbox(translateLabel("objectiveTP"), objectiveTP, true)
+  -- UI.helpMarker(false, translateLabel("objectiveTP_tooltip"))
+  -- if objectiveTPUsed then
+  --   lua_cfg.save("objectiveTP", objectiveTP)
+  --   UI.widgetSound("Nav2")
+  -- end
 
   replaceSneakAnim, rsanimUsed = ImGui.Checkbox(translateLabel("CrouchCB"), replaceSneakAnim, true)
   UI.helpMarker(false, translateLabel("Crouch_tooltip"))
@@ -1325,20 +1379,20 @@ weapon_tab:add_imgui(function()
     UI.widgetSound("Nav2")
   end
 
-  Triggerbot, TbUsed = ImGui.Checkbox(translateLabel("triggerbotCB"), Triggerbot, true)
-  UI.helpMarker(false,
-    translateLabel("triggerbot_tt"))
-  if Triggerbot then
-    ImGui.SameLine(); aimEnemy, aimEnemyUsed = ImGui.Checkbox(translateLabel("enemyonlyCB"), aimEnemy, true)
-    if aimEnemyUsed then
-      lua_cfg.save("aimEnemy", aimEnemy)
-      UI.widgetSound("Nav2")
-    end
-  end
-  if TbUsed then
-    lua_cfg.save("Triggerbot", Triggerbot)
-    UI.widgetSound("Nav2")
-  end
+  -- Triggerbot, TbUsed = ImGui.Checkbox(translateLabel("triggerbotCB"), Triggerbot, true)
+  -- UI.helpMarker(false,
+  --   translateLabel("triggerbot_tt"))
+  -- if Triggerbot then
+  --   ImGui.SameLine(); aimEnemy, aimEnemyUsed = ImGui.Checkbox(translateLabel("enemyonlyCB"), aimEnemy, true)
+  --   if aimEnemyUsed then
+  --     lua_cfg.save("aimEnemy", aimEnemy)
+  --     UI.widgetSound("Nav2")
+  --   end
+  -- end
+  -- if TbUsed then
+  --   lua_cfg.save("Triggerbot", Triggerbot)
+  --   UI.widgetSound("Nav2")
+  -- end
 
   autoKill, autoKillUsed = ImGui.Checkbox(translateLabel("autokillCB"), autoKill, true)
   UI.helpMarker(false, translateLabel("autokill_tt"))
@@ -1678,6 +1732,29 @@ vehicle_tab:add_imgui(function()
         UI.widgetSound("Nav2")
         lua_cfg.save("nosvfx", nosvfx)
       end
+      ImGui.Dummy(192, 1); ImGui.SameLine()
+      if ImGui.SmallButton("  NOS Power  ") then
+        ImGui.OpenPopup("Nos Power")
+      end
+        ImGui.SetNextWindowPos(780, 400, ImGuiCond.Appearing)
+        ImGui.SetNextWindowBgAlpha(0.9)
+      if ImGui.BeginPopupModal("Nos Power", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar) then
+        ImGui.Text("NOS Power")
+        nosPower, nspwrUsed = ImGui.SliderInt("##nospower", nosPower, 10, 100, "%d", ImGuiSliderFlags.NoInput | ImGuiSliderFlags.AlwaysClamp | ImGuiSliderFlags.Logarithmic)
+        if nspwrUsed then
+          UI.widgetSound("Nav")
+        end
+        ImGui.Spacing(); if ImGui.Button(" Save ") then
+          UI.widgetSound("Select2")
+          lua_cfg.save("nosPower", nosPower)
+          ImGui.CloseCurrentPopup()
+        end
+        ImGui.SameLine(); ImGui.Dummy(10, 1); ImGui.SameLine(); if ImGui.Button(" Cancel ") then
+          UI.widgetSound("Cancel")
+          ImGui.CloseCurrentPopup()
+        end
+        ImGui.End()
+      end
     end
 
     loud_radio, loudRadioUsed = ImGui.Checkbox("Big Subwoofer", loud_radio, true)
@@ -1862,7 +1939,9 @@ vehicle_tab:add_imgui(function()
             gui.show_error("Samurais Scripts", "This feature is only available for cars and bikes.")
           end
         end
-        UI.toolTip(false, "The siren audio only works in Online.")
+        if not Game.isOnline() then
+          UI.toolTip(false, "The siren audio only works Online.")
+        end
       else
         ImGui.BeginDisabled()
         ImGui.Button("Equip Fake Siren")
@@ -3180,7 +3259,7 @@ settings_tab:add_imgui(function()
       lua_cfg.reset(default_config)
       shortcut_anim     = {}
       Regen             = false
-      objectiveTP       = false
+      -- objectiveTP       = false
       disableTooltips   = false
       phoneAnim         = false
       sprintInside      = false
@@ -3191,7 +3270,7 @@ settings_tab:add_imgui(function()
       disableActionMode = false
       rod               = false
       clumsy            = false
-      Triggerbot        = false
+      -- Triggerbot        = false
       aimEnemy          = false
       autoKill          = false
       runaway           = false
@@ -3229,6 +3308,7 @@ settings_tab:add_imgui(function()
       DriftIntensity    = 0
       lang_idx          = 0
       lightSpeed        = 1
+      nosPower          = 10
       laser_choice      = "proj_laser_enemy"
       LANG              = "en-US"
       current_lang      = "English"
@@ -3380,7 +3460,7 @@ end
 local function var_reset()
   isCrouched = false; is_handsUp = false; anim_music = false; is_playing_radio = false; npc_blips = {}; spawned_npcs = {}; plyrProps = {}; npcProps = {}; selfPTFX = {}; npcPTFX = {}; curr_playing_anim = {}; is_playing_anim = false; is_playing_scenario = false; tab1Sound = true; tab2Sound = true; tab3Sound = true; actions_switch = 0; actions_search =
   ""; currentMvmt = ""; currentStrf = ""; currentWmvmt = ""; aimBool = false; HashGrabber = false; drew_laser = false; Entity = 0; laserPtfx_T = {}; sound_btn_off = false; tire_smoke = false; purge_started = false; nos_started = false; twostep_started = false; open_sounds_window = false; started_lct = false; launch_active = false; started_popSound = false; started_popSound2 = false; timerA = 0; timerB = 0; lastVeh = 0; defaultXenon = 0; vehSound_index = 0; smokePtfx_t = {}; nosptfx_t = {}; purgePtfx_t = {}; lctPtfx_t = {}; popSounds_t = {}; popsPtfx_t = {}; attached_vehicle = 0; tow_xAxis = 0.0; tow_yAxis = 0.0; tow_zAxis = 0.0; pedGrabber = false; ped_grabbed = false; carpool = false; show_npc_veh_ctrls = false; stop_searching = false; hijack_started = false; grp_anim_index = 0; attached_ped = 0; thisVeh = 0; pedthrowF = 10; propName =
-  ""; invalidType = ""; preview = false; is_drifting = false; drift_crashed = false; previewLoop = false; activeX = false; activeY = false; activeZ = false; rotX = false; rotY = false; rotZ = false; attached = false; attachToSelf = false; attachToVeh = false; previewStarted = false; isChanged = false; prop = 0; propHash = 0; os_switch = 0; prop_index = 0; objects_index = 0; spawned_index = 0; selectedObject = 0; selected_bone = 0; previewEntity = 0; currentObjectPreview = 0; attached_index = 0; zOffset = 0; spawned_props = {}; spawnedNames = {}; filteredSpawnNames = {}; selfAttachments = {}; selfAttachNames = {}; vehAttachments = {}; vehAttachNames = {}; filteredVehAttachNames = {}; filteredAttachNames = {}; missileDefence = false;
+  ""; invalidType = ""; preview = false; is_drifting = false; previewLoop = false; activeX = false; activeY = false; activeZ = false; rotX = false; rotY = false; rotZ = false; attached = false; attachToSelf = false; attachToVeh = false; previewStarted = false; isChanged = false; prop = 0; propHash = 0; os_switch = 0; prop_index = 0; objects_index = 0; spawned_index = 0; selectedObject = 0; selected_bone = 0; previewEntity = 0; currentObjectPreview = 0; attached_index = 0; zOffset = 0; spawned_props = {}; spawnedNames = {}; filteredSpawnNames = {}; selfAttachments = {}; selfAttachNames = {}; vehAttachments = {}; vehAttachNames = {}; filteredVehAttachNames = {}; filteredAttachNames = {}; missileDefence = false;
 end
 
 
@@ -3436,7 +3516,7 @@ script.register_looped("GameInput", function()
     PAD.DISABLE_CONTROL_ACTION(0, 257, 1)
   end
 
-  if replaceSneakAnim then
+  if replaceSneakAnim and Game.Self.isOnFoot() then
     PAD.DISABLE_CONTROL_ACTION(0, 36, 1)
   end
 
@@ -3510,28 +3590,28 @@ script.register_looped("auto-heal", function(ah)
     end
   end
 end)
-script.register_looped("objectiveTP", function()
-  if objectiveTP then
-    if PAD.IS_CONTROL_JUST_PRESSED(0, 57) then
-      for _, n in pairs(objectives_T) do
-        local blip = HUD.GET_CLOSEST_BLIP_INFO_ID(n)
-        if HUD.DOES_BLIP_EXIST(blip) then
-          blipCoords = HUD.GET_BLIP_COORDS(blip)
-          break
-        end
-      end
-      if blipCoords ~= nil then
-        Game.Self.teleport(true, blipCoords)
-      else
-        gui.show_warning("Objective Teleport", "No objective found!")
-      end
-    end
-  end
-end)
+-- script.register_looped("objectiveTP", function()
+--   if objectiveTP then
+--     if PAD.IS_CONTROL_JUST_PRESSED(0, 57) then
+--       for _, n in pairs(objectives_T) do
+--         local blip = HUD.GET_CLOSEST_BLIP_INFO_ID(n)
+--         if HUD.DOES_BLIP_EXIST(blip) then
+--           blipCoords = HUD.GET_BLIP_COORDS(blip)
+--           break
+--         end
+--       end
+--       if blipCoords ~= nil then
+--         Game.Self.teleport(true, blipCoords)
+--       else
+--         gui.show_warning("Objective Teleport", "No objective found!")
+--       end
+--     end
+--   end
+-- end)
 script.register_looped("self features", function(script)
   -- Crouch instead of sneak
   if Game.Self.isOnFoot() and not Game.Self.isInWater() then
-    if replaceSneakAnim and not ped_grabbed and not is_playing_anim and not is_playing_scenario and not is_typing then
+    if replaceSneakAnim and not ped_grabbed and not is_playing_anim and not is_playing_scenario and not is_typing and not PED.IS_PED_RAGDOLL(self.get_ped()) then
       if not isCrouched and PAD.IS_DISABLED_CONTROL_PRESSED(0, 36) then
         script:sleep(200)
         if is_handsUp then
@@ -4021,39 +4101,39 @@ script.register_looped("HashGrabber", function(hg)
 end)
 
 -- Triggerbot loop
-script.register_looped("TriggerBot", function(trgrbot)
-  if Triggerbot then
-    if PLAYER.IS_PLAYER_FREE_AIMING(PLAYER.PLAYER_ID()) then
-      aimBool, Entity = PLAYER.GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(PLAYER.PLAYER_ID(), Entity)
-      if aimBool then
-        if ENTITY.IS_ENTITY_A_PED(Entity) and PED.IS_PED_HUMAN(Entity) then
-          local bonePos = ENTITY.GET_WORLD_POSITION_OF_ENTITY_BONE(ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(Entity, "head"))
-          weapon = Game.Self.weapon()
-          if WEAPON.IS_PED_WEAPON_READY_TO_SHOOT(self.get_ped()) and Game.Self.isOnFoot() and not PED.IS_PED_RELOADING(self.get_ped()) then
-            if not ENTITY.IS_ENTITY_DEAD(Entity) then
-              if PAD.IS_CONTROL_PRESSED(0, 21) then
-                if aimEnemy then
-                  if PED.IS_PED_IN_COMBAT(Entity, self.get_ped()) then
-                    TASK.TASK_AIM_GUN_AT_COORD(self.get_ped(), bonePos.x, bonePos.y, bonePos.z, 250, true, false)
-                    TASK.TASK_SHOOT_AT_COORD(self.get_ped(), bonePos.x, bonePos.y, bonePos.z, 250, 2556319013)
-                  end
-                else
-                  TASK.TASK_AIM_GUN_AT_COORD(self.get_ped(), bonePos.x, bonePos.y, bonePos.z, 250, true, false)
-                  TASK.TASK_SHOOT_AT_COORD(self.get_ped(), bonePos.x, bonePos.y, bonePos.z, 250, 2556319013)
-                end
-              end
-            end
-          end
-        end
-      else
-        Entity = 0
-      end
-    else
-      bool = false
-    end
-  end
-  trgrbot:yield()
-end)
+-- script.register_looped("TriggerBot", function(trgrbot)
+--   if Triggerbot then
+--     if PLAYER.IS_PLAYER_FREE_AIMING(PLAYER.PLAYER_ID()) then
+--       aimBool, Entity = PLAYER.GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(PLAYER.PLAYER_ID(), Entity)
+--       if aimBool then
+--         if ENTITY.IS_ENTITY_A_PED(Entity) and PED.IS_PED_HUMAN(Entity) then
+--           local bonePos = ENTITY.GET_WORLD_POSITION_OF_ENTITY_BONE(ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(Entity, "head"))
+--           weapon = Game.Self.weapon()
+--           if WEAPON.IS_PED_WEAPON_READY_TO_SHOOT(self.get_ped()) and Game.Self.isOnFoot() and not PED.IS_PED_RELOADING(self.get_ped()) then
+--             if not ENTITY.IS_ENTITY_DEAD(Entity) then
+--               if PAD.IS_CONTROL_PRESSED(0, 21) then
+--                 if aimEnemy then
+--                   if PED.IS_PED_IN_COMBAT(Entity, self.get_ped()) then
+--                     TASK.TASK_AIM_GUN_AT_COORD(self.get_ped(), bonePos.x, bonePos.y, bonePos.z, 250, true, false)
+--                     TASK.TASK_SHOOT_AT_COORD(self.get_ped(), bonePos.x, bonePos.y, bonePos.z, 250, 2556319013)
+--                   end
+--                 else
+--                   TASK.TASK_AIM_GUN_AT_COORD(self.get_ped(), bonePos.x, bonePos.y, bonePos.z, 250, true, false)
+--                   TASK.TASK_SHOOT_AT_COORD(self.get_ped(), bonePos.x, bonePos.y, bonePos.z, 250, 2556319013)
+--                 end
+--               end
+--             end
+--           end
+--         end
+--       else
+--         Entity = 0
+--       end
+--     else
+--       bool = false
+--     end
+--   end
+--   trgrbot:yield()
+-- end)
 
 script.register_looped("auto-kill-enemies", function(ak)
   if autoKill then
@@ -4194,8 +4274,8 @@ script.register_looped("TDFT", function(script)
       if validModel or is_boat or is_bike then
         if VEHICLE.GET_IS_VEHICLE_ENGINE_RUNNING(current_vehicle) then
           if PAD.IS_DISABLED_CONTROL_PRESSED(0, tdBtn) and PAD.IS_CONTROL_PRESSED(0, 71) then
-            VEHICLE.SET_VEHICLE_CHEAT_POWER_INCREASE(current_vehicle, 5.0)
-            VEHICLE.MODIFY_VEHICLE_TOP_SPEED(current_vehicle, 100.0)
+            VEHICLE.SET_VEHICLE_CHEAT_POWER_INCREASE(current_vehicle, (nosPower) / 5)
+            VEHICLE.MODIFY_VEHICLE_TOP_SPEED(current_vehicle, nosPower)
             AUDIO.SET_VEHICLE_BOOST_ACTIVE(current_vehicle, true)
             using_nos = true
           end
@@ -4687,13 +4767,13 @@ script.register_looped("drift counter", function(dcounter)
             straight_counter  = 0
             drift_points = drift_points + (1 * drift_multiplier)
           end
-          if vehSpeedVec.x > 10 or vehSpeedVec.x < - 10 then
+          if vehSpeedVec.x > 11 or vehSpeedVec.x < - 11 then
             is_drifting = true
             drift_streak_text = 'Big Angle!' .. '   x' .. drift_multiplier
             straight_counter  = 0
             drift_points = drift_points + (5 * drift_multiplier)
           end
-          if vehSpeedVec.x > 16 or vehSpeedVec.x < - 16 then
+          if vehSpeedVec.x > 14 or vehSpeedVec.x < - 14 then
             is_drifting = true
             drift_streak_text = 'SICK ANGLE!!!' .. '   x' .. drift_multiplier
             straight_counter  = 0
@@ -4705,10 +4785,13 @@ script.register_looped("drift counter", function(dcounter)
             if vehSpeedVec.x < 2 and vehSpeedVec.x > - 2 then
               if straight_counter > 400 then
                 if ENTITY.HAS_ENTITY_COLLIDED_WITH_ANYTHING(current_vehicle) then
-                  drift_streak_text = 'Streak lost!'
-                  drift_points      = 0
-                  drift_multiplier  = 1
-                  is_drifting       = false
+                  if checkDriftCollision() then
+                    drift_streak_text = 'Streak lost!'
+                    drift_points      = 0
+                    drift_multiplier  = 1
+                    drift_extra_pts   = 0
+                    is_drifting       = false
+                  end
                 else
                   drift_streak_text = 'Banked Points: '
                   if not Game.isOnline() then
@@ -4716,22 +4799,48 @@ script.register_looped("drift counter", function(dcounter)
                       bankDriftPoints_SP(lua_Fn.round((drift_points / 10), 0))
                     end
                   end
+                  dcounter:sleep(3000)
+                  drift_points     = 0
+                  drift_extra_pts  = 0
+                  drift_multiplier = 1
+                  is_drifting      = false
                 end
-                dcounter:sleep(3000)
-                drift_points     = 0
-                drift_multiplier = 1
-                is_drifting      = false
               end
             end
           end
           if not VEHICLE.IS_VEHICLE_STOPPED(current_vehicle) then
             if ENTITY.HAS_ENTITY_COLLIDED_WITH_ANYTHING(current_vehicle) then
-              drift_crashed     = true
-              drift_streak_text = 'Streak Lost!'
-              drift_points      = 0
-              drift_multiplier  = 1
+              if checkDriftCollision() then
+                drift_streak_text = 'Streak Lost!'
+                drift_points      = 0
+                drift_extra_pts   = 0
+                drift_multiplier  = 1
+                dcounter:sleep(3000)
+                is_drifting = false
+              end
+            end
+          else
+            dcounter:sleep(3000)
+            if not ENTITY.HAS_ENTITY_COLLIDED_WITH_ANYTHING(current_vehicle) then
+              drift_streak_text = 'Banked Points: '
+              if not Game.isOnline() then
+                if drift_points > 100 then
+                  bankDriftPoints_SP(lua_Fn.round((drift_points / 10), 0))
+                end
+              end
               dcounter:sleep(3000)
-              is_drifting = false
+              drift_points     = 0
+              drift_multiplier = 1
+              is_drifting      = false
+            else
+              if checkDriftCollision() then
+                drift_streak_text = 'Streak Lost!'
+                drift_points      = 0
+                drift_extra_pts   = 0
+                drift_multiplier  = 1
+                is_drifting = false
+                dcounter:sleep(3000)
+              end
             end
           end
         end
@@ -4739,27 +4848,10 @@ script.register_looped("drift counter", function(dcounter)
         if is_drifting then
           drift_streak_text = 'Streak Lost!'
           drift_points      = 0
+          drift_extra_pts   = 0
           drift_multiplier  = 1
           is_drifting = false
         end
-      end
-    end
-  end
-end)
-script.register_looped("stop counter", function(stopcounter)
-  if Game.Self.isDriving() and is_drifting then
-    if VEHICLE.IS_VEHICLE_STOPPED(current_vehicle) then
-      stopcounter:sleep(3000)
-      if not drift_crashed then
-        drift_streak_text = 'Banked Points: '
-        if not Game.isOnline() then
-          if drift_points > 100 then
-            bankDriftPoints_SP(lua_Fn.round((drift_points / 10), 0))
-          end
-        end
-        drift_points = 0
-        is_drifting = false
-        stopcounter:sleep(2000)
       end
     end
   end
@@ -4773,6 +4865,58 @@ script.register_looped("drift time counter", function(dtcounter)
   else
     if drift_time > 0 then -- no need to keep setting it to 0
       drift_time = 0
+    end
+  end
+end)
+script.register_looped("extra points checker", function(epc)
+  if Game.Self.isDriving then
+    if is_drifting and ENTITY.GET_ENTITY_SPEED(current_vehicle) > 7 then
+      if not ENTITY.HAS_ENTITY_COLLIDED_WITH_ANYTHING(current_vehicle) then
+        local vehicle_height = ENTITY.GET_ENTITY_HEIGHT_ABOVE_GROUND(current_vehicle)
+        if vehicle_height > 0.8 and not VEHICLE.IS_VEHICLE_ON_ALL_WHEELS(current_vehicle) then
+          if vehicle_height >= 1.5 and vehicle_height <= 6 and not lua_Fn.str_contains(drift_extra_text, "Big Air!") then
+            drift_extra_pts  = drift_extra_pts + 1
+            drift_points     = drift_points + drift_extra_pts
+            drift_extra_text = "Air  +" .. drift_extra_pts .. " pts"
+            epc:sleep(100)
+          elseif vehicle_height > 6 then
+            drift_extra_pts  = drift_extra_pts + 5
+            drift_points     = drift_points + drift_extra_pts
+            drift_extra_text = "Big Air!  +" .. drift_extra_pts .. " pts"
+            epc:sleep(100)
+          end
+        else
+          if drift_extra_pts > 0 then
+            epc:sleep(2000)
+            drift_extra_pts = 0
+          end
+        end
+      else
+        local bool, txt = checkDriftCollision()
+        if not bool then
+          drift_extra_pts  = drift_extra_pts + 1
+          drift_points     = drift_points + drift_extra_pts
+          drift_extra_text = txt .. "  +" .. drift_extra_pts .. " pts"
+        else
+          if drift_extra_pts > 0 then
+            drift_extra_pts = 0
+            drift_extra_text = ""
+            epc:sleep(2000)
+          end
+        end
+      end
+    else
+      if drift_extra_pts > 0 then
+        epc:sleep(2000)
+        drift_extra_pts = 0
+        drift_extra_text = ""
+      end
+    end
+  else
+    if drift_extra_pts > 0 then
+      epc:sleep(2000)
+      drift_extra_pts = 0
+      drift_extra_text = ""
     end
   end
 end)
@@ -4797,6 +4941,9 @@ end)
 script.register_looped("drift points", function()
   if Game.Self.isDriving() and is_drifting then
     showDriftCounter(drift_streak_text .. "\n+" .. lua_Fn.separateInt(drift_points) .. " pts")
+    if drift_extra_pts > 0 then
+      showDriftExtra(drift_extra_text)
+    end
   end
 end)
 

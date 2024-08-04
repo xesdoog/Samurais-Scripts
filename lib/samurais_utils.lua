@@ -835,15 +835,7 @@ Game = {
     if type == 0 then
       definedType = "None"
     elseif type == 1 then
-      if PED.IS_PED_HUMAN(entity) then
-        definedType = "Human"
-      else
-        if ENTITY.GET_ENTITY_MODEL(entity) == 351016938 then
-          definedType = "Chop <3"
-        else
-          definedType = "Animal/Non-Human Ped"
-        end
-      end
+      definedType = "Ped"
     elseif type == 2 then
       definedType = "Vehicle"
     elseif type == 3 then

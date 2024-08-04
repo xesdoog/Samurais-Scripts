@@ -1290,7 +1290,7 @@ Labels = {
 
 
     ["Spawn NPCs in God Mode."] = {
-        {iso = "en-US", text = "Play Animations On NPCs:"},
+        {iso = "en-US", text = "Spawn NPCs in God Mode."},
         {iso = "de-DE", text = "NPCs im Gott-Modus spawnen."},
         {iso = "fr-FR", text = "Faire naître des PNJ en mode Dieu."},
         {iso = "it-IT", text = "Generare PNG in modalità Dio."},
