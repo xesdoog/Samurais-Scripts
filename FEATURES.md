@@ -48,6 +48,11 @@
     - Increased torque while drifting so that you could pick up speed faster while drifting and hold bigger angles.
   - **Drift Smoke:**
     - Your tires will now produce a lot more smoke when drifting. The smoke will appear when you're drifting at a speed higher than *approx: 15mph // 20km/h*. You can change the smoke color either from a drop down list of pre-defined colors or inputting your own [HEX](https://www.color-hex.com/) color. Note that the drift smoke color has no relation to your actual tire smoke color but I can change that if desired, it's just one line of code.
+  - **Drift Minigame:**
+    - When this option is enabled, drifting your car gives you points which when banked, 10% of them are converted into cash (currently the cashout feature is for Single Player only).
+      
+      > NOTE: To bank your points, stop drifting by either driving normally or completely stopping your vehicle. There will be a short 3 second delay in case you want to go back to drifting again but note that if you crash your car into anything you will lose all your points even if you're completely stopped and an NPC hits you.
+      
   - **Instant 180°:**
     - Press **[Mouse Scroll Down]** or **[Numpad -]** to instantly turn your car 180 degrees. Note that if your car is stopped or moving but you were not holding **[W]** / accelerating when you pressed the Instant 180° button, your car will simply face the opposite direction but if you press it while holding the accelerator then the option will give you back your speed in the opposite direction.
   - **Flappy Doors:**
@@ -74,6 +79,9 @@
     - When enabled, you will not be able to jack NPCs vehicles but instead when you press **[F]** you will get in as a passenger and the driver NPC will be cool with it. *The passengers will be confsed and frightened though...*
   - **Animate Nearby NPCs:**
     - Activate the option then choose an action from the drop down list and press **Play** to make all nearby NPCs do that action.
+
+  - **Kamikaze Drivers:**
+    - All nearby drivers will be turned into suicidal maniacs. Good luck trying to cross the road on foot.
       
 - **Improved [Object Spawner](https://github.com/xesdoog/object-spawner):**
   - Fixed a few bugs in the main script and added the ability to attach objects to your vehicle.
