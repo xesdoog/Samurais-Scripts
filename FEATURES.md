@@ -69,14 +69,17 @@
 
 ## World
 - **Main World Tab:**
-  - **Ped Grabber:**
+  - **Ped Grabber:** 
     - Get close to an NPC then press **[LEFT MOUSE BUTTON]** to grab them. Once grabbed, press and hold **[RIGHT MOUSE BUTTON]** then press **[LEFT MOUSE BUTTON]** to throw them. You can change the throwing force using a slider in the UI.
       > NOTE 1: You have to be unarmed to be able to grab an NPC.
       
       > NOTE 2: While this option is enabled, you will not be able to use your fists (punch). You can still use all other weapons normally until you grab an NPC, then you will not be able to use any weapons until you throw the ped.
+
+     - **[Test Phase Example](https://github.com/user-attachments/assets/378b2084-5d0c-4e24-8557-bbb82d5697e2)**
+
       
   - **Ride With NPCs:**
-    - When enabled, you will not be able to jack NPCs vehicles but instead when you press **[F]** you will get in as a passenger and the driver NPC will be cool with it. *The passengers will be confsed and frightened though...*
+    - When enabled, you will not be able to jack NPC vehicles but instead when you press **[F]** you will get in as a passenger and the driver NPC will be cool with it. *The passengers will be confsed and frightened though...*
   - **Animate Nearby NPCs:**
     - Activate the option then choose an action from the drop down list and press **Play** to make all nearby NPCs do that action.
 
