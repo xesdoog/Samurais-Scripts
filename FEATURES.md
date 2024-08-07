@@ -49,9 +49,12 @@
   - **Drift Smoke:**
     - Your tires will now produce a lot more smoke when drifting. The smoke will appear when you're drifting at a speed higher than *approx: 15mph // 20km/h*. You can change the smoke color either from a drop down list of pre-defined colors or inputting your own [HEX](https://www.color-hex.com/) color. Note that the drift smoke color has no relation to your actual tire smoke color but I can change that if desired, it's just one line of code.
   - **Drift Minigame:**
-    - When this option is enabled, drifting your car gives you points which when banked, 10% of them are converted into cash (currently the cashout feature is for Single Player only).
+    - When this option is enabled, drifting your car gives you points which when banked, 10% of them are converted into cash (currently the cashout feature is for Single Player only). You also get bonus points for destroying objects (fences, road signs, road cones, etc...) and hitting pedestrians while drifting.
       
       > NOTE: To bank your points, stop drifting by either driving normally or completely stopping your vehicle. There will be a short 3 second delay in case you want to go back to drifting again but note that if you crash your car into anything you will lose all your points even if you're completely stopped and an NPC hits you.
+
+  - **Missile Defense:**
+    - When enabled, all missiles near you vehicle will be destroyed. If a missile is too close *(that includes missiles or RPGs fired by you from or near your vehicle)*, the denfese will silently remove it instead of exploding it in your face.
       
   - **Instant 180°:**
     - Press **[Mouse Scroll Down]** or **[Numpad -]** to instantly turn your car 180 degrees. Note that if your car is stopped or moving but you were not holding **[W]** / accelerating when you pressed the Instant 180° button, your car will simply face the opposite direction but if you press it while holding the accelerator then the option will give you back your speed in the opposite direction.
@@ -77,6 +80,8 @@
 
      - **[Test Phase Example](https://github.com/user-attachments/assets/378b2084-5d0c-4e24-8557-bbb82d5697e2)**
 
+  - **Vehicle Grabber:** 
+    - Same as **'Ped Grabber'** but with vehicles.
       
   - **Ride With NPCs:**
     - When enabled, you will not be able to jack NPC vehicles but instead when you press **[F]** you will get in as a passenger and the driver NPC will be cool with it. *The passengers will be confsed and frightened though...*
@@ -85,6 +90,9 @@
 
   - **Kamikaze Drivers:**
     - All nearby drivers will be turned into suicidal maniacs. Good luck trying to cross the road on foot.
+   
+  - **Public Enemy N°1:**
+    - When enabled, all nearby NPCs will attack you *(except cops)*.
       
 - **Improved [Object Spawner](https://github.com/xesdoog/object-spawner):**
   - Fixed a few bugs in the main script and added the ability to attach objects to your vehicle.
