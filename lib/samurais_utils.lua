@@ -850,6 +850,7 @@ Game = {
   ---@param ped integer
   getPedVehicleSeat = function(ped)
     if PED.IS_PED_SITTING_IN_ANY_VEHICLE(ped) then
+      ---@type integer
       local pedSeat
       local vehicle  = PED.GET_VEHICLE_PED_IS_IN(ped, false)
       local maxSeats = VEHICLE.GET_VEHICLE_MODEL_NUMBER_OF_SEATS(ENTITY.GET_ENTITY_MODEL(vehicle))
@@ -1065,8 +1066,8 @@ Game = {
       return retVal
     end,
 
-    -- Returns the class of the vehicle localPlayer is sitting in.
-    class = function()
+    -- Returns the class of the specified vehicle.
+    class = function(vehicle)
       ---@type string
       local retVal
       local class_T = {
@@ -1094,15 +1095,11 @@ Game = {
         { class = 21, name = "Trains" },
       }
 
-      if not Game.Self.isOnFoot() then
-        for _, v in ipairs(class_T) do
-          if VEHICLE.GET_VEHICLE_CLASS(self.get_veh()) == v.class then
-            retVal = v.name
-            break
-          end
+      for _, v in ipairs(class_T) do
+        if VEHICLE.GET_VEHICLE_CLASS(vehicle) == v.class then
+          retVal = v.name
+          break
         end
-      else
-        retVal = ""
       end
       return retVal
     end,

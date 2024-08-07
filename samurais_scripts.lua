@@ -7,7 +7,7 @@ require('data/objects')
 require('data/actions')
 require('data/refs')
 
-SCRIPT_VERSION  = '0.7-a' -- v0.7-alpha
+SCRIPT_VERSION  = '0.8-a' -- v0.8-alpha
 TARGET_BUILD    = '3274'  -- Only YimResupplier needs a version check.
 TARGET_VERSION  = '1.69'
 CURRENT_BUILD   = Game.GetBuildNumber()
@@ -156,16 +156,19 @@ started_popSound2   = false
 customSmokeCol      = false
 pedGrabber          = false
 ped_grabbed         = false
+vehicleGrabber      = false
+vehicle_grabbed     = false
 carpool             = false
 show_npc_veh_ctrls  = false
 stop_searching      = false
 hijack_started      = false
 sound_btn_off       = false
 is_drifting         = false
-missileDefence      = false
+missiledefense      = false
 flag                = 0
 grp_anim_index      = 0
 attached_ped        = 0
+grabbed_veh         = 0
 thisVeh             = 0
 anim_index          = 0
 scenario_index      = 0
@@ -242,9 +245,11 @@ function play_music(musicSwitch, station)
       end
       mp:sleep(500)
       if ENTITY.DOES_ENTITY_EXIST(pBus) then
+        entities.take_control_of(pBus, 300)
         if Game.requestModel(dummy_model) then
           dummyDriver = PED.CREATE_PED("PED_TYPE_CIVMALE", dummy_model, myPos.x, myPos.y, (myPos.z + 40), 0, true, false)
           if ENTITY.DOES_ENTITY_EXIST(dummyDriver) then
+            entities.take_control_of(dummyDriver, 300)
             ENTITY.SET_ENTITY_ALPHA(dummyDriver, 0.0, false)
             PED.SET_PED_INTO_VEHICLE(dummyDriver, pBus, -1)
             PED.SET_PED_CONFIG_FLAG(dummyDriver, 402, true)
@@ -294,7 +299,7 @@ end
 
 function dummyCop()
   script.run_in_fiber(function(dcop)
-    if current_vehicle ~= 0 then
+    if current_vehicle ~= nil and current_vehicle ~= 0 then
       local polhash, veh_bone1, veh_bone2, attach_mode
       if is_car then
         if VEHICLE.DOES_VEHICLE_HAVE_ROOF(current_vehicle) and not VEHICLE.IS_VEHICLE_A_CONVERTIBLE(current_vehicle) then
@@ -316,6 +321,7 @@ function dummyCop()
         ENTITY.SET_ENTITY_INVINCIBLE(dummyCopCar, true)
       end
       if ENTITY.DOES_ENTITY_EXIST(dummyCopCar) then
+        entities.take_control_of(dummyCopCar, 300)
         local boneidx1 = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(dummyCopCar, veh_bone1)
         local boneidx2 = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(self.get_veh(), veh_bone2)
         VEHICLE.SET_VEHICLE_LIGHTS(dummyCopCar, 1)
@@ -377,7 +383,6 @@ function checkDriftCollision()
   local text        = ""
   local entity      = ENTITY.GET_LAST_ENTITY_HIT_BY_ENTITY_(self.get_veh())
   local entity_type = Game.getEntityTypeString(entity)
-  local player_pos  = self.get_pos()
   if ENTITY.IS_ENTITY_A_PED(entity) then
     text = "Hit and run"
     crashed = false
@@ -385,10 +390,8 @@ function checkDriftCollision()
     crashed = true
   elseif entity_type == "Object" then
     -- ENTITY.GET_ENTITY_MODEL(entity) ~= 3300474446 and ENTITY.GET_ENTITY_MODEL(entity) ~= 3231494328 and ENTITY.GET_ENTITY_MODEL(entity) ~= 3008087081 and ENTITY.GET_ENTITY_MODEL(entity) ~= 874602658
-    if not ENTITY.HAS_ENTITY_BEEN_DAMAGED_BY_ENTITY(self.get_veh(), entity) and ENTITY.GET_ENTITY_SPEED(self.get_veh()) > 3 then
+    if ENTITY.GET_ENTITY_SPEED(self.get_veh()) > 5 then
       text = "Wrecking ball"
-      log.info('fine')
-      log.info(tostring(ENTITY.GET_ENTITY_HEALTH(entity)))
       crashed = false
     else
       crashed = true
@@ -781,7 +784,7 @@ Actions:add_imgui(function()
             anim_music = false
           end
         end
-        playSelected(self.get_ped(), selfprop1, selfprop2, selfloopedFX, selfSexPed, boneIndex, coords, heading, forwardX,
+        playSelected(self.get_ped(), flag, selfprop1, selfprop2, selfloopedFX, selfSexPed, boneIndex, coords, heading, forwardX,
           forwardY, bonecoords, "self", plyrProps, selfPTFX)
         is_playing_anim = true
       else
@@ -793,9 +796,10 @@ Actions:add_imgui(function()
     if ImGui.Button(translateLabel("generic_stop_btn") .. "##anim") then
       if is_playing_anim then
         UI.widgetSound("Cancel")
-        if PED.IS_PED_IN_ANY_VEHICLE(self.get_ped(), false) then
+        if PED.IS_PED_SITTING_IN_ANY_VEHICLE(self.get_ped()) then
+          local veh    = PED.GET_VEHICLE_PED_IS_IN(self.get_ped(), false)
+          local mySeat = Game.getPedVehicleSeat(self.get_ped())
           cleanup()
-          local mySeat Game.getPedVehicleSeat(self.get_ped())
           PED.SET_PED_INTO_VEHICLE(self.get_ped(), self.get_veh(), mySeat)
         else
           cleanup()
@@ -1118,7 +1122,7 @@ Actions:add_imgui(function()
             else
               flag = info.flag
             end
-            playSelected(v, npcprop1, npcprop2, npcloopedFX, npcSexPed, npcBoneIndex, npcCoords, npcHeading, npcForwardX,
+            playSelected(v, flag, npcprop1, npcprop2, npcloopedFX, npcSexPed, npcBoneIndex, npcCoords, npcHeading, npcForwardX,
               npcForwardY, npcBboneCoords, "cunt", npcProps, npcPTFX)
           end
         end
@@ -1406,6 +1410,9 @@ weapon_tab:add_imgui(function()
   if runawayUsed then
     lua_cfg.save("runaway", runaway)
     UI.widgetSound("Nav2")
+    if runaway then
+      publicEnemy = false
+    end
   end
 
   laserSight, laserSightUSed = ImGui.Checkbox(translateLabel("laserSightCB"), laserSight, true)
@@ -1593,7 +1600,7 @@ vehicle_tab:add_imgui(function()
   local manufacturer  = Game.Vehicle.manufacturer()
   local vehicle_name  = Game.Vehicle.name()
   local full_veh_name = manufacturer .. " " .. vehicle_name
-  local vehicle_class = Game.Vehicle.class()
+  local vehicle_class = Game.Vehicle.class(current_vehicle)
   if PED.IS_PED_IN_ANY_VEHICLE(self.get_ped(), true) then
     if validModel then
       ImGui.Text(full_veh_name .. "   (" .. vehicle_class .. ")")
@@ -1698,17 +1705,16 @@ vehicle_tab:add_imgui(function()
       lua_cfg.save("limitVehOptions", limitVehOptions)
     end
 
-    ImGui.SameLine(); ImGui.Dummy(7, 1); ImGui.SameLine(); missileDefence, mdefUsed = ImGui.Checkbox("Missile Defence", missileDefence, true)
+    ImGui.SameLine(); ImGui.Dummy(7, 1); ImGui.SameLine(); missiledefense, mdefUsed = ImGui.Checkbox("Missile Defense", missiledefense, true)
     UI.toolTip(false,
-    "Inrercepts any missiles near your vehicle including those fired by you.\nAs a security measure, this option will not be saved for the next script load. You have to manually enable it each time.\n\nWARNING: If you activate this option while in a weaponized vehicle, DO NOT FIRE YOUR MISSILES.")
-    if mdefUsed then
-      UI.widgetSound("Nav2")
+    "Inrercepts any missiles near your vehicle including those fired by you.\nAs a security measure, this option will not be saved for the next script load. \nNOTE: If you fire any missiles from or near your vehicle, the defense will render them inert.")
+    if missiledefense and mdefUsed then
+      UI.widgetSound("Radar")
+      gui.show_success("Samurais Scripts", "Missile defense activated! Please note that firing any missiles from or near your vehicle will render them inert.")
     end
-    if missileDefence and mdefUsed then
-      gui.show_warning("Samurais Scripts", "Missile Defence activated! Please do not fire any missiles from or near your vehicle, otherwise the defence will backfire on you.")
-    end
-    if not missileDefence and mdefUsed then
-      gui.show_message("Samurais Scripts", "Missile Defence deactivated.")
+    if not missiledefense and mdefUsed then
+      UI.widgetSound("Delete")
+      gui.show_message("Samurais Scripts", "Missile defense deactivated.")
     end
 
     launchCtrl, lctrlUsed = ImGui.Checkbox("Launch Control", launchCtrl, true)
@@ -2323,6 +2329,59 @@ local function attachPed(ped)
   return ped_grabbed, attached_ped
 end
 
+local function attachVeh(veh)
+  local attach_X
+  local veh_class = Game.Vehicle.class(veh)
+  local myBone = PED.GET_PED_BONE_INDEX(self.get_ped(), 6286)
+  script.run_in_fiber(function()
+    if not vehicle_grabbed and not VEHICLE.IS_THIS_MODEL_A_TRAIN(veh_model) then
+      if entities.take_control_of(veh, 300) then
+        if is_handsUp then
+          TASK.CLEAR_PED_TASKS(self.get_ped())
+          is_handsUp = false
+        end
+        if is_playing_anim then
+          if anim_music then
+            play_music("stop")
+            anim_music = false
+          end
+          cleanup()
+          is_playing_anim = false
+        end
+        if is_playing_scenario then
+          TASK.CLEAR_PED_TASKS(self.get_ped())
+          if ENTITY.DOES_ENTITY_EXIST(bbq) then
+            ENTITY.DELETE_ENTITY(bbq)
+          end
+          is_playing_scenario = false
+        end
+        if isCrouched then
+          PED.RESET_PED_MOVEMENT_CLIPSET(self.get_ped(), 0.3)
+          isCrouched = false
+        end
+        if veh_class == "Commercial" or veh_class == "Industrial" or veh_class == "Utility" then
+          if VEHICLE.IS_BIG_VEHICLE(veh) then
+            attach_X = 2.1
+          else
+            attach_X = 1.9
+          end
+        elseif veh_class == "Cycles" or veh_class == "Motorcycles" then
+          attach_X = 0.4
+        else
+          attach_X = 1.17
+        end
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(veh, self.get_ped(), myBone, attach_X, 0.0, 0.0, 0.0, 0.0, -16.0, false, true,
+          false, true, 1, true, 1)
+        vehicle_grabbed = true
+        grabbed_veh     = veh
+      else
+        gui.show_error("Samurai's Scripts", translateLabel("failedToCtrlNPC"))
+      end
+    end
+  end)
+  return vehicle_grabbed, grabbed_veh
+end
+
 local function displayHijackAnims()
   local groupAnimNames = {}
   for _, anim in ipairs(hijackOptions) do
@@ -2338,8 +2397,31 @@ world_tab:add_imgui(function()
     UI.widgetSound("Nav2")
   end
 
+  if pedGrabber and pgUsed then
+    vehicleGrabber = false
+  end
+
   if pedGrabber then
     ImGui.Text(translateLabel("Throw Force"))
+    ImGui.PushItemWidth(220)
+    pedthrowF, ptfUsed = ImGui.SliderInt("##throw_force", pedthrowF, 10, 100, "%d", 0)
+    ImGui.PopItemWidth()
+    if ptfUsed then
+      UI.widgetSound("Nav")
+    end
+  end
+
+  vehicleGrabber, vgUsed = ImGui.Checkbox("Vehicle Grabber", vehicleGrabber, true)
+  UI.helpMarker(false, "Same as 'Ped Grabber' but with vehicles.")
+  if vgUsed then
+    UI.widgetSound("Nav2")
+  end
+  if vehicleGrabber and vgUsed then
+    pedGrabber = false
+  end
+
+  if vehicleGrabber then
+    ImGui.Text("Throw Force")
     ImGui.PushItemWidth(220)
     pedthrowF, ptfUsed = ImGui.SliderInt("##throw_force", pedthrowF, 10, 100, "%d", 0)
     ImGui.PopItemWidth()
@@ -2449,11 +2531,39 @@ world_tab:add_imgui(function()
       end
     end
 
-    kamikazeDrivers, kamikazeDriversUsed = ImGui.Checkbox("Kamikaze Drivers", kamikazeDrivers, true)
-    if riotUsed then
+    kamikazeDrivers, kdUsed = ImGui.Checkbox("Kamikaze Drivers", kamikazeDrivers, true)
+    if kdUsed then
       UI.widgetSound("Nav2")
+      if kamikazeDrivers then
+        publicEnemy = false
+      end
     end
     UI.helpMarker(false, translateLabel("kamikazeDrivers_tt"))
+
+    publicEnemy, peUsed = ImGui.Checkbox("Public Enemy N°1", publicEnemy, true)
+    if peUsed then
+      UI.widgetSound("Nav2")
+      if publicEnemy then
+        kamikazeDrivers = false
+        runaway = false
+        script.run_in_fiber(function(puben)
+          default_wanted_lvl = PLAYER.GET_MAX_WANTED_LEVEL()
+        end)
+      else
+        script.run_in_fiber(function()
+          PLAYER.SET_MAX_WANTED_LEVEL(default_wanted_lvl)
+          PLAYER.SET_POLICE_IGNORE_PLAYER(self.get_id(), false)
+          for _, ped in ipairs(entities.get_all_peds_as_handles()) do
+            if PED.IS_PED_IN_COMBAT(ped, self.get_ped()) then
+              TASK.CLEAR_PED_TASKS_IMMEDIATELY(ped)
+              TASK.TASK_SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped, false)
+              PED.SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped, false)
+            end
+          end
+        end)
+      end
+    end
+    UI.helpMarker(false, "Everyone is out to get you")
 end)
 
 object_spawner = world_tab:add_tab("Object Spawner")
@@ -3333,6 +3443,11 @@ local function SS_handle_events()
     TASK.CLEAR_PED_TASKS_IMMEDIATELY(self.get_ped())
   end
 
+  if grabbed_veh ~= nil and grabbed_veh ~= 0 then
+    ENTITY.DETACH_ENTITY(grabbed_veh, true, true)
+    TASK.CLEAR_PED_TASKS_IMMEDIATELY(self.get_ped())
+  end
+
   if attached_vehicle ~= nil and attached_vehicle ~= 0 then
     local modelHash         = ENTITY.GET_ENTITY_MODEL(attached_vehicle)
     local attachedVehicle   = ENTITY.GET_ENTITY_OF_TYPE_ATTACHED_TO_ENTITY(PED.GET_VEHICLE_PED_IS_USING(self.get_ped()),
@@ -3459,8 +3574,8 @@ end
 
 local function var_reset()
   isCrouched = false; is_handsUp = false; anim_music = false; is_playing_radio = false; npc_blips = {}; spawned_npcs = {}; plyrProps = {}; npcProps = {}; selfPTFX = {}; npcPTFX = {}; curr_playing_anim = {}; is_playing_anim = false; is_playing_scenario = false; tab1Sound = true; tab2Sound = true; tab3Sound = true; actions_switch = 0; actions_search =
-  ""; currentMvmt = ""; currentStrf = ""; currentWmvmt = ""; aimBool = false; HashGrabber = false; drew_laser = false; Entity = 0; laserPtfx_T = {}; sound_btn_off = false; tire_smoke = false; purge_started = false; nos_started = false; twostep_started = false; open_sounds_window = false; started_lct = false; launch_active = false; started_popSound = false; started_popSound2 = false; timerA = 0; timerB = 0; lastVeh = 0; defaultXenon = 0; vehSound_index = 0; smokePtfx_t = {}; nosptfx_t = {}; purgePtfx_t = {}; lctPtfx_t = {}; popSounds_t = {}; popsPtfx_t = {}; attached_vehicle = 0; tow_xAxis = 0.0; tow_yAxis = 0.0; tow_zAxis = 0.0; pedGrabber = false; ped_grabbed = false; carpool = false; show_npc_veh_ctrls = false; stop_searching = false; hijack_started = false; grp_anim_index = 0; attached_ped = 0; thisVeh = 0; pedthrowF = 10; propName =
-  ""; invalidType = ""; preview = false; is_drifting = false; previewLoop = false; activeX = false; activeY = false; activeZ = false; rotX = false; rotY = false; rotZ = false; attached = false; attachToSelf = false; attachToVeh = false; previewStarted = false; isChanged = false; prop = 0; propHash = 0; os_switch = 0; prop_index = 0; objects_index = 0; spawned_index = 0; selectedObject = 0; selected_bone = 0; previewEntity = 0; currentObjectPreview = 0; attached_index = 0; zOffset = 0; spawned_props = {}; spawnedNames = {}; filteredSpawnNames = {}; selfAttachments = {}; selfAttachNames = {}; vehAttachments = {}; vehAttachNames = {}; filteredVehAttachNames = {}; filteredAttachNames = {}; missileDefence = false;
+  ""; currentMvmt = ""; currentStrf = ""; currentWmvmt = ""; aimBool = false; HashGrabber = false; drew_laser = false; Entity = 0; laserPtfx_T = {}; sound_btn_off = false; tire_smoke = false; purge_started = false; nos_started = false; twostep_started = false; open_sounds_window = false; started_lct = false; launch_active = false; started_popSound = false; started_popSound2 = false; timerA = 0; timerB = 0; lastVeh = 0; defaultXenon = 0; vehSound_index = 0; smokePtfx_t = {}; nosptfx_t = {}; purgePtfx_t = {}; lctPtfx_t = {}; popSounds_t = {}; popsPtfx_t = {}; attached_vehicle = 0; tow_xAxis = 0.0; tow_yAxis = 0.0; tow_zAxis = 0.0; pedGrabber = false; ped_grabbed = false;; vehicleGrabber = false; vehicle_grabbed = false; carpool = false; show_npc_veh_ctrls = false; stop_searching = false; hijack_started = false; grp_anim_index = 0; attached_ped = 0; grabbed_veh = 0; thisVeh = 0; pedthrowF = 10; propName =
+  ""; invalidType = ""; preview = false; is_drifting = false; previewLoop = false; activeX = false; activeY = false; activeZ = false; rotX = false; rotY = false; rotZ = false; attached = false; attachToSelf = false; attachToVeh = false; previewStarted = false; isChanged = false; prop = 0; propHash = 0; os_switch = 0; prop_index = 0; objects_index = 0; spawned_index = 0; selectedObject = 0; selected_bone = 0; previewEntity = 0; currentObjectPreview = 0; attached_index = 0; zOffset = 0; spawned_props = {}; spawnedNames = {}; filteredSpawnNames = {}; selfAttachments = {}; selfAttachNames = {}; vehAttachments = {}; vehAttachNames = {}; filteredVehAttachNames = {}; filteredAttachNames = {}; missiledefense = false;
 end
 
 
@@ -3547,7 +3662,7 @@ script.register_looped("GameInput", function()
     end
   end
 
-  if pedGrabber and Game.Self.isOnFoot() and not WEAPON.IS_PED_ARMED(self.get_ped(), 7) then
+  if (pedGrabber or vehicleGrabber) and Game.Self.isOnFoot() and not WEAPON.IS_PED_ARMED(self.get_ped(), 7) then
     PAD.DISABLE_CONTROL_ACTION(0, 24, 1)
     PAD.DISABLE_CONTROL_ACTION(0, 25, 1)
     PAD.DISABLE_CONTROL_ACTION(0, 50, 1)
@@ -3555,7 +3670,7 @@ script.register_looped("GameInput", function()
     PAD.DISABLE_CONTROL_ACTION(0, 91, 1)
     PAD.DISABLE_CONTROL_ACTION(0, 257, 1)
   end
-  if ped_grabbed then
+  if ped_grabbed or vehicle_grabbed then
     PAD.DISABLE_CONTROL_ACTION(0, 24, 1)
     PAD.DISABLE_CONTROL_ACTION(0, 25, 1)
     PAD.DISABLE_CONTROL_ACTION(0, 50, 1)
@@ -3637,8 +3752,8 @@ script.register_looped("self features", function(script)
     end
   end
 
-  -- Replace Point Action
-  if Game.Self.isOnFoot() then
+  -- Replace 'Point At' Action
+  if Game.Self.isOnFoot() or is_car then
     if replacePointAct and not ped_grabbed and not is_playing_anim and not is_playing_scenario and not is_typing then
       if not is_handsUp and PAD.IS_DISABLED_CONTROL_PRESSED(0, 29) then
         script:sleep(200)
@@ -3650,20 +3765,27 @@ script.register_looped("self features", function(script)
         is_handsUp = true
       end
     end
-    if is_handsUp and PAD.IS_DISABLED_CONTROL_PRESSED(0, 29) then
-      script:sleep(200)
+  end
+
+  if is_handsUp and PAD.IS_DISABLED_CONTROL_PRESSED(0, 29) then
+    script:sleep(200)
+    TASK.CLEAR_PED_TASKS(self.get_ped())
+    script:sleep(500)
+    is_handsUp = false
+  end
+  if is_handsUp then
+    if WEAPON.IS_PED_ARMED(self.get_ped(), 7) then
+      if PAD.IS_CONTROL_PRESSED(0, 24) then
+        TASK.CLEAR_PED_TASKS(self.get_ped())
+        is_handsUp = false
+      end
+    end
+    if PLAYER.IS_PLAYER_FREE_AIMING(self.get_id()) then
       TASK.CLEAR_PED_TASKS(self.get_ped())
-      script:sleep(500)
       is_handsUp = false
     end
-    if is_handsUp then
-      if WEAPON.IS_PED_ARMED(self.get_ped(), 7) then
-        if PAD.IS_CONTROL_PRESSED(0, 24) then
-          TASK.CLEAR_PED_TASKS(self.get_ped())
-          is_handsUp = false
-        end
-      end
-      if PLAYER.IS_PLAYER_FREE_AIMING(self.get_id()) then
+    if not Game.Self.isOnFoot() then
+      if PED.IS_PED_SITTING_IN_ANY_VEHICLE(self.get_ped()) and not is_car then
         TASK.CLEAR_PED_TASKS(self.get_ped())
         is_handsUp = false
       end
@@ -3944,7 +4066,7 @@ script.register_looped("animation hotkey", function(script)
       script:sleep(400)
     end
     if PAD.IS_CONTROL_PRESSED(0, 256) then
-      if not ped_grabbed then
+      if not ped_grabbed and not vehicle_grabbed then
         if not is_playing_anim then
           if info ~= nil then
             local mycoords     = ENTITY.GET_ENTITY_COORDS(self.get_ped(), false)
@@ -3958,7 +4080,7 @@ script.register_looped("animation hotkey", function(script)
             else
               flag = info.flag
             end
-            playSelected(self.get_ped(), selfprop1, selfprop2, selfloopedFX, selfSexPed, myboneIndex, mycoords, myheading,
+            playSelected(self.get_ped(), flag, selfprop1, selfprop2, selfloopedFX, selfSexPed, myboneIndex, mycoords, myheading,
               myforwardX, myforwardY, mybonecoords, "self", plyrProps, selfPTFX)
               curr_playing_anim = {curr_dict = info.dict, curr_anim = info.anim, curr_flag = flag, curr_name = info.name}
               is_playing_anim = true
@@ -4044,7 +4166,7 @@ script.register_looped("anim shortcut", function(animsc)
         animsc:sleep(100)
       end
       if Game.requestAnimDict(shortcut_anim.dict) then
-        playSelected(self.get_ped(), selfprop1, selfprop2, selfloopedFX, selfSexPed, myboneIndex, mycoords, myheading,
+        playSelected(self.get_ped(), shortcut_anim.flag, selfprop1, selfprop2, selfloopedFX, selfSexPed, myboneIndex, mycoords, myheading,
           myforwardX, myforwardY, mybonecoords, "self", plyrProps, selfPTFX)
         curr_playing_anim = {curr_dict = shortcut_anim.dict, curr_anim = shortcut_anim.anim, curr_flag = shortcut_anim.flag}
         if lua_Fn.str_contains(shortcut_anim.name, "DJ") then
@@ -4338,7 +4460,6 @@ script.register_looped("TDFT", function(script)
       end
     end
   else
-    current_vehicle = 0
     if started_lct then
       started_lct = false
     end
@@ -4399,7 +4520,7 @@ script.register_looped("LCTRL", function(lct)
       end
     end
     local notif_sound, notif_ref
-    if NETWORK.NETWORK_IS_SESSION_ACTIVE() then
+    if Game.isOnline() then
       notif_sound, notif_ref = "SELL", "GTAO_EXEC_SECUROSERV_COMPUTER_SOUNDS"
     else
       notif_sound, notif_ref = "MP_5_SECOND_TIMER", "HUD_FRONTEND_DEFAULT_SOUNDSET"
@@ -4472,16 +4593,16 @@ script.register_looped("MISC Vehicle Options", function(mvo)
       end
     end
   end
-  if flappyDoors and is_car then
-    local lastveh = onVehEnter()
-    local n_doors = VEHICLE.GET_NUMBER_OF_VEHICLE_DOORS(lastveh)
+
+  if flappyDoors and current_vehicle ~= 0 and is_car then
+    local n_doors = VEHICLE.GET_NUMBER_OF_VEHICLE_DOORS(current_vehicle)
     if n_doors > 0 then
       for i = -1, n_doors + 1 do
-        if VEHICLE.GET_IS_DOOR_VALID(lastveh, i) then
+        if VEHICLE.GET_IS_DOOR_VALID(current_vehicle, i) then
           mvo:sleep(180)
-          VEHICLE.SET_VEHICLE_DOOR_OPEN(lastveh, i, false, false)
+          VEHICLE.SET_VEHICLE_DOOR_OPEN(current_vehicle, i, false, false)
           mvo:sleep(180)
-          VEHICLE.SET_VEHICLE_DOOR_SHUT(lastveh, i, false)
+          VEHICLE.SET_VEHICLE_DOOR_SHUT(current_vehicle, i, false)
         end
       end
     end
@@ -4740,16 +4861,14 @@ end)
 
 -- drift minigame (WIP)
 script.register_looped("straight line counter", function()
-  if driftMinigame then
-    if driftMode or DriftTires then
-      if current_vehicle ~= 0 then
-        local vehSpeedVec = ENTITY.GET_ENTITY_SPEED_VECTOR(current_vehicle, true)
-        if not VEHICLE.IS_VEHICLE_STOPPED(current_vehicle) then
-          if vehSpeedVec.x ~= 0 and vehSpeedVec.x < 2 or vehSpeedVec.x > - 2 then
-            straight_counter = straight_counter + 1
-          else
-            straight_counter = 0
-          end
+  if driftMode or DriftTires then
+    if Game.Self.isDriving() and is_drifting and driftMinigame then
+      local vehSpeedVec = ENTITY.GET_ENTITY_SPEED_VECTOR(current_vehicle, true)
+      if not VEHICLE.IS_VEHICLE_STOPPED(current_vehicle) then
+        if vehSpeedVec.x ~= 0 and vehSpeedVec.x < 2 or vehSpeedVec.x > - 2 then
+          straight_counter = straight_counter + 1
+        else
+          straight_counter = 0
         end
       end
     end
@@ -4874,12 +4993,12 @@ script.register_looped("extra points checker", function(epc)
       if not ENTITY.HAS_ENTITY_COLLIDED_WITH_ANYTHING(current_vehicle) then
         local vehicle_height = ENTITY.GET_ENTITY_HEIGHT_ABOVE_GROUND(current_vehicle)
         if vehicle_height > 0.8 and not VEHICLE.IS_VEHICLE_ON_ALL_WHEELS(current_vehicle) then
-          if vehicle_height >= 1.5 and vehicle_height <= 6 and not lua_Fn.str_contains(drift_extra_text, "Big Air!") then
+          if vehicle_height >= 1.1 and vehicle_height <= 5 and not lua_Fn.str_contains(drift_extra_text, "Big Air!") and drift_streak_text ~= 'Streak Lost!' then
             drift_extra_pts  = drift_extra_pts + 1
             drift_points     = drift_points + drift_extra_pts
             drift_extra_text = "Air  +" .. drift_extra_pts .. " pts"
             epc:sleep(100)
-          elseif vehicle_height > 6 then
+          elseif vehicle_height > 5 and drift_streak_text ~= 'Streak Lost!' then
             drift_extra_pts  = drift_extra_pts + 5
             drift_points     = drift_points + drift_extra_pts
             drift_extra_text = "Big Air!  +" .. drift_extra_pts .. " pts"
@@ -4893,7 +5012,7 @@ script.register_looped("extra points checker", function(epc)
         end
       else
         local bool, txt = checkDriftCollision()
-        if not bool then
+        if not bool and drift_streak_text ~= 'Streak Lost!' then
           drift_extra_pts  = drift_extra_pts + 1
           drift_points     = drift_points + drift_extra_pts
           drift_extra_text = txt .. "  +" .. drift_extra_pts .. " pts"
@@ -4947,19 +5066,27 @@ script.register_looped("drift points", function()
   end
 end)
 
--- Missile Defence
-script.register_looped("missile defence", function(md)
-  if missileDefence and lastVeh ~= 0 then
-    for _, p in ipairs(projectile_types_T) do
-      local vehPos = ENTITY.GET_ENTITY_COORDS(lastVeh, true)
+-- Missile defense
+script.register_looped("missile defense", function(md)
+  if missiledefense and current_vehicle ~= 0 then
+    local missile
+    local vehPos = ENTITY.GET_ENTITY_COORDS(current_vehicle, true)
+    for _, p in pairs(projectile_types_T) do
       if MISC.IS_PROJECTILE_TYPE_IN_AREA(vehPos.x + 500, vehPos.y + 500, vehPos.z + 100, vehPos.x - 500, vehPos.y - 500, vehPos.z - 100, p, false) then
-        repeat
-          md:sleep(1)
-          vehPos = ENTITY.GET_ENTITY_COORDS(lastVeh, true)
-        until MISC.IS_PROJECTILE_TYPE_IN_AREA(vehPos.x + 20, vehPos.y + 20, vehPos.z + 100, vehPos.x - 20, vehPos.y - 20, vehPos.z - 100, p, false)
-        log.info('Detected missile heading our way! Proceeding to destroy it.')
-        WEAPON.REMOVE_ALL_PROJECTILES_OF_TYPE(p, true)
-        return
+        missile = p
+        -- log.info(tostring(missile))
+        break
+      end
+    end
+    if missile ~= nil then
+      if MISC.IS_PROJECTILE_TYPE_IN_AREA(vehPos.x + 20, vehPos.y + 20, vehPos.z + 100, vehPos.x - 20, vehPos.y - 20, vehPos.z - 100, missile, false) then
+        if not MISC.IS_PROJECTILE_TYPE_IN_AREA(vehPos.x + 10, vehPos.y + 10, vehPos.z + 50, vehPos.x - 10, vehPos.y - 10, vehPos.z - 50, missile, false) then
+          log.info('Detected missile heading our way! Proceeding to destroy it.')
+          WEAPON.REMOVE_ALL_PROJECTILES_OF_TYPE(missile, true)
+        else
+          log.warning('Detected missile very close to our vehicle! Proceeding to silently remove it.')
+          WEAPON.REMOVE_ALL_PROJECTILES_OF_TYPE(missile, false)
+        end
       end
     end
     md:yield()
@@ -5224,11 +5351,12 @@ end)
 
 -- World
 script.register_looped("Ped Grabber", function(pg)
-  if pedGrabber then
+  if pedGrabber and not vehicleGrabber then
     if Game.Self.isOnFoot() then
       local nearestPed = Game.getClosestPed(self.get_ped(), 10)
+      local myGroup    = PED.GET_PED_GROUP_INDEX(self.get_ped())
       if not ped_grabbed and nearestPed ~= 0 then
-        if PED.IS_PED_ON_FOOT(nearestPed) and not PED.IS_PED_A_PLAYER(nearestPed) then
+        if PED.IS_PED_ON_FOOT(nearestPed) and not PED.IS_PED_A_PLAYER(nearestPed) and not PED.IS_PED_GROUP_MEMBER(nearestPed, myGroup) then
           if PAD.IS_DISABLED_CONTROL_PRESSED(0, 24) or PAD.IS_DISABLED_CONTROL_PRESSED(0, 257) then
             ped_grabbed, attached_ped = attachPed(nearestPed)
             pg:sleep(200)
@@ -5279,6 +5407,56 @@ script.register_looped("Ped Grabber", function(pg)
     end
   end
   pg:yield()
+end)
+
+script.register_looped("Vehicle Grabber", function(vg)
+  if vehicleGrabber and not pedGrabber then
+    if Game.Self.isOnFoot() then
+      local nearestVeh = Game.getClosestVehicle(self.get_ped(), 10)
+      if not vehicle_grabbed and nearestVeh ~= 0 then
+        if PAD.IS_DISABLED_CONTROL_PRESSED(0, 24) or PAD.IS_DISABLED_CONTROL_PRESSED(0, 257) then
+          vehicle_grabbed, grabbed_veh = attachVeh(nearestVeh)
+          vg:sleep(200)
+          if grabbed_veh ~= 0 then
+            playHandsUp()
+            PED.SET_PED_CAN_SWITCH_WEAPON(self.get_ped(), false)
+            vehicle_grabbed = true
+          end
+        end
+      end
+      if vehicle_grabbed and grabbed_veh ~= 0 then
+        if not ENTITY.IS_ENTITY_PLAYING_ANIM(self.get_ped(), "mp_missheist_countrybank@lift_hands", "lift_hands_in_air_outro", 3) then
+          playHandsUp()
+        end
+        if PED.IS_PED_RAGDOLL(self.get_ped()) then
+          repeat
+            vg:sleep(100)
+          until PED.IS_PED_RAGDOLL(self.get_ped()) == false
+          playHandsUp()
+        end
+        if PED.IS_PED_USING_ACTION_MODE(self.get_ped()) then
+          repeat
+            vg:sleep(100)
+          until PED.IS_PED_USING_ACTION_MODE(self.get_ped()) == false
+          playHandsUp()
+        end
+        if PAD.IS_DISABLED_CONTROL_PRESSED(0, 25) then
+          if PAD.IS_DISABLED_CONTROL_PRESSED(0, 24) or PAD.IS_DISABLED_CONTROL_PRESSED(0, 257) then
+            local myFwdX = Game.getForwardX(self.get_ped())
+            local myFwdY = Game.getForwardY(self.get_ped())
+            ENTITY.DETACH_ENTITY(grabbed_veh, true, true)
+            ENTITY.SET_ENTITY_VELOCITY(grabbed_veh, (pedthrowF * myFwdX), (pedthrowF * myFwdY), 0)
+            TASK.CLEAR_PED_TASKS(self.get_ped())
+            PED.SET_PED_CAN_SWITCH_WEAPON(self.get_ped(), true)
+            vg:sleep(200)
+            grabbed_veh     = 0
+            vehicle_grabbed = false
+          end
+        end
+      end
+    end
+  end
+  vg:yield()
 end)
 
 script.register_looped("Carpool", function(cp)
@@ -5436,8 +5614,9 @@ end)
 script.register_looped("KamikazeDrivers", function (rd)
   if kamikazeDrivers and Game.Self.isAlive() then
     local gta_peds = entities.get_all_peds_as_handles()
+    local myGroup  = PED.GET_PED_GROUP_INDEX(self.get_ped())
     for _, ped in pairs(gta_peds) do
-      if ped ~= self.get_ped() and not PED.IS_PED_A_PLAYER(ped) then
+      if ped ~= self.get_ped() and not PED.IS_PED_A_PLAYER(ped) and not PED.IS_PED_GROUP_MEMBER(ped, myGroup) then
         if PED.IS_PED_SITTING_IN_ANY_VEHICLE(ped) then
           local ped_veh = PED.GET_VEHICLE_PED_IS_USING(ped)
           if VEHICLE.GET_IS_VEHICLE_ENGINE_RUNNING(ped_veh) then
@@ -5456,6 +5635,59 @@ script.register_looped("KamikazeDrivers", function (rd)
     end
   end
   rd:yield()
+end)
+
+script.register_looped("Public Enemy", function (pe)
+  if publicEnemy and Game.Self.isAlive() then
+    local myGroup  = PED.GET_PED_GROUP_INDEX(self.get_ped())
+    local gta_peds = entities.get_all_peds_as_handles()
+    local combat_attributes_T = {
+      {id = 5,  bool = true},
+      {id = 13, bool = true},
+      {id = 21, bool = true},
+      {id = 28, bool = true},
+      {id = 31, bool = true},
+      {id = 38, bool = true},
+      {id = 42, bool = true},
+      {id = 46, bool = true},
+      {id = 58, bool = true},
+      {id = 71, bool = true},
+      {id = 17, bool = false},
+      {id = 63, bool = false},
+    }
+
+    local config_flags_T = {
+      {id = 118, bool = true},
+      {id = 128, bool = true},
+      {id = 140, bool = true},
+      {id = 141, bool = true},
+      {id = 208, bool = true},
+      {id = 229, bool = true},
+      {id = 286, bool = true},
+      {id = 294, bool = true},
+    }
+
+    for _, ped in pairs(gta_peds) do
+      if ped ~= self.get_ped() and not PED.IS_PED_A_PLAYER(ped) and not PED.IS_PED_GROUP_MEMBER(ped, myGroup) then
+        for _, attr in ipairs(combat_attributes_T) do
+          PED.SET_PED_COMBAT_ATTRIBUTES(ped, attr.id, attr.bool)
+        end
+        if not PED.IS_PED_IN_COMBAT(ped, self.get_ped()) then
+          PED.SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped, true)
+          for _, cflg in ipairs(config_flags_T) do
+            if not PED.GET_PED_CONFIG_FLAG(ped, cflg.id, cflg.bool) then
+              PED.SET_PED_CONFIG_FLAG(ped, cflg.id, cflg.bool)
+            end
+          end
+          TASK.TASK_SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped, true)
+          PLAYER.SET_POLICE_IGNORE_PLAYER(self.get_id(), true)
+          PLAYER.SET_MAX_WANTED_LEVEL(0)
+          TASK.TASK_COMBAT_PED(ped, self.get_ped(), 0, 16)
+        end
+      end
+    end
+  end
+  pe:yield()
 end)
 
 -- online players

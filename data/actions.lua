@@ -445,7 +445,7 @@ function cleanupNPC()
   end)
 end
 
-function playSelected(target, prop1, prop2, loopedFX, propPed, targetBone, targetCoords, targetHeading, targetForwardX,
+function playSelected(target, Flag, prop1, prop2, loopedFX, propPed, targetBone, targetCoords, targetHeading, targetForwardX,
                       targetForwardY, targetBoneCoords, ent, propTable, ptfxTable)
   if info.type == 1 then
     if ent == "self" then
@@ -469,7 +469,7 @@ function playSelected(target, prop1, prop2, loopedFX, propPed, targetBone, targe
         STREAMING.REQUEST_ANIM_DICT(info.dict)
         coroutine.yield()
       end
-      TASK.TASK_PLAY_ANIM(target, info.dict, info.anim, 4.0, -4.0, -1, flag, 1.0, false, false, false)
+      TASK.TASK_PLAY_ANIM(target, info.dict, info.anim, 4.0, -4.0, -1, Flag, 1.0, false, false, false)
       PED.SET_PED_CONFIG_FLAG(target, 179, true)
       is_playing_anim = true
     end)
@@ -488,7 +488,7 @@ function playSelected(target, prop1, prop2, loopedFX, propPed, targetBone, targe
         STREAMING.REQUEST_ANIM_DICT(info.dict)
         coroutine.yield()
       end
-      TASK.TASK_PLAY_ANIM(target, info.dict, info.anim, 4.0, -4.0, -1, flag, 0, false, false, false)
+      TASK.TASK_PLAY_ANIM(target, info.dict, info.anim, 4.0, -4.0, -1, Flag, 0, false, false, false)
       PED.SET_PED_CONFIG_FLAG(target, 179, true)
       is_playing_anim = true
       type2:sleep(info.ptfxdelay)
@@ -521,7 +521,7 @@ function playSelected(target, prop1, prop2, loopedFX, propPed, targetBone, targe
         STREAMING.REQUEST_ANIM_DICT(info.dict)
         coroutine.yield()
       end
-      TASK.TASK_PLAY_ANIM(target, info.dict, info.anim, 4.0, -4.0, -1, flag, 1.0, false, false, false)
+      TASK.TASK_PLAY_ANIM(target, info.dict, info.anim, 4.0, -4.0, -1, Flag, 1.0, false, false, false)
       PED.SET_PED_CONFIG_FLAG(target, 179, true)
       is_playing_anim = true
     end)
@@ -550,7 +550,7 @@ function playSelected(target, prop1, prop2, loopedFX, propPed, targetBone, targe
         STREAMING.REQUEST_ANIM_DICT(info.dict)
         coroutine.yield()
       end
-      TASK.TASK_PLAY_ANIM(target, info.dict, info.anim, 4.0, -4.0, -1, flag, 1.0, false, false, false)
+      TASK.TASK_PLAY_ANIM(target, info.dict, info.anim, 4.0, -4.0, -1, Flag, 1.0, false, false, false)
       PED.SET_PED_CONFIG_FLAG(target, 179, true)
       is_playing_anim = true
     end)
@@ -565,7 +565,7 @@ function playSelected(target, prop1, prop2, loopedFX, propPed, targetBone, targe
         STREAMING.REQUEST_ANIM_DICT(info.dict)
         coroutine.yield()
       end
-      TASK.TASK_PLAY_ANIM(target, info.dict, info.anim, 4.0, -4.0, -1, flag, 0.0, false, false, false)
+      TASK.TASK_PLAY_ANIM(target, info.dict, info.anim, 4.0, -4.0, -1, Flag, 0.0, false, false, false)
       PED.SET_PED_CONFIG_FLAG(target, 179, true)
       if not disableProps then
         while not STREAMING.HAS_MODEL_LOADED(info.prop1) do
@@ -620,7 +620,7 @@ function playSelected(target, prop1, prop2, loopedFX, propPed, targetBone, targe
         STREAMING.REQUEST_ANIM_DICT(info.dict)
         coroutine.yield()
       end
-      TASK.TASK_PLAY_ANIM(target, info.dict, info.anim, 4.0, -4.0, -1, flag, 1.0, false, false, false)
+      TASK.TASK_PLAY_ANIM(target, info.dict, info.anim, 4.0, -4.0, -1, Flag, 1.0, false, false, false)
       PED.SET_PED_CONFIG_FLAG(target, 179, true)
       is_playing_anim = true
     end)
@@ -648,7 +648,7 @@ function playSelected(target, prop1, prop2, loopedFX, propPed, targetBone, targe
           STREAMING.REQUEST_ANIM_DICT(info.dict2)
           coroutine.yield()
         end
-        TASK.TASK_PLAY_ANIM(propPed, info.dict2, info.anim2, 4.0, -4.0, -1, flag, 1.0, false, false, false)
+        TASK.TASK_PLAY_ANIM(propPed, info.dict2, info.anim2, 4.0, -4.0, -1, Flag, 1.0, false, false, false)
         PED.SET_PED_CONFIG_FLAG(propPed, 179, true)
         PED.SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(propPed, true)
         ENTITY.SET_ENTITY_AS_NO_LONGER_NEEDED(propPed)
@@ -657,7 +657,7 @@ function playSelected(target, prop1, prop2, loopedFX, propPed, targetBone, targe
         STREAMING.REQUEST_ANIM_DICT(info.dict)
         coroutine.yield()
       end
-      TASK.TASK_PLAY_ANIM(target, info.dict, info.anim, 4.0, -4.0, -1, flag, 1.0, false, false, false)
+      TASK.TASK_PLAY_ANIM(target, info.dict, info.anim, 4.0, -4.0, -1, Flag, 1.0, false, false, false)
       PED.SET_PED_CONFIG_FLAG(target, 179, true)
       is_playing_anim = true
     end)
@@ -672,7 +672,7 @@ function playSelected(target, prop1, prop2, loopedFX, propPed, targetBone, targe
         STREAMING.REQUEST_ANIM_DICT(info.dict)
         coroutine.yield()
       end
-      TASK.TASK_PLAY_ANIM(target, info.dict, info.anim, 4.0, -4.0, -1, flag, 0.0, false, false, false)
+      TASK.TASK_PLAY_ANIM(target, info.dict, info.anim, 4.0, -4.0, -1, Flag, 0.0, false, false, false)
       PED.SET_PED_CONFIG_FLAG(target, 179, true)
       is_playing_anim = true
     end)
