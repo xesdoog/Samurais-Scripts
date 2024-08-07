@@ -38,8 +38,12 @@ A base for a Lua script centered around roleplaying and having fun in a game ful
 
 ## TODO:
 
-- [x] Merge YimActions. ✔️ Done.
+- [x] Improve and merge [YimActions](https://github.com/xesdoog/YimActions). ✔️ Done.
+- [x] Improve and merge [TokyoDrift](https://github.com/YimMenu-Lua/TokyoDrift). ✔️ Done.
+- [x] Improve and merge [Object Spawner](https://github.com/xesdoog/object-spawner). ✔️ Done.
+- [ ] Improve and merge [YimResupplier](https://github.com/YimMenu-Lua/YimResupplier). *Probably*
 - [ ] Add new features. ⚙️ In-progress...
+- [x] Keep it unique and don't turn it into another copypasta. 🤌 **FUGGEDABOUTIT**
 
 ## Credits
 
