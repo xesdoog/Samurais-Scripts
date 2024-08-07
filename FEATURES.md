@@ -43,7 +43,7 @@
   - Renders a laser sight on your weapons when you're aiming them. The laser doesn't look perfect and doesn't travel far either. You can choose between red and green lasers.
 
 ## Vehicle:
-- **All features from [TokyoDrift](https://github.com/YimMenu-Lua/TokyoDrift) with a few improvments and additions:**
+- **All features from [TokyoDrift](https://github.com/YimMenu-Lua/TokyoDrift) with a few improvements and additions:**
   - **Better Drift Mode / Drift Tires:**
     - Increased torque while drifting so that you could pick up speed faster while drifting and hold bigger angles.
   - **Drift Smoke:**
