@@ -1707,7 +1707,7 @@ vehicle_tab:add_imgui(function()
 
     ImGui.SameLine(); ImGui.Dummy(7, 1); ImGui.SameLine(); missiledefense, mdefUsed = ImGui.Checkbox("Missile Defense", missiledefense, true)
     UI.toolTip(false,
-    "Inrercepts any missiles near your vehicle including those fired by you.\nAs a security measure, this option will not be saved for the next script load. \nNOTE: If you fire any missiles from or near your vehicle, the defense will render them inert.")
+    "Inrercepts any missiles near your vehicle including those fired by you.\10As a security measure, this option will not be saved for the next script load.\10\10NOTE: If you fire any missiles from or near your vehicle, the defense will render them inert.")
     if missiledefense and mdefUsed then
       UI.widgetSound("Radar")
       gui.show_success("Samurais Scripts", "Missile defense activated! Please note that firing any missiles from or near your vehicle will render them inert.")
@@ -3874,7 +3874,7 @@ script.register_looped("Ragdoll Loop", function(rgdl)
     end
   elseif rod then
     if PED.CAN_PED_RAGDOLL(self.get_ped()) then
-      if PAD.IS_CONTROL_PRESSED(0, 252) then
+      if PAD.IS_CONTROL_PRESSED(0, 252) and Game.getEntityModel(self.get_veh()) ~= 884483972 and Game.getEntityModel(self.get_veh()) ~= 2069146067 then
         PED.SET_PED_TO_RAGDOLL(self.get_ped(), 1500, 0, 0, false)
         if isCrouched then
           isCrouched = false
@@ -5072,19 +5072,18 @@ script.register_looped("missile defense", function(md)
     local missile
     local vehPos = ENTITY.GET_ENTITY_COORDS(current_vehicle, true)
     for _, p in pairs(projectile_types_T) do
-      if MISC.IS_PROJECTILE_TYPE_IN_AREA(vehPos.x + 500, vehPos.y + 500, vehPos.z + 100, vehPos.x - 500, vehPos.y - 500, vehPos.z - 100, p, false) then
+      if MISC.IS_PROJECTILE_TYPE_IN_AREA(vehPos.x + 500, vehPos.y + 500, vehPos.z + 100, vehPos.x - 500, vehPos.y - 500, vehPos.z - 100, p, false) and not MISC.IS_PROJECTILE_TYPE_IN_AREA(vehPos.x + 3, vehPos.y + 3, vehPos.z + 5, vehPos.x - 3, vehPos.y - 3, vehPos.z - 5, p, false) then
         missile = p
-        -- log.info(tostring(missile))
         break
       end
     end
-    if missile ~= nil then
+    if missile ~= 0 then
       if MISC.IS_PROJECTILE_TYPE_IN_AREA(vehPos.x + 20, vehPos.y + 20, vehPos.z + 100, vehPos.x - 20, vehPos.y - 20, vehPos.z - 100, missile, false) then
         if not MISC.IS_PROJECTILE_TYPE_IN_AREA(vehPos.x + 10, vehPos.y + 10, vehPos.z + 50, vehPos.x - 10, vehPos.y - 10, vehPos.z - 50, missile, false) then
-          log.info('Detected missile heading our way! Proceeding to destroy it.')
+          log.info('Detected projectile within our defense area! Proceeding to destroy it.')
           WEAPON.REMOVE_ALL_PROJECTILES_OF_TYPE(missile, true)
         else
-          log.warning('Detected missile very close to our vehicle! Proceeding to silently remove it.')
+          log.warning('Found a projectile very close to our vehicle! Proceeding to remove it.')
           WEAPON.REMOVE_ALL_PROJECTILES_OF_TYPE(missile, false)
         end
       end
