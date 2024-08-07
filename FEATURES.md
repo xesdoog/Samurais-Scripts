@@ -49,12 +49,12 @@
   - **Drift Smoke:**
     - Your tires will now produce a lot more smoke when drifting. The smoke will appear when you're drifting at a speed higher than *approx: 15mph // 20km/h*. You can change the smoke color either from a drop down list of pre-defined colors or inputting your own [HEX](https://www.color-hex.com/) color. Note that the drift smoke color has no relation to your actual tire smoke color but I can change that if desired, it's just one line of code.
   - **Drift Minigame:**
-    - When this option is enabled, drifting your car gives you points which when banked, 10% of them are converted into cash (currently the cashout feature is for Single Player only). You also get bonus points for destroying objects (fences, road signs, road cones, etc...) and hitting pedestrians while drifting.
+    - When this option is enabled, drifting your car gives you points which when banked, 10% of them are converted into cash (currently the cashout feature is for Single Player only). You also get bonus points for destroying objects (fences, road signs, road cones, etc...), hitting pedestrians, and jumping in the air. *(PS: if you don't land on all four wheels after a jump, you will lose your points. I will probably rewrite this to make you lose your multiplier instead but as of now, jumping is risky)*.
       
-      > NOTE: To bank your points, stop drifting by either driving normally or completely stopping your vehicle. There will be a short 3 second delay in case you want to go back to drifting again but note that if you crash your car into anything you will lose all your points even if you're completely stopped and an NPC hits you.
+      > NOTE: To bank your points, stop drifting by either driving normally or completely stopping your vehicle. There will be a short 3 second delay in case you want to go back to drifting again but note that if you crash your car into another vehicle or an indestructible object (building, ground, tree, wall...) you will lose all your points.
 
   - **Missile Defense:**
-    - When enabled, all missiles near you vehicle will be destroyed. If a missile is too close *(that includes missiles or RPGs fired by you from or near your vehicle)*, the denfese will silently remove it instead of exploding it in your face.
+    - When enabled, all missiles and explosives near your vehicle will be destroyed before they hit you. If a projectile is too close *(that includes missiles, sticky bombs, RPGs or any explosives fired by you from or near your vehicle)*, the denfese will silently remove it instead of exploding it in your face. (the point here is to protect you, not cause you to kill yourself by accident 😅)
       
   - **Instant 180°:**
     - Press **[Mouse Scroll Down]** or **[Numpad -]** to instantly turn your car 180 degrees. Note that if your car is stopped or moving but you were not holding **[W]** / accelerating when you pressed the Instant 180° button, your car will simply face the opposite direction but if you press it while holding the accelerator then the option will give you back your speed in the opposite direction.
