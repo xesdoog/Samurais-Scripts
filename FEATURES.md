@@ -3,7 +3,7 @@
   - **Auto-Heal:**
     - Constantly fills your health and armour whenever they fall below the maximum.
   - **Teleport To Objective:**
-    - This was only added because the option in YimMenu was kind of broken. [gir489](https://github.com/gir489returns) fixed it so this one will be removed.
+    - This was only added because the option in YimMenu was kind of broken. [gir489returns](https://github.com/gir489returns) fixed it so this one will be removed.
   - **Crouch Instead Of Sneak:**
     - Replaces the default sneaking stance (Left control) with crouching.
   - **Replace 'Point At' Action:**
@@ -34,7 +34,7 @@
 - **Info Gun:**
   - A debug option that will be removed in the future. Simply aim your gun at a game entity and press [Left Mouse Button] to log information about it to the console.
 - **Trigger Bot:**
-  - A barebones and janky triggerbot. *Kinda works?* Only on foot though. Will probably be removed once YimMenu's triggerbot gets fixed.
+  - ~A barebones and janky triggerbot. *Kinda works?* Only on foot though. Will probably be removed once YimMenu's triggerbot gets fixed.~ [gir489returns](https://github.com/gir489returns) also fixed YimMenu's triggerbot. There's no need for this feature anymore.
 - **Autokill Enemies:**
   - Automatically kills nearby enemies. I've put a delay to prevent kill spamming because I don't want enemies to die the moment they spawn. Feedback on this would be appreciated *(keep the delay or spam kill?)*.
 - **Enemies Flee:**
