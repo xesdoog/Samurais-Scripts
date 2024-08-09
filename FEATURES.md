@@ -84,7 +84,7 @@
     - Same as **'Ped Grabber'** but with vehicles.
       
   - **Ride With NPCs:**
-    - When enabled, you will not be able to jack NPC vehicles but instead when you press **[F]** you will get in as a passenger and the driver NPC will be cool with it. *The passengers will be confsed and frightened though...*
+    - When enabled, you will not be able to jack NPC vehicles but instead when you press **[F]** you will get in as a passenger and the driver NPC will be cool with it. *The passengers will be confused and frightened though...*
   - **Animate Nearby NPCs:**
     - Activate the option then choose an action from the drop down list and press **Play** to make all nearby NPCs do that action.
 
