@@ -2,7 +2,7 @@
 A base for a Lua script centered around roleplaying and having fun in a game full of ad bots and toxic cheaters.
 
 > [!NOTE]
-> This is a basic template and only a few test features are present. More will be added in the future.
+> For now, only a handful of features are present. More will be added in the future.
 
 ## Contributing To Translations
 #### Editing a pre-existing language:
