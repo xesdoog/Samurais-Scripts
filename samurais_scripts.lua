@@ -7,7 +7,7 @@ require('data/objects')
 require('data/actions')
 require('data/refs')
 
-SCRIPT_VERSION  = '0.8-a' -- v0.8-alpha
+SCRIPT_VERSION  = '0.9-a' -- v0.9-alpha
 TARGET_BUILD    = '3274'  -- Only YimResupplier needs a version check.
 TARGET_VERSION  = '1.69'
 CURRENT_BUILD   = Game.GetBuildNumber()
@@ -5389,7 +5389,7 @@ end)
 
 -- drift minigame (WIP)
 script.register_looped("straight line counter", function()
-  if driftMode or DriftTires then
+  if driftMode or DriftTires and is_car then
     if Game.Self.isDriving() and is_drifting and driftMinigame then
       local vehSpeedVec = ENTITY.GET_ENTITY_SPEED_VECTOR(current_vehicle, true)
       if not VEHICLE.IS_VEHICLE_STOPPED(current_vehicle) then
@@ -5404,7 +5404,7 @@ script.register_looped("straight line counter", function()
 end)
 script.register_looped("drift counter", function(dcounter)
   if driftMinigame then
-    if driftMode or DriftTires then
+    if driftMode or DriftTires and is_car then
       if Game.Self.isDriving() then
         local vehSpeedVec = ENTITY.GET_ENTITY_SPEED_VECTOR(current_vehicle, true)
         if vehSpeedVec.x ~= 0 and VEHICLE.IS_VEHICLE_ON_ALL_WHEELS(current_vehicle) then
@@ -5504,7 +5504,7 @@ script.register_looped("drift counter", function(dcounter)
   end
 end)
 script.register_looped("drift time counter", function(dtcounter)
-  if Game.Self.isDriving and is_drifting then
+  if Game.Self.isDriving  and is_car and is_drifting then
     if straight_counter == 0 then
       drift_time = drift_time + 1
       dtcounter:sleep(1000)
@@ -5516,7 +5516,7 @@ script.register_looped("drift time counter", function(dtcounter)
   end
 end)
 script.register_looped("extra points checker", function(epc)
-  if Game.Self.isDriving then
+  if Game.Self.isDriving and is_car then
     if is_drifting and ENTITY.GET_ENTITY_SPEED(current_vehicle) > 7 then
       if not ENTITY.HAS_ENTITY_COLLIDED_WITH_ANYTHING(current_vehicle) then
         local vehicle_height = ENTITY.GET_ENTITY_HEIGHT_ABOVE_GROUND(current_vehicle)
@@ -5568,7 +5568,7 @@ script.register_looped("extra points checker", function(epc)
   end
 end)
 script.register_looped("drift multiplier", function(dmult)
-  if Game.Self.isDriving and is_drifting then
+  if Game.Self.isDriving and is_car and is_drifting then
     if drift_time >= 10 and drift_time < 30 then
       drift_multiplier = 1
     elseif drift_time >= 20 and drift_time < 60 then
@@ -5586,7 +5586,7 @@ script.register_looped("drift multiplier", function(dmult)
   dmult:yield()
 end)
 script.register_looped("drift points", function()
-  if Game.Self.isDriving() and is_drifting then
+  if Game.Self.isDriving() and is_car and is_drifting then
     showDriftCounter(drift_streak_text .. "\n+" .. lua_Fn.separateInt(drift_points) .. " pts")
     if drift_extra_pts > 0 then
       showDriftExtra(drift_extra_text)
