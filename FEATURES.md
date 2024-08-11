@@ -65,6 +65,9 @@
 
 - **An implementation of [Flatbed Script](https://github.com/xesdoog/Flatbed-Script):**
   - Short explanation: You can tow anything with a flatbed truck. If the vehicle you're towing is occupied, you'll still tow it and kidnap whoever is sitting in it. Note that kidnapping players could sometimes log errors and cause issues. Also you can't tow players who have protections.
+ 
+- **Vehicle Creator:**
+  - Spawn and merge two or more vehicles into one then save it as a custom vehicle. Wanna create a widebody Futo? A Sentinel XS with 2 BMXs on the roof? A drivable skyscraper made out of tanks? Feel free.
 
 
 ## Players
