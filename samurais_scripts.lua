@@ -19,6 +19,7 @@ local loading_label = ""
 local start_loading_anim = false
 default_config   = {
   shortcut_anim     = {},
+  saved_vehicles    = {},
   Regen             = false,
   -- objectiveTP       = false,
   disableTooltips   = false,
@@ -2196,6 +2197,533 @@ flatbed:add_imgui(function()
   end
 end)
 
+vehicle_creator   = vehicle_tab:add_tab("Vehicle Creator")
+is_typing         = false
+vCreator_searchQ       = ""
+vehicleName       = ""
+creation_name     = ""
+main_vehicle_name = ""
+veh_axisMult      = 1
+vehicle_index     = 0
+persist_index     = 0
+spawned_veh_index = 0
+vehicleHash       = 0
+spawned_vehicle   = 0
+main_vehicle      = 0
+persist_switch    = 0
+attachment_index  = 0
+selected_attchmnt = 0
+spawned_persist   = 0
+veh_attach_X      = 0.0
+veh_attach_Y      = 0.0
+veh_attach_Z      = 0.0
+veh_attach_RX     = 0.0
+veh_attach_RY     = 0.0
+veh_attach_RZ     = 0.0
+spawned_vehicles  = {}
+spawned_vehNames  = {}
+persist_names     = {}
+veh_attachments   = {}
+attached_vehicles = {entity = 0, hash = 0, posx = 0.0, posy = 0.0, posz = 0.0, rotx = 0.0, roty = 0.0, rotz = 0.0}
+vehicle_creation  = {name = "", main_veh = 0, attachments = {}}
+saved_vehicles    = lua_cfg.read("saved_vehicles")
+
+script.register_looped("disableInput", function()
+  if is_typing then
+    PAD.DISABLE_ALL_CONTROL_ACTIONS(0)
+  end
+end)
+
+local function updateFilteredVehicles()
+  filtered_vehicles = {}
+  for _, veh in ipairs(gta_vehicles_T) do
+    if string.find(string.lower(veh), string.lower(vCreator_searchQ)) then
+      table.insert(filtered_vehicles, veh)
+    end
+  end
+end
+
+local function displayFilteredList()
+  updateFilteredVehicles()
+  local vehicle_names = {}
+  if filtered_vehicles[1] ~= nil then
+    for _, veh in ipairs(filtered_vehicles) do
+      local displayName = vehicles.get_vehicle_display_name(joaat(veh))
+      table.insert(vehicle_names, displayName)
+    end
+  end
+  vehicle_index, _ = ImGui.ListBox("##vehList", vehicle_index, vehicle_names, #filtered_vehicles)
+end
+
+local function showAttachedVehicles()
+  attachment_names = {}
+  for _, veh in pairs(veh_attachments) do
+    table.insert(attachment_names, veh.name)
+  end
+  attachment_index, _ = ImGui.Combo("##attached_vehs", attachment_index, attachment_names, #veh_attachments)
+end
+
+local function filterSavedVehicles()
+  filteredCreations = {}
+  if saved_vehicles[1] ~= nil then
+    for _, t in pairs(saved_vehicles) do
+      table.insert(filteredCreations, t)
+    end
+  end
+end
+
+local function showSavedVehicles()
+  filterSavedVehicles()
+  for _, veh in pairs(filteredCreations) do
+    table.insert(persist_names, veh.name)
+  end
+  persist_index, _ = ImGui.ListBox("##persist_vehs", persist_index, persist_names, #filteredCreations)
+end
+
+---@param main integer
+---@param attachments table
+local function spawnPersistVeh(main, attachments)
+  script.run_in_fiber(function()
+    local Pos      = self.get_pos()
+    local forwardX = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
+    local forwardY = ENTITY.GET_ENTITY_FORWARD_Y(self.get_ped())
+    local heading  = ENTITY.GET_ENTITY_HEADING(self.get_ped())
+    Pos.x = Pos.x + (forwardX * 7)
+    Pos.y = Pos.y + (forwardY * 7)
+    if Game.requestModel(main) then
+      spawned_persist = VEHICLE.CREATE_VEHICLE(main, Pos.x, Pos.y, Pos.z, heading, true, false, false)
+      VEHICLE.SET_VEHICLE_IS_STOLEN(spawned_persist, false)
+      DECORATOR.DECOR_SET_INT(spawned_persist, "MPBitset", 0)
+    end
+    for _, att in ipairs(attachments) do
+      if Game.requestModel(att.hash) then
+        local attach = VEHICLE.CREATE_VEHICLE(att.hash, Pos.x, Pos.y, Pos.z, heading, true, false, false)
+        VEHICLE.SET_VEHICLE_IS_STOLEN(attach, false)
+        DECORATOR.DECOR_SET_INT(attach, "MPBitset", 0)
+        if ENTITY.DOES_ENTITY_EXIST(spawned_persist) and ENTITY.DOES_ENTITY_EXIST(attach) then
+          local Bone = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(spawned_persist, "chassis_dummy")
+          ENTITY.ATTACH_ENTITY_TO_ENTITY(attach, spawned_persist, Bone, att.posx, att.posy, att.posz, att.rotx, att.roty, att.rotz, false, false, false, false, 2, true, 1)
+        end
+      end
+    end
+  end)
+end
+
+function resetOnSave()
+  vehicleName       = ""
+  creation_name     = ""
+  main_vehicle_name = ""
+  veh_axisMult      = 1
+  vehicle_index     = 0
+  persist_index     = 0
+  spawned_veh_index = 0
+  vehicleHash       = 0
+  spawned_vehicle   = 0
+  main_vehicle      = 0
+  attachment_index  = 0
+  selected_attchmnt = 0
+  veh_attach_X      = 0.0
+  veh_attach_Y      = 0.0
+  veh_attach_Z      = 0.0
+  veh_attach_RX     = 0.0
+  veh_attach_RY     = 0.0
+  veh_attach_RZ     = 0.0
+  spawned_vehicles  = {}
+  spawned_vehNames  = {}
+  persist_names     = {}
+  veh_attachments   = {}
+  attachment_names  = {}
+  attached_vehicles = {}
+  vehicle_creation  = {name = "", main_veh = 0, attachments = {}}
+end
+
+vehicle_creator:add_imgui(function()
+  ImGui.Dummy(1, 10)
+  persist_switch, pswChanged = ImGui.RadioButton("Create", persist_switch, 0)
+  UI.helpMarker(false, "Start by spawning a vehicle. The first one you spawn will always be the main vehicle that others will be attached to.\10Once you spawn more than one vehicle, other UI widgets will appear allowing you to manage all your spawned vehicles:\10 - Delete\10 - Attach\10 - Adjust attach position\10 - Save")
+  if pswChanged then
+    UI.widgetSound("Nav")
+  end
+  if saved_vehicles[1] ~= nil then
+    ImGui.SameLine(); ImGui.Dummy(40, 1); ImGui.SameLine(); persist_switch, pswChanged = ImGui.RadioButton("Spawn Persistent", persist_switch, 1)
+    if pswChanged then
+      UI.widgetSound("Nav")
+    end
+  else
+    ImGui.BeginDisabled()
+    ImGui.SameLine(); ImGui.Dummy(40, 1); ImGui.SameLine(); persist_switch, pswChanged = ImGui.RadioButton("Spawn Persistent", persist_switch, 1)
+    ImGui.EndDisabled()
+    UI.toolTip(false, "You do not have any saved vehicles. This option will be unlocked after you create and save a vehicle.")
+  end
+  if persist_switch == 0 then
+    ImGui.Spacing()
+    ImGui.PushItemWidth(350)
+    vCreator_searchQ, used = ImGui.InputTextWithHint("##searchVehicles", "Search", vCreator_searchQ, 32)
+    ImGui.PopItemWidth()
+    if ImGui.IsItemActive() then
+      is_typing = true
+    else
+      is_typing = false
+    end
+    ImGui.PushItemWidth(350)
+    displayFilteredList()
+    ImGui.PopItemWidth()
+    ImGui.Separator()
+    if filtered_vehicles[1] ~= nil then
+      vehicleHash = joaat(filtered_vehicles[vehicle_index + 1])
+      vehicleName = vehicles.get_vehicle_display_name(joaat(filtered_vehicles[vehicle_index + 1]))
+    end
+    ImGui.Dummy(1, 10)
+    if ImGui.Button("    Spawn   ") then
+      UI.widgetSound("Select")
+      script.run_in_fiber(function()
+        local plyrCoords   = self.get_pos()
+        local plyrForwardX = Game.getForwardX(self.get_ped())
+        local plyrForwardY = Game.getForwardY(self.get_ped())
+        if Game.requestModel(vehicleHash) then
+          spawned_vehicle = VEHICLE.CREATE_VEHICLE(vehicleHash, plyrCoords.x + (plyrForwardX * 5),
+            plyrCoords.y + (plyrForwardY * 5), plyrCoords.z, (ENTITY.GET_ENTITY_HEADING(self.get_ped()) - 90), true, false, false)
+          VEHICLE.SET_VEHICLE_IS_STOLEN(spawned_vehicle, false)
+          DECORATOR.DECOR_SET_INT(spawned_vehicle, "MPBitset", 0)
+          if main_vehicle == 0 then
+            main_vehicle      = spawned_vehicle
+            main_vehicle_name = vehicles.get_vehicle_display_name(ENTITY.GET_ENTITY_MODEL(main_vehicle))
+          else
+            table.insert(spawned_vehicles, spawned_vehicle)
+            table.insert(spawned_vehNames, vehicleName)
+          end
+        end
+      end)
+    end
+    if main_vehicle ~= 0 then
+      ImGui.Dummy(1, 10);
+      ImGui.BulletText("Main Vehicle: " .. main_vehicle_name); ImGui.Spacing()
+      if ImGui.Button("   Delete   ##mainVeh") then
+        UI.widgetSound("Delete")
+        script.run_in_fiber(function(delmv)
+          if entities.take_control_of(main_vehicle, 300) then
+            ENTITY.SET_ENTITY_AS_MISSION_ENTITY(main_vehicle, true, true)
+            delmv:sleep(100)
+            ENTITY.DELETE_ENTITY(main_vehicle)
+          end
+          if attached_vehicles[1] ~= nil then
+            table.remove(attached_vehicles, 1)
+          end
+          if spawned_vehicles[1] ~= nil then
+            for k, veh in ipairs(spawned_vehicles) do
+              if ENTITY.DOES_ENTITY_EXIST(veh) then
+                main_vehicle = veh
+                main_vehicle_name = vehicles.get_vehicle_display_name(ENTITY.GET_ENTITY_MODEL(main_vehicle))
+                table.remove(spawned_vehicles, k)
+                table.remove(spawned_vehNames, k)
+              end
+            end
+          end
+        end)
+      end
+    end
+    if spawned_vehicles[1] ~= nil then
+      ImGui.Spacing(); ImGui.Text("Spawned Vehicles")
+      ImGui.PushItemWidth(230)
+      spawned_veh_index, _ = ImGui.Combo("##Spawned Vehicles", spawned_veh_index, spawned_vehNames, #spawned_vehicles)
+      ImGui.PopItemWidth()
+      selectedVeh = spawned_vehicles[spawned_veh_index + 1]
+      ImGui.SameLine()
+      if ImGui.Button("   Delete   ##spawnedVeh") then
+        UI.widgetSound("Delete")
+        script.run_in_fiber(function(del)
+          if entities.take_control_of(selectedVeh, 300) then
+            ENTITY.SET_ENTITY_AS_MISSION_ENTITY(selectedVeh, true, true)
+            del:sleep(200)
+            VEHICLE.DELETE_VEHICLE(selectedVeh)
+            vehicle_creation = {}
+            creation_name = ""
+            attached_vehicle = 0
+            if spawned_veh_index ~= 0 then
+              spawned_veh_index = 0
+            end
+            if attachment_index ~= 0 then
+              attachment_index = 0
+            end
+            -- table.remove(spawned_vehNames, (spawned_veh_index + 1))
+            -- table.remove(attachment_names, (attachment_index + 1))
+          else
+            gui.show_error("Vehicle Creator", "Failed to delete the vehicle! ")
+          end
+        end)
+      end
+      if ImGui.Button("Attach To " .. main_vehicle_name) then
+        if selectedVeh ~= main_vehicle then
+          script.run_in_fiber(function()
+            if not ENTITY.IS_ENTITY_ATTACHED_TO_ENTITY(selectedVeh, main_vehicle) then
+              UI.widgetSound("Select")
+              ENTITY.ATTACH_ENTITY_TO_ENTITY(selectedVeh, main_vehicle,
+                ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(main_vehicle, "chassis_dummy"), veh_attach_X, veh_attach_Y,
+                veh_attach_Z, veh_attach_RX, veh_attach_RY, veh_attach_RZ, false, false, false,
+                false,
+                2, true, 1)
+              attached_vehicles.entity = selectedVeh
+              attached_vehicles.hash   = ENTITY.GET_ENTITY_MODEL(selectedVeh)
+              attached_vehicles.name   = vehicles.get_vehicle_display_name(ENTITY.GET_ENTITY_MODEL(selectedVeh))
+              attached_vehicles.posx   = veh_attach_X
+              attached_vehicles.posy   = veh_attach_Y
+              attached_vehicles.posz   = veh_attach_Z
+              attached_vehicles.rotx   = veh_attach_RX
+              attached_vehicles.roty   = veh_attach_RY
+              attached_vehicles.rotz   = veh_attach_RZ
+              table.insert(veh_attachments, attached_vehicles)
+              attached_vehicles = {}
+            else
+              UI.widgetSound("Error")
+              gui.show_error("Vehicle Creator", "This vehicle is already attached.")
+            end
+          end)
+        else
+          UI.widgetSound("Error")
+          gui.show_error("Vehicle Creator", "You cannot attach a vehicle to itself.")
+        end
+      end
+    end
+    if veh_attachments[1] ~= nil then
+      ImGui.PushItemWidth(230)
+      showAttachedVehicles()
+      ImGui.PopItemWidth()
+      selected_attchmnt = veh_attachments[attachment_index + 1]
+      ImGui.Text("Multiplier:")
+      ImGui.PushItemWidth(271)
+      veh_axisMult, _ = ImGui.InputInt("##AttachMultiplier", veh_axisMult, 1, 2, 0)
+      ImGui.PopItemWidth()
+      ImGui.Spacing()
+      ImGui.Text("X Axis :"); ImGui.SameLine(); ImGui.Dummy(25, 1); ImGui.SameLine(); ImGui.Text("Y Axis :"); ImGui.SameLine()
+      ImGui.Dummy(25, 1); ImGui.SameLine(); ImGui.Text("Z Axis :")
+      ImGui.ArrowButton("##Xleft", 0)
+      if ImGui.IsItemActive() then
+        UI.widgetSound("Nav")
+        selected_attchmnt.posx = selected_attchmnt.posx + 0.001 * veh_axisMult
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(selected_attchmnt.entity, main_vehicle,
+          ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(main_vehicle, "chassis_dummy"), selected_attchmnt.posx, selected_attchmnt.posy,
+          selected_attchmnt.posz, selected_attchmnt.rotx, selected_attchmnt.roty, selected_attchmnt.rotz, false, false, false,
+          false,
+          2, true, 1)
+      end
+      ImGui.SameLine()
+      ImGui.ArrowButton("##XRight", 1)
+      if ImGui.IsItemActive() then
+        UI.widgetSound("Nav")
+        selected_attchmnt.posx = selected_attchmnt.posx - 0.001 * veh_axisMult
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(selected_attchmnt.entity, main_vehicle,
+          ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(main_vehicle, "chassis_dummy"), selected_attchmnt.posx, selected_attchmnt.posy,
+          selected_attchmnt.posz, selected_attchmnt.rotx, selected_attchmnt.roty, selected_attchmnt.rotz, false, false, false,
+          false,
+          2, true, 1)
+      end
+      ImGui.SameLine()
+      ImGui.Dummy(5, 1); ImGui.SameLine()
+      ImGui.ArrowButton("##Yleft", 0)
+      if ImGui.IsItemActive() then
+        UI.widgetSound("Nav")
+        selected_attchmnt.posy = selected_attchmnt.posy + 0.001 * veh_axisMult
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(selected_attchmnt.entity, main_vehicle,
+          ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(main_vehicle, "chassis_dummy"), selected_attchmnt.posx, selected_attchmnt.posy,
+          selected_attchmnt.posz, selected_attchmnt.rotx, selected_attchmnt.roty, selected_attchmnt.rotz, false, false, false,
+          false,
+          2, true, 1)
+      end
+      ImGui.SameLine()
+      ImGui.ArrowButton("##YRight", 1)
+      if ImGui.IsItemActive() then
+        UI.widgetSound("Nav")
+        selected_attchmnt.posy = selected_attchmnt.posy - 0.001 * veh_axisMult
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(selected_attchmnt.entity, main_vehicle,
+          ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(main_vehicle, "chassis_dummy"), selected_attchmnt.posx, selected_attchmnt.posy,
+          selected_attchmnt.posz, selected_attchmnt.rotx, selected_attchmnt.roty, selected_attchmnt.rotz, false, false, false,
+          false,
+          2, true, 1)
+      end
+      ImGui.SameLine()
+      ImGui.Dummy(5, 1); ImGui.SameLine()
+      ImGui.ArrowButton("##zUp", 2)
+      if ImGui.IsItemActive() then
+        UI.widgetSound("Nav")
+        selected_attchmnt.posz = selected_attchmnt.posz + 0.001 * veh_axisMult
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(selected_attchmnt.entity, main_vehicle,
+          ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(main_vehicle, "chassis_dummy"), selected_attchmnt.posx, selected_attchmnt.posy,
+          selected_attchmnt.posz, selected_attchmnt.rotx, selected_attchmnt.roty, selected_attchmnt.rotz, false, false, false,
+          false,
+          2, true, 1)
+      end
+      ImGui.SameLine()
+      ImGui.ArrowButton("##zDown", 3)
+      if ImGui.IsItemActive() then
+        UI.widgetSound("Nav")
+        selected_attchmnt.posz = selected_attchmnt.posz - 0.001 * veh_axisMult
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(selected_attchmnt.entity, main_vehicle,
+          ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(main_vehicle, "chassis_dummy"), selected_attchmnt.posx, selected_attchmnt.posy,
+          selected_attchmnt.posz, selected_attchmnt.rotx, selected_attchmnt.roty, selected_attchmnt.rotz, false, false, false,
+          false,
+          2, true, 1)
+      end
+      ImGui.Text("X Rotation :"); ImGui.SameLine(); ImGui.Text("Y Rotation :"); ImGui.SameLine(); ImGui.Text(
+        "Z Rotation :")
+      ImGui.ArrowButton("##rotXleft", 0)
+      if ImGui.IsItemActive() then
+        UI.widgetSound("Nav")
+        selected_attchmnt.rotx = selected_attchmnt.rotx + 0.01 * veh_axisMult
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(selected_attchmnt.entity, main_vehicle,
+          ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(main_vehicle, "chassis_dummy"), selected_attchmnt.posx, selected_attchmnt.posy,
+          selected_attchmnt.posz, selected_attchmnt.rotx, selected_attchmnt.roty, selected_attchmnt.rotz, false, false, false,
+          false,
+          2, true, 1)
+      end
+      ImGui.SameLine()
+      ImGui.ArrowButton("##rotXright", 1)
+      if ImGui.IsItemActive() then
+        UI.widgetSound("Nav")
+        selected_attchmnt.rotx = selected_attchmnt.rotx - 0.01 * veh_axisMult
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(selected_attchmnt.entity, main_vehicle,
+          ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(main_vehicle, "chassis_dummy"), selected_attchmnt.posx, selected_attchmnt.posy,
+          selected_attchmnt.posz, selected_attchmnt.rotx, selected_attchmnt.roty, selected_attchmnt.rotz, false, false, false,
+          false,
+          2, true, 1)
+      end
+      ImGui.SameLine()
+      ImGui.Dummy(5, 1); ImGui.SameLine()
+      ImGui.ArrowButton("##rotYleft", 0)
+      if ImGui.IsItemActive() then
+        UI.widgetSound("Nav")
+        selected_attchmnt.roty = selected_attchmnt.roty + 0.01 * veh_axisMult
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(selected_attchmnt.entity, main_vehicle,
+          ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(main_vehicle, "chassis_dummy"), selected_attchmnt.posx, selected_attchmnt.posy,
+          selected_attchmnt.posz, selected_attchmnt.rotx, selected_attchmnt.roty, selected_attchmnt.rotz, false, false, false,
+          false,
+          2, true, 1)
+      end
+      ImGui.SameLine()
+      ImGui.ArrowButton("##rotYright", 1)
+      if ImGui.IsItemActive() then
+        UI.widgetSound("Nav")
+        selected_attchmnt.roty = selected_attchmnt.roty - 0.01 * veh_axisMult
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(selected_attchmnt.entity, main_vehicle,
+          ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(main_vehicle, "chassis_dummy"), selected_attchmnt.posx, selected_attchmnt.posy,
+          selected_attchmnt.posz, selected_attchmnt.rotx, selected_attchmnt.roty, selected_attchmnt.rotz, false, false, false,
+          false,
+          2, true, 1)
+      end
+      ImGui.SameLine()
+      ImGui.Dummy(5, 1); ImGui.SameLine()
+      ImGui.ArrowButton("##rotZup", 2)
+      if ImGui.IsItemActive() then
+        UI.widgetSound("Nav")
+        selected_attchmnt.rotz = selected_attchmnt.rotz + 0.01 * veh_axisMult
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(selected_attchmnt.entity, main_vehicle,
+          ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(main_vehicle, "chassis_dummy"), selected_attchmnt.posx, selected_attchmnt.posy,
+          selected_attchmnt.posz, selected_attchmnt.rotx, selected_attchmnt.roty, selected_attchmnt.rotz, false, false, false,
+          false,
+          2, true, 1)
+      end
+      ImGui.SameLine()
+      ImGui.ArrowButton("##rotZdown", 3)
+      if ImGui.IsItemActive() then
+        UI.widgetSound("Nav")
+        selected_attchmnt.rotz = selected_attchmnt.rotz - 0.01 * veh_axisMult
+        ENTITY.ATTACH_ENTITY_TO_ENTITY(selected_attchmnt.entity, main_vehicle,
+          ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(main_vehicle, "chassis_dummy"), selected_attchmnt.posx, selected_attchmnt.posy,
+          selected_attchmnt.posz, selected_attchmnt.rotx, selected_attchmnt.roty, selected_attchmnt.rotz, false, false, false,
+          false,
+          2, true, 1)
+      end
+      ImGui.Spacing()
+      if ImGui.Button(" Save ") then
+        UI.widgetSound("Select2")
+        ImGui.OpenPopup("Save Merged Vehicles")
+      end
+      ImGui.SetNextWindowPos(760, 400, ImGuiCond.Appearing)
+      ImGui.SetNextWindowBgAlpha(0.81)
+      if ImGui.BeginPopupModal("Save Merged Vehicles", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar) then
+        creation_name, _ = ImGui.InputTextWithHint("##save_merge", "Choose a name", creation_name, 64)
+        if ImGui.IsItemActive() then
+          is_typing = true
+        else
+          is_typing = false
+        end
+        ImGui.Spacing()
+        if ImGui.Button(" Save ##2") then
+          script.run_in_fiber(function()
+            if creation_name ~= "" then
+              UI.widgetSound("Select")
+              vehicle_creation.name         = creation_name
+              vehicle_creation.main_veh     = ENTITY.GET_ENTITY_MODEL(main_vehicle)
+              vehicle_creation.attachments  = veh_attachments
+              table.insert(saved_vehicles, vehicle_creation)
+              lua_cfg.save("saved_vehicles", saved_vehicles)
+              ENTITY.SET_ENTITY_AS_NO_LONGER_NEEDED(main_vehicle)
+              for _, veh in ipairs(spawned_vehicles) do
+                ENTITY.SET_ENTITY_AS_NO_LONGER_NEEDED(veh)
+              end
+              gui.show_success("Vehicle Creator", "Your vehicle has been saved.")
+              resetOnSave()
+              ImGui.CloseCurrentPopup()
+            else
+              UI.widgetSound("Error")
+              gui.show_warning("Vehicle Creator", "Please choose a name for your vehicle!")
+            end
+          end)
+        end
+        ImGui.SameLine(); ImGui.Dummy(10, 1); ImGui.SameLine()
+        if ImGui.Button("Cancel") then
+          UI.widgetSound("Cancel")
+          creation_name = ""
+          ImGui.CloseCurrentPopup()
+        end
+        ImGui.End()
+      end
+    end
+  elseif persist_switch == 1 then
+    if saved_vehicles[1] ~= nil then
+      ImGui.PushItemWidth(350)
+      showSavedVehicles()
+      ImGui.PopItemWidth()
+      persist_info = filteredCreations[persist_index + 1]
+      ImGui.Spacing()
+      if ImGui.Button("  Spawn  ##persist") then
+        UI.widgetSound("Select")
+        spawnPersistVeh(persist_info.main_veh, persist_info.attachments)
+      end
+      ImGui.SameLine(); ImGui.Dummy(20, 1); ImGui.SameLine()
+      if UI.coloredButton("Remove From List", "#E40000", "#FF3F3F", "#FF8080", 0.87) then
+        UI.widgetSound("Focus_In")
+        ImGui.OpenPopup("Remove Persistent")
+      end
+      ImGui.SetNextWindowPos(760, 400, ImGuiCond.Appearing)
+      ImGui.SetNextWindowBgAlpha(0.7)
+      if ImGui.BeginPopupModal("Remove Persistent", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar) then
+        UI.coloredText("Are you sure?\10This will permanently remove your saved vehicle.", "yellow", 0.91, 35)
+        ImGui.Dummby(1, 20)
+        if ImGui.Button("  Yes  ##delPerst") then
+          for key, value in ipairs(saved_vehicles) do
+            if persist_info == value then
+              table.remove(saved_vehicles, key)
+              lua_cfg.save("saved_vehicles", saved_vehicles)
+            end
+          end
+          if saved_vehicles[1] == nil then
+            persist_switch = 0
+          end
+          UI.widgetSound("Select")
+          ImGui.CloseCurrentPopup()
+          gui.show_success("Samurais Scripts", "You saved vehicle has been deleted.")
+        end
+        ImGui.SameLine(); ImGui.Dummy(20, 1); ImGui.SameLine()
+        if ImGui.Button("  Cancel  ") then
+          UI.widgetSound("Cancel")
+          ImGui.CloseCurrentPopup()
+        end
+        ImGui.End()
+      end
+    end
+  end
+end)
+
 
 --[[
     *players*
@@ -2710,6 +3238,7 @@ local function updateFilteredProps()
     end)
   end
 end
+
 local function displayFilteredProps()
   updateFilteredProps()
   local propNames = {}
@@ -2723,6 +3252,7 @@ local function displayFilteredProps()
     propName = prop.name
   end
 end
+
 local function getAllObjects()
   filteredObjects = {}
   for _, object in ipairs(gta_objets) do
@@ -3150,7 +3680,7 @@ object_spawner:add_imgui(function()
         ImGui.Dummy(25, 1); ImGui.SameLine(); ImGui.Text("Z Axis :")
         ImGui.ArrowButton("##Xleft", 0)
         if ImGui.IsItemActive() then
-          attachPos.x = attachPos.x + 0.001
+          attachPos.x = attachPos.x + 0.001 * axisMult
           ENTITY.ATTACH_ENTITY_TO_ENTITY(selectedObject, target, attachBone, attachPos.x,
             attachPos.y, attachPos.z, attachPos.rotX, attachPos.rotY, attachPos.rotZ, false, false, false, false, 2, true,
             1)
@@ -3573,6 +4103,7 @@ local function SS_handle_events()
 end
 
 local function var_reset()
+  resetOnSave()
   isCrouched = false; is_handsUp = false; anim_music = false; is_playing_radio = false; npc_blips = {}; spawned_npcs = {}; plyrProps = {}; npcProps = {}; selfPTFX = {}; npcPTFX = {}; curr_playing_anim = {}; is_playing_anim = false; is_playing_scenario = false; tab1Sound = true; tab2Sound = true; tab3Sound = true; actions_switch = 0; actions_search =
   ""; currentMvmt = ""; currentStrf = ""; currentWmvmt = ""; aimBool = false; HashGrabber = false; drew_laser = false; Entity = 0; laserPtfx_T = {}; sound_btn_off = false; tire_smoke = false; purge_started = false; nos_started = false; twostep_started = false; open_sounds_window = false; started_lct = false; launch_active = false; started_popSound = false; started_popSound2 = false; timerA = 0; timerB = 0; lastVeh = 0; defaultXenon = 0; vehSound_index = 0; smokePtfx_t = {}; nosptfx_t = {}; purgePtfx_t = {}; lctPtfx_t = {}; popSounds_t = {}; popsPtfx_t = {}; attached_vehicle = 0; tow_xAxis = 0.0; tow_yAxis = 0.0; tow_zAxis = 0.0; pedGrabber = false; ped_grabbed = false;; vehicleGrabber = false; vehicle_grabbed = false; carpool = false; show_npc_veh_ctrls = false; stop_searching = false; hijack_started = false; grp_anim_index = 0; attached_ped = 0; grabbed_veh = 0; thisVeh = 0; pedthrowF = 10; propName =
   ""; invalidType = ""; preview = false; is_drifting = false; previewLoop = false; activeX = false; activeY = false; activeZ = false; rotX = false; rotY = false; rotZ = false; attached = false; attachToSelf = false; attachToVeh = false; previewStarted = false; isChanged = false; prop = 0; propHash = 0; os_switch = 0; prop_index = 0; objects_index = 0; spawned_index = 0; selectedObject = 0; selected_bone = 0; previewEntity = 0; currentObjectPreview = 0; attached_index = 0; zOffset = 0; spawned_props = {}; spawnedNames = {}; filteredSpawnNames = {}; selfAttachments = {}; selfAttachNames = {}; vehAttachments = {}; vehAttachNames = {}; filteredVehAttachNames = {}; filteredAttachNames = {}; missiledefense = false;
@@ -3687,9 +4218,6 @@ script.register_looped("auto-heal", function(ah)
     local maxHp  = Game.Self.maxHealth()
     local myHp   = Game.Self.health()
     local myArmr = Game.Self.armour()
-    if PLAYER.GET_PLAYER_MAX_ARMOUR(self.get_id()) < 100 then
-      PLAYER.SET_PLAYER_MAX_ARMOUR(self.get_id(), 100)
-    end
     if myHp < maxHp and myHp > 0 then
       if PED.IS_PED_IN_COVER(self.get_ped()) then
         ENTITY.SET_ENTITY_HEALTH(self.get_ped(), myHp + 10, 0, 0)
@@ -3700,7 +4228,7 @@ script.register_looped("auto-heal", function(ah)
     if myArmr == nil then
       PED.SET_PED_ARMOUR(self.get_ped(), 10)
     end
-    if myArmr ~= nil and myArmr < 100 then
+    if myArmr ~= nil and myArmr < 50 then
       PED.ADD_ARMOUR_TO_PED(self.get_ped(), 0.5)
     end
   end
@@ -5343,6 +5871,26 @@ script.register_looped("TowPos Marker", function()
       local detectPos      = vec3:new(playerPosition.x - (playerForwardX * 10), playerPosition.y - (playerForwardY * 10),
         playerPosition.z)
       GRAPHICS.DRAW_MARKER_SPHERE(detectPos.x, detectPos.y, detectPos.z, 2.5, 180, 128, 0, 0.115)
+    end
+  end
+end)
+script.register_looped("vehicle creator organizer", function()
+  for k, v in ipairs(spawned_vehicles) do
+    if not ENTITY.DOES_ENTITY_EXIST(v) then
+      table.remove(spawned_vehicles, k)
+      table.remove(spawned_vehNames, k)
+    end
+  end
+
+  for k, v in ipairs(veh_attachments) do
+    if not ENTITY.DOES_ENTITY_EXIST(v.entity) then
+      table.remove(veh_attachments, k)
+    end
+  end
+
+  if main_vehicle ~= 0 then
+    if not ENTITY.DOES_ENTITY_EXIST(main_vehicle) then
+      main_vehicle = 0
     end
   end
 end)

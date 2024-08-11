@@ -1,7 +1,7 @@
 ---@diagnostic disable: undefined-global, lowercase-global
 
-gta_vehicles_T     = {
-    "Airbus", "Airtug", "akula", "akuma", "aleutian", "alkonost", "alpha", "alphaz1",
+gta_vehicles_T     = { 
+    "adder", "airbus", "airtug", "akula", "akuma", "aleutian", "alkonost", "alpha", "alphaz1",
     "AMBULANCE", "annihilator", "annihilator2", "apc", "ardent", "armytanker", "armytrailer", "armytrailer2", "asbo",
     "asea", "asea2", "asterope", "asterope2", "astron", "autarch", "avarus", "avenger", "avenger2", "avenger3",
     "avenger4",
