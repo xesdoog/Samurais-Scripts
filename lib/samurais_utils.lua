@@ -129,7 +129,7 @@ lua_Fn = {
     return r, g, b
   end,
 
-  --[[ Decodes hexadecimal to string.
+  --[[ Decodes hex to string.
 
   HEX must be provided in a string format.
       
@@ -146,7 +146,7 @@ lua_Fn = {
     end))
   end,
 
-  ---Encodes a string into hexadecimal
+  ---Encodes a string into hex
   ---@param str string
   ---@return string
   stringToHex = function(str)
@@ -170,7 +170,7 @@ lua_Fn = {
 
   ---Returns the number of duplicate values in a table.
   ---@param table table
-  ---@param value any
+  ---@param value string | number | integer | table | userdata | lightuserdata | function | thread
   getTableDupes = function(table, value)
     local count = 0
     for _, v in pairs(table) do
@@ -547,6 +547,13 @@ UI = {
     end
   end,
 }
+
+
+----------------------------------------------- Script Specific -------------------------------------------------
+
+-- As in Samurai's Scripts, not Schutzstaffel 🙄
+SS = {}
+
 
 ----------------------------------------------- GTA Funcs -------------------------------------------------------
 Game = {

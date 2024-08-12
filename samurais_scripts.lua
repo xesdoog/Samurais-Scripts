@@ -1,4 +1,4 @@
----@diagnostic disable: undefined-global, lowercase-global
+---@diagnostic disable: undefined-global, lowercase-global, undefined-field
 
 
 require('lib/samurais_utils')
@@ -7,7 +7,7 @@ require('data/objects')
 require('data/actions')
 require('data/refs')
 
-SCRIPT_VERSION  = '0.9-a' -- v0.9-alpha
+SCRIPT_VERSION  = '1.0'   -- 1.0
 TARGET_BUILD    = '3274'  -- Only YimResupplier needs a version check.
 TARGET_VERSION  = '1.69'
 CURRENT_BUILD   = Game.GetBuildNumber()
@@ -270,13 +270,11 @@ function play_music(musicSwitch, station)
             false, true, 1, true, 1)
           else
             gui.show_error("Samurais Scripts", "Failed to start music!")
-            log.debug('Failed to create ped')
             return
           end
         end
       else
         gui.show_error("Samurais Scripts", "Failed to start music!")
-        log.debug('Failed to create vehicle')
         return
       end
     elseif musicSwitch == "stop" then
@@ -292,8 +290,6 @@ function play_music(musicSwitch, station)
         ENTITY.DELETE_ENTITY(pBus)
         pBus = 0
       end
-    else
-      log.error('invalid argument ' .. tostring(musicSwitch))
     end
   end)
 end
@@ -341,12 +337,7 @@ function dummyCop()
         VEHICLE.SET_VEHICLE_CAUSES_SWERVING(self.get_veh(), true)
         VEHICLE.SET_VEHICLE_INDICATOR_LIGHTS(self.get_veh(), 0, true)
         VEHICLE.SET_VEHICLE_INDICATOR_LIGHTS(self.get_veh(), 1, true)
-      else
-        log.debug('Failed to create police vehicle')
-        return
       end
-    else
-      log.debug('Player is on foot.')
     end
   end)
 end
@@ -1577,6 +1568,9 @@ local function displayVehNames()
   local vehNames = {}
   for _, veh in ipairs(filteredNames) do
     local vehName = vehicles.get_vehicle_display_name(joaat(veh))
+    if string.find(string.lower(veh), "drift") then
+      vehName = vehName .. "(Drift)"
+    end
     table.insert(vehNames, vehName)
   end
   vehSound_index, used = ImGui.ListBox("##Vehicle Names", vehSound_index, vehNames, #filteredNames)
@@ -2199,7 +2193,7 @@ end)
 
 vehicle_creator   = vehicle_tab:add_tab("Vehicle Creator")
 is_typing         = false
-vCreator_searchQ       = ""
+vCreator_searchQ  = ""
 vehicleName       = ""
 creation_name     = ""
 main_vehicle_name = ""
@@ -2222,10 +2216,11 @@ veh_attach_RY     = 0.0
 veh_attach_RZ     = 0.0
 spawned_vehicles  = {}
 spawned_vehNames  = {}
+filteredVehNames  = {}
 persist_names     = {}
 veh_attachments   = {}
-attached_vehicles = {entity = 0, hash = 0, posx = 0.0, posy = 0.0, posz = 0.0, rotx = 0.0, roty = 0.0, rotz = 0.0}
-vehicle_creation  = {name = "", main_veh = 0, attachments = {}}
+attached_vehicles = {entity = 0, hash = 0, mods = {}, color_1 = {r = 0, g = 0, b = 0}, color_2 = {r = 0, g = 0, b = 0}, tint = 0, posx = 0.0, posy = 0.0, posz = 0.0, rotx = 0.0, roty = 0.0, rotz = 0.0}
+vehicle_creation  = {name = "", main_veh = 0, mods = {}, color_1 = {r = 0, g = 0, b = 0}, color_2 = {r = 0, g = 0, b = 0}, tint = 0, attachments = {}}
 saved_vehicles    = lua_cfg.read("saved_vehicles")
 
 script.register_looped("disableInput", function()
@@ -2249,6 +2244,9 @@ local function displayFilteredList()
   if filtered_vehicles[1] ~= nil then
     for _, veh in ipairs(filtered_vehicles) do
       local displayName = vehicles.get_vehicle_display_name(joaat(veh))
+      if string.find(string.lower(veh), "drift") then
+        displayName = displayName .. "  (Drift)"
+      end
       table.insert(vehicle_names, displayName)
     end
   end
@@ -2280,9 +2278,29 @@ local function showSavedVehicles()
   persist_index, _ = ImGui.ListBox("##persist_vehs", persist_index, persist_names, #filteredCreations)
 end
 
+local function appendVehicleMods(v, t)
+  script.run_in_fiber(function()
+    for i = 0, 49 do
+      table.insert(t, VEHICLE.GET_VEHICLE_MOD(v, i))
+    end
+  end)
+end
+
+local function setVehicleMods(v, t)
+  script.run_in_fiber(function()
+    VEHICLE.SET_VEHICLE_MOD_KIT(v, 0)
+    for slot, mod in pairs(t) do
+      VEHICLE.SET_VEHICLE_MOD(v, (slot - 1), mod)
+    end
+  end)
+end
+
 ---@param main integer
+---@param mods table
+---@param col_1 table
+---@param col_2 table
 ---@param attachments table
-local function spawnPersistVeh(main, attachments)
+local function spawnPersistVeh(main, mods, col_1, col_2, tint, attachments)
   script.run_in_fiber(function()
     local Pos      = self.get_pos()
     local forwardX = ENTITY.GET_ENTITY_FORWARD_X(self.get_ped())
@@ -2294,12 +2312,20 @@ local function spawnPersistVeh(main, attachments)
       spawned_persist = VEHICLE.CREATE_VEHICLE(main, Pos.x, Pos.y, Pos.z, heading, true, false, false)
       VEHICLE.SET_VEHICLE_IS_STOLEN(spawned_persist, false)
       DECORATOR.DECOR_SET_INT(spawned_persist, "MPBitset", 0)
+      VEHICLE.SET_VEHICLE_CUSTOM_PRIMARY_COLOUR(spawned_persist, col_1.r, col_1.g, col_1.b)
+      VEHICLE.SET_VEHICLE_CUSTOM_SECONDARY_COLOUR(spawned_persist, col_2.r, col_2.g, col_2.b)
+      setVehicleMods(spawned_persist, mods)
+      VEHICLE.SET_VEHICLE_WINDOW_TINT(spawned_persist, tint)
     end
     for _, att in ipairs(attachments) do
       if Game.requestModel(att.hash) then
         local attach = VEHICLE.CREATE_VEHICLE(att.hash, Pos.x, Pos.y, Pos.z, heading, true, false, false)
         VEHICLE.SET_VEHICLE_IS_STOLEN(attach, false)
         DECORATOR.DECOR_SET_INT(attach, "MPBitset", 0)
+        VEHICLE.SET_VEHICLE_CUSTOM_PRIMARY_COLOUR(attach, att.color_1.r, att.color_1.g, att.color_1.b)
+        VEHICLE.SET_VEHICLE_CUSTOM_SECONDARY_COLOUR(attach, att.color_2.r, att.color_2.g, att.color_2.b)
+        setVehicleMods(attach, att.mods)
+        VEHICLE.SET_VEHICLE_WINDOW_TINT(attach, att.tint)
         if ENTITY.DOES_ENTITY_EXIST(spawned_persist) and ENTITY.DOES_ENTITY_EXIST(attach) then
           local Bone = ENTITY.GET_ENTITY_BONE_INDEX_BY_NAME(spawned_persist, "chassis_dummy")
           ENTITY.ATTACH_ENTITY_TO_ENTITY(attach, spawned_persist, Bone, att.posx, att.posy, att.posz, att.rotx, att.roty, att.rotz, false, false, false, false, 2, true, 1)
@@ -2309,7 +2335,22 @@ local function spawnPersistVeh(main, attachments)
   end)
 end
 
-function resetOnSave()
+local function createWideBodyCivic()
+  vehicle_creation = {
+    name = "Widebody Civic", main_veh = 1074745671, mods = {}, color_1 = {r = 0, g = 0, b = 0}, color_2 = {r = 0, g = 0, b = 0}, tint = 1,
+    attachments = {
+      {entity = 0, hash = 987469656, posx = 0.0, posy = -0.075, posz = 0.076, rotx = 0.0, roty = 0.0, rotz = 0.0,
+        mods = {5,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,3,2,2,-1,4,4,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
+        color_1 = {r = 0, g = 0, b = 0}, color_2 = {r = 0, g = 0, b = 0}, tint = 1,
+      }
+    }
+  }
+  table.insert(saved_vehicles, vehicle_creation)
+  lua_cfg.save("saved_vehicles", saved_vehicles)
+  vehicle_creation = {}
+end
+
+local function resetOnSave()
   vehicleName       = ""
   creation_name     = ""
   main_vehicle_name = ""
@@ -2330,11 +2371,12 @@ function resetOnSave()
   veh_attach_RZ     = 0.0
   spawned_vehicles  = {}
   spawned_vehNames  = {}
+  filteredVehNames  = {}
   persist_names     = {}
   veh_attachments   = {}
   attachment_names  = {}
   attached_vehicles = {}
-  vehicle_creation  = {name = "", main_veh = 0, attachments = {}}
+  vehicle_creation  = {name = "", main_veh = 0, mods = {}, color_1 = {r = 0, g = 0, b = 0}, color_2 = {r = 0, g = 0, b = 0}, tint = 0, attachments = {}}
 end
 
 vehicle_creator:add_imgui(function()
@@ -2391,9 +2433,24 @@ vehicle_creator:add_imgui(function()
           else
             table.insert(spawned_vehicles, spawned_vehicle)
             table.insert(spawned_vehNames, vehicleName)
+            local dupes = lua_Fn.getTableDupes(spawned_vehNames, vehicleName)
+            if dupes > 1 then
+              newVehName = vehicleName .. " #" .. tostring(dupes)
+              table.insert(filteredVehNames, newVehName)
+            else
+              table.insert(filteredVehNames, vehicleName)
+            end
           end
         end
       end)
+    end
+    if saved_vehicles[1] == nil then
+      ImGui.SameLine(); ImGui.Dummy(20, 1); ImGui.SameLine()
+      if ImGui.Button("Generate A Widebody Civic") then
+        createWideBodyCivic()
+        spawnPersistVeh(saved_vehicles[1].main_veh, saved_vehicles[1].mods, saved_vehicles[1].color_1, saved_vehicles[1].color_2, saved_vehicles[1].tint, saved_vehicles[1].attachments)
+      end
+      UI.toolTip(false, "Generates, spawns and saves a widebody Honda Civic (Sugoi) as a simple example of what the vehicle creator can do.")
     end
     if main_vehicle ~= 0 then
       ImGui.Dummy(1, 10);
@@ -2416,6 +2473,7 @@ vehicle_creator:add_imgui(function()
                 main_vehicle_name = vehicles.get_vehicle_display_name(ENTITY.GET_ENTITY_MODEL(main_vehicle))
                 table.remove(spawned_vehicles, k)
                 table.remove(spawned_vehNames, k)
+                table.remove(filteredVehNames, k)
               end
             end
           end
@@ -2425,7 +2483,7 @@ vehicle_creator:add_imgui(function()
     if spawned_vehicles[1] ~= nil then
       ImGui.Spacing(); ImGui.Text("Spawned Vehicles")
       ImGui.PushItemWidth(230)
-      spawned_veh_index, _ = ImGui.Combo("##Spawned Vehicles", spawned_veh_index, spawned_vehNames, #spawned_vehicles)
+      spawned_veh_index, _ = ImGui.Combo("##Spawned Vehicles", spawned_veh_index, filteredVehNames, #spawned_vehicles)
       ImGui.PopItemWidth()
       selectedVeh = spawned_vehicles[spawned_veh_index + 1]
       ImGui.SameLine()
@@ -2445,8 +2503,6 @@ vehicle_creator:add_imgui(function()
             if attachment_index ~= 0 then
               attachment_index = 0
             end
-            -- table.remove(spawned_vehNames, (spawned_veh_index + 1))
-            -- table.remove(attachment_names, (attachment_index + 1))
           else
             gui.show_error("Vehicle Creator", "Failed to delete the vehicle! ")
           end
@@ -2471,6 +2527,10 @@ vehicle_creator:add_imgui(function()
               attached_vehicles.rotx   = veh_attach_RX
               attached_vehicles.roty   = veh_attach_RY
               attached_vehicles.rotz   = veh_attach_RZ
+              attached_vehicles.tint   = VEHICLE.GET_VEHICLE_WINDOW_TINT(selectedVeh)
+              attached_vehicles.color_1.r, attached_vehicles.color_1.g, attached_vehicles.color_1.b = VEHICLE.GET_VEHICLE_CUSTOM_PRIMARY_COLOUR(selectedVeh, attached_vehicles.color_1.r, attached_vehicles.color_1.g, attached_vehicles.color_1.b)
+              attached_vehicles.color_2.r, attached_vehicles.color_2.g, attached_vehicles.color_2.b = VEHICLE.GET_VEHICLE_CUSTOM_SECONDARY_COLOUR(selectedVeh, attached_vehicles.color_2.r, attached_vehicles.color_2.g, attached_vehicles.color_2.b)
+              appendVehicleMods(selectedVeh, attached_vehicles.mods)
               table.insert(veh_attachments, attached_vehicles)
               attached_vehicles = {}
             else
@@ -2654,6 +2714,10 @@ vehicle_creator:add_imgui(function()
               vehicle_creation.name         = creation_name
               vehicle_creation.main_veh     = ENTITY.GET_ENTITY_MODEL(main_vehicle)
               vehicle_creation.attachments  = veh_attachments
+              vehicle_creation.tint         = VEHICLE.GET_VEHICLE_WINDOW_TINT(main_vehicle)
+              vehicle_creation.color_1.r, vehicle_creation.color_1.g, vehicle_creation.color_1.b = VEHICLE.GET_VEHICLE_CUSTOM_PRIMARY_COLOUR(main_vehicle, vehicle_creation.color_1.r, vehicle_creation.color_1.g, vehicle_creation.color_1.b)
+              vehicle_creation.color_2.r, vehicle_creation.color_2.g, vehicle_creation.color_2.b = VEHICLE.GET_VEHICLE_CUSTOM_SECONDARY_COLOUR(main_vehicle, vehicle_creation.color_2.r, vehicle_creation.color_2.g, vehicle_creation.color_2.b)
+              appendVehicleMods(main_vehicle, vehicle_creation.mods)
               table.insert(saved_vehicles, vehicle_creation)
               lua_cfg.save("saved_vehicles", saved_vehicles)
               ENTITY.SET_ENTITY_AS_NO_LONGER_NEEDED(main_vehicle)
@@ -2687,10 +2751,10 @@ vehicle_creator:add_imgui(function()
       ImGui.Spacing()
       if ImGui.Button("  Spawn  ##persist") then
         UI.widgetSound("Select")
-        spawnPersistVeh(persist_info.main_veh, persist_info.attachments)
+        spawnPersistVeh(persist_info.main_veh, persist_info.mods, persist_info.color_1, persist_info.color_2, persist_info.tint, persist_info.attachments)
       end
-      ImGui.SameLine(); ImGui.Dummy(20, 1); ImGui.SameLine()
-      if UI.coloredButton("Remove From List", "#E40000", "#FF3F3F", "#FF8080", 0.87) then
+      ImGui.SameLine(); ImGui.Dummy(60, 1); ImGui.SameLine()
+      if UI.coloredButton("Remove From The List", "#E40000", "#FF3F3F", "#FF8080", 0.87) then
         UI.widgetSound("Focus_In")
         ImGui.OpenPopup("Remove Persistent")
       end
@@ -2698,7 +2762,7 @@ vehicle_creator:add_imgui(function()
       ImGui.SetNextWindowBgAlpha(0.7)
       if ImGui.BeginPopupModal("Remove Persistent", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar) then
         UI.coloredText("Are you sure?\10This will permanently remove your saved vehicle.", "yellow", 0.91, 35)
-        ImGui.Dummby(1, 20)
+        ImGui.Dummy(1, 20)
         if ImGui.Button("  Yes  ##delPerst") then
           for key, value in ipairs(saved_vehicles) do
             if persist_info == value then
@@ -3073,19 +3137,32 @@ world_tab:add_imgui(function()
       UI.widgetSound("Nav2")
       if publicEnemy then
         kamikazeDrivers = false
-        runaway = false
-        script.run_in_fiber(function(puben)
+        runaway         = false
+        script.run_in_fiber(function()
           default_wanted_lvl = PLAYER.GET_MAX_WANTED_LEVEL()
         end)
       else
         script.run_in_fiber(function()
-          PLAYER.SET_MAX_WANTED_LEVEL(default_wanted_lvl)
-          PLAYER.SET_POLICE_IGNORE_PLAYER(self.get_id(), false)
+          local myGroup = PED.GET_PED_GROUP_INDEX(self.get_ped())
+          if default_wanted_lvl ~= nil then
+            PLAYER.SET_MAX_WANTED_LEVEL(default_wanted_lvl)
+            PLAYER.SET_POLICE_IGNORE_PLAYER(self.get_id(), false)
+          end
           for _, ped in ipairs(entities.get_all_peds_as_handles()) do
-            if PED.IS_PED_IN_COMBAT(ped, self.get_ped()) then
-              TASK.CLEAR_PED_TASKS_IMMEDIATELY(ped)
-              TASK.TASK_SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped, false)
-              PED.SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped, false)
+            if not PED.IS_PED_A_PLAYER(ped) and not PED.IS_PED_GROUP_MEMBER(ped, myGroup) then
+              if PED.IS_PED_IN_COMBAT(ped, self.get_ped()) then
+                for _, attr in ipairs(pe_combat_attributes_T) do
+                  PED.SET_PED_COMBAT_ATTRIBUTES(ped, attr.id, (not attr.bool))
+                end
+                for _, cflg in ipairs(pe_config_flags_T) do
+                  if PED.GET_PED_CONFIG_FLAG(ped, cflg.id, cflg.bool) then
+                    PED.SET_PED_CONFIG_FLAG(ped, cflg.id, (not cflg.bool))
+                  end
+                end
+                TASK.CLEAR_PED_TASKS_IMMEDIATELY(ped)
+                TASK.TASK_SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped, false)
+                PED.SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped, false)
+              end
             end
           end
         end)
@@ -4473,12 +4550,12 @@ script.register_looped("anim_interrupt_event", function (aiev)
           repeat
             aiev:sleep(500)
           until not PED.IS_PED_FALLING(self.get_ped())
-          if Game.Self.isAlive() and not PAD.IS_CONTROL_PRESSED(0, 47) then -- we're alive and we didn't manually stop it
+          if Game.Self.isAlive() and not PAD.IS_CONTROL_PRESSED(0, 47) then
             onAnimInterrupt()
           end
         else
           aiev:sleep(100)
-          if Game.Self.isAlive() and not PAD.IS_CONTROL_PRESSED(0, 47) then -- we're alive and we didn't manually stop it
+          if Game.Self.isAlive() and not PAD.IS_CONTROL_PRESSED(0, 47) then
             onAnimInterrupt()
           end
         end
@@ -5600,7 +5677,7 @@ script.register_looped("missile defense", function(md)
     local missile
     local vehPos = ENTITY.GET_ENTITY_COORDS(current_vehicle, true)
     for _, p in pairs(projectile_types_T) do
-      if MISC.IS_PROJECTILE_TYPE_IN_AREA(vehPos.x + 500, vehPos.y + 500, vehPos.z + 100, vehPos.x - 500, vehPos.y - 500, vehPos.z - 100, p, false) and not MISC.IS_PROJECTILE_TYPE_IN_AREA(vehPos.x + 3, vehPos.y + 3, vehPos.z + 5, vehPos.x - 3, vehPos.y - 3, vehPos.z - 5, p, false) then
+      if MISC.IS_PROJECTILE_TYPE_IN_AREA(vehPos.x + 500, vehPos.y + 500, vehPos.z + 100, vehPos.x - 500, vehPos.y - 500, vehPos.z - 100, p, false) then
         missile = p
         break
       end
@@ -5610,9 +5687,17 @@ script.register_looped("missile defense", function(md)
         if not MISC.IS_PROJECTILE_TYPE_IN_AREA(vehPos.x + 10, vehPos.y + 10, vehPos.z + 50, vehPos.x - 10, vehPos.y - 10, vehPos.z - 50, missile, false) then
           log.info('Detected projectile within our defense area! Proceeding to destroy it.')
           WEAPON.REMOVE_ALL_PROJECTILES_OF_TYPE(missile, true)
+          if Game.requestNamedPtfxAsset("scr_sm_counter") then
+            GRAPHICS.USE_PARTICLE_FX_ASSET("scr_sm_counter")
+            GRAPHICS.START_NETWORKED_PARTICLE_FX_NON_LOOPED_AT_COORD("scr_sm_counter_chaff", vehPos.x, vehPos.y, (vehPos.z + 2.5), 0.0, 0.0, 0.0, 5.0, false, false, false, false)
+          end
         else
           log.warning('Found a projectile very close to our vehicle! Proceeding to remove it.')
           WEAPON.REMOVE_ALL_PROJECTILES_OF_TYPE(missile, false)
+          if Game.requestNamedPtfxAsset("scr_sm_counter") then
+            GRAPHICS.USE_PARTICLE_FX_ASSET("scr_sm_counter")
+            GRAPHICS.START_NETWORKED_PARTICLE_FX_NON_LOOPED_AT_COORD("scr_sm_counter_chaff", vehPos.x, vehPos.y, (vehPos.z + 2.5), 0.0, 0.0, 0.0, 5.0, false, false, false, false)
+          end
         end
       end
     end
@@ -5879,6 +5964,7 @@ script.register_looped("vehicle creator organizer", function()
     if not ENTITY.DOES_ENTITY_EXIST(v) then
       table.remove(spawned_vehicles, k)
       table.remove(spawned_vehNames, k)
+      table.remove(filteredVehNames, k)
     end
   end
 
@@ -6188,40 +6274,14 @@ script.register_looped("Public Enemy", function (pe)
   if publicEnemy and Game.Self.isAlive() then
     local myGroup  = PED.GET_PED_GROUP_INDEX(self.get_ped())
     local gta_peds = entities.get_all_peds_as_handles()
-    local combat_attributes_T = {
-      {id = 5,  bool = true},
-      {id = 13, bool = true},
-      {id = 21, bool = true},
-      {id = 28, bool = true},
-      {id = 31, bool = true},
-      {id = 38, bool = true},
-      {id = 42, bool = true},
-      {id = 46, bool = true},
-      {id = 58, bool = true},
-      {id = 71, bool = true},
-      {id = 17, bool = false},
-      {id = 63, bool = false},
-    }
-
-    local config_flags_T = {
-      {id = 118, bool = true},
-      {id = 128, bool = true},
-      {id = 140, bool = true},
-      {id = 141, bool = true},
-      {id = 208, bool = true},
-      {id = 229, bool = true},
-      {id = 286, bool = true},
-      {id = 294, bool = true},
-    }
-
     for _, ped in pairs(gta_peds) do
       if ped ~= self.get_ped() and not PED.IS_PED_A_PLAYER(ped) and not PED.IS_PED_GROUP_MEMBER(ped, myGroup) then
-        for _, attr in ipairs(combat_attributes_T) do
+        for _, attr in ipairs(pe_combat_attributes_T) do
           PED.SET_PED_COMBAT_ATTRIBUTES(ped, attr.id, attr.bool)
         end
         if not PED.IS_PED_IN_COMBAT(ped, self.get_ped()) then
           PED.SET_BLOCKING_OF_NON_TEMPORARY_EVENTS(ped, true)
-          for _, cflg in ipairs(config_flags_T) do
+          for _, cflg in ipairs(pe_config_flags_T) do
             if not PED.GET_PED_CONFIG_FLAG(ped, cflg.id, cflg.bool) then
               PED.SET_PED_CONFIG_FLAG(ped, cflg.id, cflg.bool)
             end
