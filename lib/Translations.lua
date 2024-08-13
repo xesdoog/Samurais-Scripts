@@ -377,6 +377,30 @@ Labels = {
         {iso = "pt-BR", text = "Limitar algumas opções apenas a veículos de desempenho. Por exemplo, com essa opção ativada, os veículos lentos e irrelevantes não terão 'Launch Control' nem um 'Pops & Bangs'."},
     },
 
+    ["missile_def_tt"] = {
+        {iso = "en-US", text = "Inrercepts any missiles near your vehicle including those fired by you.\10\10NOTE: If you fire any missiles from or near your vehicle, the defense will render them inert."},
+        {iso = "de-DE", text = "Fängt alle Raketen in der Nähe Ihres Fahrzeugs ab, einschließlich der von Ihnen abgefeuerten.\10\10HINWEIS: Wenn Sie von Ihrem Fahrzeug aus oder in dessen Nähe Raketen abfeuern, werden diese durch die Verteidigung unschädlich gemacht."},
+        {iso = "fr-FR", text = "Intercepte tous les missiles à proximité de votre véhicule, y compris ceux que vous avez tirés.\10\10REMARQUE : Si vous tirez des missiles depuis ou à proximité de votre véhicule, la défense les rendra inertes."},
+        {iso = "it-IT", text = "Intercetta tutti i missili vicini al veicolo, compresi quelli lanciati dall'utente.\10\10NOTA: Se si lanciano missili dal veicolo o nelle sue vicinanze, la difesa li renderà inerti."},
+        {iso = "pt-BR", text = "Intercepta todos os mísseis próximos ao seu veículo, inclusive os disparados por você.\10\10NOTA: Se você disparar algum míssil do seu veículo ou próximo a ele, a defesa o tornará inerte."},
+    },
+
+    ["missile_def_on_notif"] = {
+        {iso = "en-US", text = "Missile defense activated! Please note that firing any missiles from or near your vehicle will render them inert."},
+        {iso = "de-DE", text = "Raketenabwehr aktiviert! Bitte beachten Sie, dass das Abfeuern von Raketen aus oder in der Nähe Ihres Fahrzeugs diese unbrauchbar macht."},
+        {iso = "fr-FR", text = "Défense antimissile activée ! Veuillez noter que le fait de tirer des missiles à partir ou à proximité de votre véhicule les rendra inertes."},
+        {iso = "it-IT", text = "Difesa missilistica attivata! Si noti che il lancio di missili da o vicino al veicolo li renderà inerti."},
+        {iso = "pt-BR", text = "Defesa antimísseis ativada! Observe que disparar qualquer míssil do seu veículo ou próximo a ele o deixará inerte."},
+    },
+
+    ["missile_def_off_notif"] = {
+        {iso = "en-US", text = "Missile defense deactivated."},
+        {iso = "de-DE", text = "Die Raketenabwehr wurde deaktiviert."},
+        {iso = "fr-FR", text = "Défense antimissile désactivée."},
+        {iso = "it-IT", text = "Difesa missilistica disattivata."},
+        {iso = "pt-BR", text = "Defesa antimísseis desativada."},
+    },
+
     ["lct_tt"] = {
         {iso = "en-US", text = "When your vehicle is completely stopped, press and hold [Accelerate] + [Brake] for 3 seconds then let go of the brakes."},
         {iso = "de-DE", text = "Halte die Tasten [Beschleunigen] + [Bremsen] drei Sekunden lang gedrückt und lasse dann die Bremse los. Funktioniert nur wenn das Fahrzeug still steht."},
@@ -455,6 +479,15 @@ Labels = {
         {iso = "it-IT", text = "Ripristina l'uscita dal veicolo di GTA IV: tieni premuto [F] per spegnere il motore prima di uscire dal veicolo o premi normalmente per uscire e tenerlo in funzione."},
         {iso = "pt-BR", text = "Traz de volta a saída do veículo do GTA IV: segure [F] para desligar o motor antes de sair do veículo ou pressione normalmente para sair e mantê-lo funcionando."},
     },
+
+    ["wheelsturned_tt"] = {
+        {iso = "en-US", text = "Keeps your wheels turned when you exit your vehicle while holding [A] or [D]."},
+        {iso = "de-DE", text = "Hält die Räder beim Verlassen des Fahrzeugs gedreht, während Sie [A] oder [D]."},
+        {iso = "fr-FR", text = "Les roues restent tournées lorsque vous sortez du véhicule en maintenant la touche [A] ou [D]."},
+        {iso = "it-IT", text = "Mantiene le ruote girate quando si esce dal veicolo tenendo premuto [A] o [D]."},
+        {iso = "pt-BR", text = "Mantém as rodas girando quando você sai do veículo enquanto segura [A] ou [D]."},
+    },
+
 
     ["canttouchthis_tt"] = {
         {iso = "en-US", text = "Prevent NPCs and players from carjacking you."},
@@ -1441,12 +1474,165 @@ Labels = {
         {iso = "pt-BR", text = "Transforma todos os motoristas próximos a você em maníacos suicidas."},
     },
 
+    ["Create"] = {
+        {iso = "en-US", text = "Create"},
+        {iso = "de-DE", text = "Erstellen"},
+        {iso = "fr-FR", text = "Créer"},
+        {iso = "it-IT", text = "Creare"},
+        {iso = "pt-BR", text = "Criar"},
+    },
+
+    ["vcreator_tt"] = {
+        {iso = "en-US", text = "Start by spawning a vehicle. The first one you spawn will always be the main vehicle that others will be attached to.\10Once you spawn more than one vehicle, other UI widgets will appear allowing you to manage all your spawned vehicles:\10 - Delete\10 - Attach\10 - Adjust attach position\10 - Save"},
+        {iso = "de-DE", text = "Beginnen Sie damit, ein Fahrzeug zu spawnen. Das erste, das Sie spawnen, wird immer das Hauptfahrzeug sein, an das die anderen angehängt werden.\10Wenn Sie mehr als ein Fahrzeug spawnen, erscheinen andere UI-Widgets, mit denen Sie alle Ihre gespawnten Fahrzeuge verwalten können:\10 - Löschen\10 - Anhängen\10 - Anhängeposition anpassen\10 - Speichern"},
+        {iso = "fr-FR", text = "Commencez par créer un véhicule. Le premier que vous créez sera toujours le véhicule principal auquel les autres seront attachés.\10Lorsque vous créez plus d'un véhicule, d'autres widgets d'interface utilisateur apparaîtront pour vous permettre de gérer tous les véhicules créés:\10- Supprimer\10- Attacher\10- Ajuster la position de l'attache\10- Sauvegarder"},
+        {iso = "it-IT", text = "Iniziare con la creazione di un veicolo. Il primo che viene generato sarà sempre il veicolo principale a cui verranno agganciati gli altri.\10Quando si genera più di un veicolo, appariranno altri widget dell'interfaccia utente che permetteranno di gestire tutti i veicoli generati:\10 - Elimina\10 - Attacca\10 - Regola la posizione di attacco\10 - Salva"},
+        {iso = "pt-BR", text = "Comece gerando um veículo. O primeiro que você gerar será sempre o veículo principal ao qual os outros serão anexados.\10Quando você gerar mais de um veículo, outros widgets da interface do usuário aparecerão, permitindo que você gerencie todos os veículos gerados:\10 - Excluir\10 - Anexar\10 - Ajustar a posição de anexação\10 - Salvar"},
+    },
+
+    ["vc_saved_vehs"] = {
+        {iso = "en-US", text = "Saved Vehicles"},
+        {iso = "de-DE", text = "Gespeicherte Fahrzeuge"},
+        {iso = "fr-FR", text = "Véhicules Sauvegardés"},
+        {iso = "it-IT", text = "Veicoli Salvati"},
+        {iso = "pt-BR", text = "Veículos Salvos"},
+    },
+
+    ["vc_saved_vehs_tt"] = {
+        {iso = "en-US", text = "You do not have any saved vehicles. This option will be unlocked after you create and save a vehicle."},
+        {iso = "de-DE", text = "Sie haben noch keine Fahrzeuge gespeichert. Diese Option wird freigeschaltet, nachdem Sie ein Fahrzeug erstellt und gespeichert haben."},
+        {iso = "fr-FR", text = "Vous n'avez pas de véhicules sauvegardés. Cette option sera débloquée après la création et la sauvegarde d'un véhicule."},
+        {iso = "it-IT", text = "Non ci sono veicoli salvati. Questa opzione verrà sbloccata dopo aver creato e salvato un veicolo."},
+        {iso = "pt-BR", text = "Você não tem nenhum veículo salvo. Essa opção será desbloqueada depois que você criar e salvar um veículo."},
+    },
+
+    ["widebodycivic_Btn"] = {
+        {iso = "en-US", text = "Generate A 'Widebody Civic'"},
+        {iso = "de-DE", text = "Einen 'Widebody Civic' Generieren"},
+        {iso = "fr-FR", text = "Générer Une 'Widebody Civic'"},
+        {iso = "it-IT", text = "Generare Una 'Widebody Civic'"},
+        {iso = "pt-BR", text = "Gerar Um 'Widebody Civic'"},
+    },
+
+    ["widebodycivic_tt"] = {
+        {iso = "en-US", text = "Generates, spawns and saves a widebody Honda Civic (Sugoi) as a simple example of what the vehicle creator can do."},
+        {iso = "de-DE", text = "Generiert, erstellt und speichert einen Honda Civic (Sugoi) als einfaches Beispiel dafür, was der Fahrzeugentwickler tun kann."},
+        {iso = "fr-FR", text = "Génère, crée et enregistre une Honda Civic (Sugoi) à carrosserie large comme exemple simple de ce que le créateur de véhicule peut faire."},
+        {iso = "it-IT", text = "Genera, créa e salva una Honda Civic (Sugoi) corpo largo come semplice esempio di ciò che il creatore di veicoli può fare."},
+        {iso = "pt-BR", text = "Gera, cria e salva um Honda Civic (Sugoi) de corpo largo como um exemplo simples do que o criador de veículos pode fazer."},
+    },
+
+    ["vc_main_veh"] = {
+        {iso = "en-US", text = "Main Vehicle: "},
+        {iso = "de-DE", text = "Hauptfahrzeug: "},
+        {iso = "fr-FR", text = "Véhicule Principal: "},
+        {iso = "it-IT", text = "Veicolo Principale: "},
+        {iso = "pt-BR", text = "Veículo Principal: "},
+    },
+
+    ["vc_spawned_vehs"] = {
+        {iso = "en-US", text = "Spawned Vehicles:"},
+        {iso = "de-DE", text = "Gespawnte Fahrzeuge:"},
+        {iso = "fr-FR", text = "Véhicules Générés :"},
+        {iso = "it-IT", text = "Veicoli Generati:"},
+        {iso = "pt-BR", text = "Veículos Gerados:"},
+    },
+
+    ["vc_attach_btn"] = {
+        {iso = "en-US", text = "Attach To "},
+        {iso = "de-DE", text = "Anhängen An "},
+        {iso = "fr-FR", text = "Attacher À "},
+        {iso = "it-IT", text = "Allegare A "},
+        {iso = "pt-BR", text = "Anexar A "},
+    },
+
+    ["generic_veh_delete_fail"] = {
+        {iso = "en-US", text = "Failed to delete the vehicle!"},
+        {iso = "de-DE", text = "Löschen des Fahrzeugs fehlgeschlagen!"},
+        {iso = "fr-FR", text = "Échec de la suppression du véhicule !"},
+        {iso = "it-IT", text = "Impossibile cancellare il veicolo!"},
+        {iso = "pt-BR", text = "Falha ao excluir o veículo!"},
+    },
+
+    ["vc_alrattached_err"] = {
+        {iso = "en-US", text = "This vehicle is already attached."},
+        {iso = "de-DE", text = "Dieses Fahrzeug ist bereits angeschlossen."},
+        {iso = "fr-FR", text = "Ce véhicule est déjà attaché."},
+        {iso = "it-IT", text = "Questo veicolo è già collegato."},
+        {iso = "pt-BR", text = "Esse veículo já está acoplado."},
+    },
+
+    ["vc_selfattach_err"] = {
+        {iso = "en-US", text = "You cannot attach a vehicle to itself!"},
+        {iso = "de-DE", text = "Sie können ein Fahrzeug nicht an sich selbst befestigen!"},
+        {iso = "fr-FR", text = "Il n'est pas possible d'attacher un véhicule à lui-même !"},
+        {iso = "it-IT", text = "Non si può attaccare un veicolo a se stesso!"},
+        {iso = "pt-BR", text = "Não é possível acoplar um veículo a si mesmo!"},
+    },
+
+    ["generic_multiplier_label"] = {
+        {iso = "en-US", text = "Multiplier:"},
+        {iso = "de-DE", text = "Multiplikator:"},
+        {iso = "fr-FR", text = "Multiplicateur :"},
+        {iso = "it-IT", text = "Moltiplicatore:"},
+        {iso = "pt-BR", text = "Multiplicador:"},
+    },
+
+    ["vc_choose_name_hint"] = {
+        {iso = "en-US", text = "Choose a name"},
+        {iso = "de-DE", text = "Wählen Sie einen Namen"},
+        {iso = "fr-FR", text = "Choisissez un nom"},
+        {iso = "it-IT", text = "Scegliete un nome"},
+        {iso = "pt-BR", text = "Escolha um nome"},
+    },
+
+    ["vc_saved_msg"] = {
+        {iso = "en-US", text = "Your vehicle has been saved."},
+        {iso = "de-DE", text = "Ihr Fahrzeug wurde gespeichert."},
+        {iso = "fr-FR", text = "Votre véhicule a été sauvegardé."},
+        {iso = "it-IT", text = "Il vostro veicolo è stato salvato."},
+        {iso = "pt-BR", text = "Seu veículo foi salvo."},
+    },
+
+    ["vc_save_err"] = {
+        {iso = "en-US", text = "Please choose a name for your vehicle!"},
+        {iso = "de-DE", text = "Bitte wählen Sie einen Namen für Ihr Fahrzeug!"},
+        {iso = "fr-FR", text = "Veuillez choisir un nom pour votre véhicule !"},
+        {iso = "it-IT", text = "Scegliete un nome per il vostro veicolo!"},
+        {iso = "pt-BR", text = "Escolha um nome para seu veículo!"},
+    },
+
+    ["vc_spawn_persist"] = {
+        {iso = "en-US", text = "Spawn Persistent"},
+        {iso = "de-DE", text = "Dauerhaftes Laichen"},
+        {iso = "fr-FR", text = "Spawn Persistant"},
+        {iso = "it-IT", text = "Spawn Persistente"},
+        {iso = "pt-BR", text = "Geração Persistente"},
+    },
+
+    ["vc_delete_persist"] = {
+        {iso = "en-US", text = "Remove From The List"},
+        {iso = "de-DE", text = "Aus Der Liste Entfernen"},
+        {iso = "fr-FR", text = "Retirer De La Liste"},
+        {iso = "it-IT", text = "Rimuovere Dall'elenco"},
+        {iso = "pt-BR", text = "Remover Da Lista"},
+    },
+
+    ["vc_delete_msg"] = {
+        {iso = "en-US", text = "Your saved vehicle has been deleted."},
+        {iso = "de-DE", text = "Ihr gespeichertes Fahrzeug wurde gelöscht."},
+        {iso = "fr-FR", text = "Votre véhicule enregistré a été supprimé."},
+        {iso = "it-IT", text = "Il veicolo salvato è stato cancellato."},
+        {iso = "pt-BR", text = "Seu veículo salvo foi excluído."},
+    },
+
     ["Gambling"] = {
         {iso = "en-US", text = "Casino Games"},
         {iso = "de-DE", text = "Casino Spiele"},
         {iso = "fr-FR", text = "Jeux De Casino"},
         {iso = "it-IT", text = "Giochi Di Casinò"},
         {iso = "pt-BR", text = "Jogos De Cassino"},
+        {iso = "ru-RU", text = "Игры Казино"},
     },
 
     ["bypassCasinoCooldownCB"] = {
@@ -1455,6 +1641,7 @@ Labels = {
         {iso = "fr-FR", text = "Désactiver Le Temps De Recharge"},
         {iso = "it-IT", text = "Disattivare Il Tempo Di Ricarica"},
         {iso = "pt-BR", text = "Desabilitar O Tempo De Recarga"},
+        {iso = "ru-RU", text = "Обход кулдауна Казино"},
     },
 
     ["casinoCDwarn"] = {
@@ -1463,6 +1650,7 @@ Labels = {
         {iso = "fr-FR", text = "ATTENTION!\10\10Si vous gagnez trop et trop vite, vous risquez d'être banni. Activez cette option à vos risques et périls."},
         {iso = "it-IT", text = "ATTENZIONE!\10\10Vincere troppo e troppo in fretta potrebbe farvi bannare. Quindi attivatevi a vostro rischio e pericolo."},
         {iso = "pt-BR", text = "ATENÇÃO!\10\10Ganhar muito rapidamente pode fazer com que você seja banido. Ative isso por sua própria conta e risco."},
+        {iso = "ru-RU", text = "ВНИМАНИЕ!\10\10Обильные и частые выигрыши могут привести к бану. Включайте на свой страх и риск."},
     },
 
     ["casinoCDstatus"] = {
@@ -1471,6 +1659,7 @@ Labels = {
         {iso = "fr-FR", text = "Statut Du Temps De Recharge Du Casino:"},
         {iso = "it-IT", text = "Stato Di Tempo Di Ricarica Del Casinò:"},
         {iso = "pt-BR", text = "Status De Resfriamento Do Cassino:"},
+        {iso = "ru-RU", text = "Статус кулдауна Казино:"},
     },
 
     ["forcePokerCardsCB"] = {
@@ -1479,6 +1668,7 @@ Labels = {
         {iso = "fr-FR", text = "Forcer Tous Les Joueurs à Obtenir Une Quinte Royale"},
         {iso = "it-IT", text = "Forzare Tutte Le Mani Dei Giocatori Alla Scala Reale"},
         {iso = "pt-BR", text = "Forçar Todas As Mãos Dos Jogadores A Um Royal Flush"},
+        {iso = "ru-RU", text = "Принудительно собрать Флеш Рояль для всех игроков"},
     },
 
     ["setDealersCardsCB"] = {
@@ -1487,6 +1677,7 @@ Labels = {
         {iso = "fr-FR", text = "Forcer La Main Du Croupier à Un 'Bad Beat'"},
         {iso = "it-IT", text = "Forzare La Mano Del Mazziere A 'Bad Beat'"},
         {iso = "pt-BR", text = "Forçar A Mão Do Crupiê A Uma 'Bad Beat'"},
+        {iso = "ru-RU", text = "Принудить дилера к «Бэд-Биту»"},
     },
 
     ["faceDownCard"] = {
@@ -1495,6 +1686,7 @@ Labels = {
         {iso = "fr-FR", text = "Carte cachée du croupier : "},
         {iso = "it-IT", text = "Carta scoperta del mazziere: "},
         {iso = "pt-BR", text = "Carta virada para baixo do crupiê: "},
+        {iso = "ru-RU", text = "Скрытые карты дилера: "},
     },
 
     ["dealerBustBtn"] = {
@@ -1503,6 +1695,7 @@ Labels = {
         {iso = "fr-FR", text = "Forcer La Main Du Croupier A Echouer"},
         {iso = "it-IT", text = "Forzare La Mano Del Mazziere A Fallire"},
         {iso = "pt-BR", text = "Forçar A Mão Do Crupiê A Falhar"},
+        {iso = "ru-RU", text = "Принудить дилера к перебору"},
     },
 
     ["forceRouletteCB"] = {
@@ -1511,14 +1704,16 @@ Labels = {
         {iso = "fr-FR", text = "Forcer La Balle à Atterrir Sur Rouge 18"},
         {iso = "it-IT", text = "Forzare La Palla Ad Atterrare Sul Rosso 18"},
         {iso = "pt-BR", text = "Forçar A Bola A Aterrissar No Vermelho 18"},
+        {iso = "ru-RU", text = "Принудить шар выпасть на 18 Красный"},
     },
 
     ["rigSlotsCB"] = {
         {iso = "en-US", text = "Rig Slot Machines"},
         {iso = "de-DE", text = "Spielautomaten Manipulieren"},
         {iso = "fr-FR", text = "Truquer Les Machines A Sous"},
-        {iso = "it-IT", text = "Fingere Le Slot Machine"}, -- Huh? We're fingering the slot machines? Someone help with these translations PLEASE 😭
+        {iso = "it-IT", text = "Truccare Macchina Da Gioco"},
         {iso = "pt-BR", text = "Falsificação Máquinas Caça-Níquei"},
+        {iso = "ru-RU", text = "Подтасовать Слоты"},
     },
 
     ["autoplaySlotsCB"] = {
@@ -1527,6 +1722,7 @@ Labels = {
         {iso = "fr-FR", text = "Autoplay"},
         {iso = "it-IT", text = "Autoplay"},
         {iso = "pt-BR", text = "Autoplay"},
+        {iso = "ru-RU", text = "Авто-Игра"},
     },
 
     ["autoplayCapCB"] = {
@@ -1535,6 +1731,7 @@ Labels = {
         {iso = "fr-FR", text = "Max Jetons"},
         {iso = "it-IT", text = "Massimo Di Gettoni"},
         {iso = "pt-BR", text = "Fichas Máximas"},
+        {iso = "ru-RU", text = "Лимит Авто-Игры"},
     },
 
     ["podiumVeh_Btn"] = {
@@ -1543,6 +1740,7 @@ Labels = {
         {iso = "fr-FR", text = "Donner Le Véhicule Du Podium"},
         {iso = "it-IT", text = "Dare Il Veicolo Del Podio"},
         {iso = "pt-BR", text = "Oferecer Veículo Pódio"},
+        {iso = "ru-RU", text = "Выдать подиумное авто"},
     },
 
     ["mysteryPrize_Btn"] = {
@@ -1551,6 +1749,7 @@ Labels = {
         {iso = "fr-FR", text = "Donner Un Cadeau Mystère"},
         {iso = "it-IT", text = "Dare Un Premio Misterioso"},
         {iso = "pt-BR", text = "Dê Um Prêmio Misterioso"},
+        {iso = "ru-RU", text = "Выдать таинственный приз"},
     },
 
     ["50k_Btn"] = {
@@ -1559,6 +1758,7 @@ Labels = {
         {iso = "fr-FR", text = "Donner $50,000"},
         {iso = "it-IT", text = "Dare $50,000"},
         {iso = "pt-BR", text = "Dar $50,000"},
+        {iso = "ru-RU", text = "Выдать $50,000"},
     },
 
     ["25k_Btn"] = {
@@ -1567,6 +1767,7 @@ Labels = {
         {iso = "fr-FR", text = "Donner 25000 Jetons"},
         {iso = "it-IT", text = "Donare 25000 Gettoni"},
         {iso = "pt-BR", text = "Dê 25000 Fichas"},
+        {iso = "ru-RU", text = "Выдать 25000 фишек"},
     },
 
     ["15k_Btn"] = {
@@ -1575,6 +1776,7 @@ Labels = {
         {iso = "fr-FR", text = "Donner 15000 RP"},
         {iso = "it-IT", text = "Donare 15000 RP"},
         {iso = "pt-BR", text = "Dê 15000 RP"},
+        {iso = "ru-RU", text = "Выдать 15000 RP"},
     },
 
     ["%_Btn"] = {
@@ -1583,6 +1785,7 @@ Labels = {
         {iso = "fr-FR", text = "Donner Une Remise"},
         {iso = "it-IT", text = "Dare Uno Sconto"},
         {iso = "pt-BR", text = "Dar Desconto"},
+        {iso = "ru-RU", text = "Дать скидку"},
     },
 
     ["clothing_Btn"] = {
@@ -1591,6 +1794,7 @@ Labels = {
         {iso = "fr-FR", text = "Donner Des Vêtements"},
         {iso = "it-IT", text = "Dare Abbigliamento"},
         {iso = "pt-BR", text = "Dar Roupa"},
+        {iso = "ru-RU", text = "Выдать одежду"},
     },
 
     ["approach"] = {
@@ -1599,6 +1803,7 @@ Labels = {
         {iso = "fr-FR", text = "Approche"},
         {iso = "it-IT", text = "Approccio"},
         {iso = "pt-BR", text = "Abordagem"},
+        {iso = "ru-RU", text = "Подход"},
     },
 
     ["target"] = {
@@ -1607,6 +1812,7 @@ Labels = {
         {iso = "fr-FR", text = "Cible"},
         {iso = "it-IT", text = "Obiettivo"},
         {iso = "pt-BR", text = "Objetivo"},
+        {iso = "ru-RU", text = "Цель"},
     },
 
     ["last_approach"] = {
@@ -1615,6 +1821,7 @@ Labels = {
         {iso = "fr-FR", text = "Dernière Approche"},
         {iso = "it-IT", text = "Ultimo Approccio"},
         {iso = "pt-BR", text = "Última Abordagem"},
+        {iso = "ru-RU", text = "Последний подход"},
     },
 
     ["hard_approach"] = {
@@ -1623,6 +1830,7 @@ Labels = {
         {iso = "fr-FR", text = "Approche Dure"},
         {iso = "it-IT", text = "Approccio Duro"},
         {iso = "pt-BR", text = "Abordagem Difícil"},
+        {iso = "ru-RU", text = "Сложный подход"},
     },
 
     ["gunman"] = {
@@ -1631,6 +1839,7 @@ Labels = {
         {iso = "fr-FR", text = "Tireur"},
         {iso = "it-IT", text = "Pistolero"},
         {iso = "pt-BR", text = "Pistoleiro"},
+        {iso = "ru-RU", text = "Стрелок"},
     },
 
     ["driver"] = {
@@ -1639,6 +1848,7 @@ Labels = {
         {iso = "fr-FR", text = "Conducteur"},
         {iso = "it-IT", text = "Autista"},
         {iso = "pt-BR", text = "Condutor"},
+        {iso = "ru-RU", text = "Водитель"},
     },
 
     ["hacker"] = {
@@ -1647,6 +1857,7 @@ Labels = {
         {iso = "fr-FR", text = "Hacker"},
         {iso = "it-IT", text = "Hacker"},
         {iso = "pt-BR", text = "Hacker"},
+        {iso = "ru-RU", text = "Хакер"},
     },
 
     ["unmarked_weapons"] = {
@@ -1655,6 +1866,7 @@ Labels = {
         {iso = "fr-FR", text = "Armes Banalisées"},
         {iso = "it-IT", text = "Armi Non Marcate"},
         {iso = "pt-BR", text = "Armas Não Marcadas"},
+        {iso = "ru-RU", text = "Немаркированное Оружие"},
     },
 
     ["getaways"] = {
@@ -1663,6 +1875,7 @@ Labels = {
         {iso = "fr-FR", text = "Véhicules De Fuite"},
         {iso = "it-IT", text = "Veicoli Da Fuga"},
         {iso = "pt-BR", text = "Veículos De Fuga"},
+        {iso = "ru-RU", text = "Авто для побега"},
     },
 
     ["masks"] = {
@@ -1671,6 +1884,7 @@ Labels = {
         {iso = "fr-FR", text = "Masques"},
         {iso = "it-IT", text = "Maschere"},
         {iso = "pt-BR", text = "Máscaras"},
+        {iso = "ru-RU", text = "Маски"},
     },
 
     ["autograb"] = {
@@ -1679,6 +1893,7 @@ Labels = {
         {iso = "fr-FR", text = "Récupérer Automatiquement L'argent / L'or / Les diamants"},
         {iso = "it-IT", text = "Afferrare automaticamente Contanti / Oro / Diamanti"},
         {iso = "pt-BR", text = "Captura Automática De Dinheiro / Ouro / Diamantes"},
+        {iso = "ru-RU", text = "Автоматически подбирать деньги/золото/алмазы"},
     },
 
     ["Unlock All Heist Options"] = {
@@ -1687,6 +1902,7 @@ Labels = {
         {iso = "fr-FR", text = "Déverrouiller Toutes Les Options Du Braquage"},
         {iso = "it-IT", text = "Sbloccare Tutte Le Opzioni Di Rapina"},
         {iso = "pt-BR", text = "Desbloqueie Todas As Opções De Roubo"},
+        {iso = "ru-RU", text = "Разблокировать все варианты ограблений"},
     },
 
     ["%0_ai_cuts_Btn"] = {
@@ -1695,6 +1911,7 @@ Labels = {
         {iso = "fr-FR", text = "Fixer Les Pourcentages D'équipe IA à %0"},
         {iso = "it-IT", text = "Imposta Le Percentuali Della Squadra AI A %0"},
         {iso = "pt-BR", text = "Definir As Porcentagens Da Equipe IA Como %0"},
+        {iso = "ru-RU", text = "Установить долю 0% для ИИ команды"},
     },
 
     ["%100_p_cuts_Btn"] = {
@@ -1703,6 +1920,7 @@ Labels = {
         {iso = "fr-FR", text = "Fixer Tous Les Pourcentages à %100"},
         {iso = "it-IT", text = "Imposta Tuute Le Percentuali A %100"},
         {iso = "pt-BR", text = "Definir Todas Porcentagens Como %100"},
+        {iso = "ru-RU", text = "Установить всю долю в 100%"},
     },
 }
 
@@ -1729,8 +1947,8 @@ function translateLabel(g)
         end
         if retStr == nil or retStr == "" then
             if logMsg then
-                gui.show_warning("Samurai's Scripts", "Unsupported language or missing label detected! Defaulting to English.")
-                log.warning("Unsupported language or missing label detected! Defaulting to English.")
+                gui.show_warning("Samurai's Scripts", "Unsupported language or missing label(s) detected! Defaulting to English.")
+                log.warning("Unsupported language or missing label(s) detected! Defaulting to English.")
             end
             retStr = Labels[g][1].text
             logMsg = false
